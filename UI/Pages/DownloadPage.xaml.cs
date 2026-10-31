@@ -1,4 +1,4 @@
-﻿using System.IO;
+using System.IO;
 using System.Windows;
 using System.Windows.Controls;
 using Microsoft.Win32;
@@ -136,10 +136,6 @@ public partial class DownloadPage : UserControl, IPage
     {
         if (PanelGame is null) return;
         var tag = (sender as RadioButton)?.Tag as string ?? "game";
-        PanelGame.Visibility = tag == "game" ? Visibility.Visible : Visibility.Collapsed;
-        PanelFabric.Visibility = tag == "fabric" ? Visibility.Visible : Visibility.Collapsed;
-        PanelForge.Visibility = tag == "forge" ? Visibility.Visible : Visibility.Collapsed;
-        PanelResource.Visibility = tag == "resource" ? Visibility.Visible : Visibility.Collapsed;
         if (tag == "forge") PopulateForgeMc();
         if (tag == "resource") ResourcePanel.OnShown();
     }
