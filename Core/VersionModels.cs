@@ -169,7 +169,7 @@ public sealed class LaunchOptions
     public string ExtraJvmArgs { get; init; } = "";
     public string ExtraGameArgs { get; init; } = "";
     public string LauncherName { get; init; } = "Vermilune";
-    public string LauncherVersion { get; init; } = "1.2.2-beta";
+    public string LauncherVersion { get; init; } = "1.2.3-beta";
 }
 
 public static class RuleEvaluator
