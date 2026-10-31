@@ -87,6 +87,6 @@ Assets/                 # 图标与主页插图
 
 ## 许可
 
-本项目部分代码参考 PCL。PCL 使用《PCL 分发有限许可》，并非标准开源许可证；使用、修改或分发前请阅读并遵守 [PCL 的许可要求](https://github.com/Meloong-Git/PCL/blob/master/LICENCE)。
+本项目原创代码采用 [MIT License](LICENSE)。
 
-本仓库目前未附带自己的开源许可证，公开发布前可补充 `LICENSE`。
+参考 PCL 的实现与 `Assets` 中的第三方素材不在 MIT 授权范围内，详见 [NOTICE](NOTICE)。PCL 使用《PCL 分发有限许可》，并非标准开源许可证；涉及相关部分时请阅读并遵守 [PCL 的许可要求](https://github.com/Meloong-Git/PCL/blob/master/LICENCE)。

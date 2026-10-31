@@ -1,0 +1,27 @@
+# NOTICE
+
+本文件列出 Vermilune 中使用或参考的第三方内容。`LICENSE` 中的 MIT 条款仅适用于本项目的原创代码，不改变下列内容的授权。
+
+## PCL（Plain Craft Launcher）
+
+- 作者：龙腾猫跃
+- 主页：https://meloong.com/
+- 仓库：https://github.com/Meloong-Git/PCL
+- 许可：PCL 分发有限许可（https://github.com/Meloong-Git/PCL/blob/master/LICENCE），不是标准开源许可证。
+
+本项目部分实现参考了 PCL 的公开源码，包括皮肤模型判定、启动与下载流程等思路。参考部分不适用本项目的 MIT 许可；如需复用或再分发，请自行阅读并遵守 PCL 的许可要求。
+
+本项目不是 PCL 官方项目，与 PCL 作者无隶属关系。
+
+## SkinPilot
+
+- 仓库：https://github.com/TsukaStore/SkinPilot
+- 3D 皮肤的模型尺寸、贴图盒、六面 UV 与内外层膨胀量参考 `src/preview/skinGeometry.ts`。
+
+## 主页插图
+
+`Assets/Satori.jpg` 版权归原作者所有，仅用于界面展示，不在 MIT 许可范围内。
+
+## Minecraft
+
+Minecraft 客户端、资源与 Mod 的版权归 Mojang Studios 及对应作者所有。
