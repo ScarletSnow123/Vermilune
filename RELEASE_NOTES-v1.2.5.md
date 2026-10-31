@@ -1,6 +1,6 @@
-﻿# Vermilune v1.2.5-beta
+# Vermilune v1.2.5-beta
 
-- 整合包 zip 直接拖进窗口安装，自动识别 CurseForge / Modrinth
-- 新实例首次启动默认中文，已设置过的语言不覆盖
-- 修复切换皮肤后预览、头像不刷新
-- 修复挂 VPN 时披风读取失败
+- 多账号保存与免登录切换，支持 Microsoft、离线、Yggdrasil 外置登录
+- 整合包 zip 拖进窗口即可安装，自动识别 CurseForge / Modrinth
+- 新实例默认中文，自动隐藏 Fabric / Forge 补的原版依赖
+- 修复切皮肤后预览和头像不刷新、VPN 下披风读取失败、安装实例下拉为空
