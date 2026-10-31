@@ -147,6 +147,8 @@
                         <TextBlock Text="安装到实例" Style="{StaticResource FormLabel}" />
                         <ComboBox x:Name="TargetCombo" Height="34" DisplayMemberPath="DisplayName"
                                   DropDownOpened="TargetCombo_DropDownOpened" />
+                        <TextBlock x:Name="TargetHint" Text="" Style="{StaticResource MutedText}"
+                                   Margin="0,5,0,0" Visibility="Collapsed" />
                     </StackPanel>
                     <Button x:Name="InstallButton" Style="{StaticResource PrimaryButton}" Height="38" Margin="0,14,0,0"
                             Content="安装" IsEnabled="False" Click="Install_Click" />

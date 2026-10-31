@@ -24,7 +24,7 @@ public partial class ResourceBrowser : UserControl
     public ResourceBrowser()
     {
         InitializeComponent();
-        Loaded += (_, _) => EnsureInitialized();
+        Loaded += (_, _) => { EnsureInitialized(); RefreshTargets(); };
     }
 
     public void OnShown()
@@ -53,6 +53,7 @@ public partial class ResourceBrowser : UserControl
 
     private void RefreshTargets()
     {
+        if (LauncherApp.I.Versions.Versions.Count == 0) LauncherApp.I.ReloadVersions();
         var selectedId = (TargetCombo.SelectedItem as VersionInfo)?.Id
                          ?? LauncherApp.I.CurrentVersion?.Id
                          ?? "";
@@ -61,6 +62,10 @@ public partial class ResourceBrowser : UserControl
         TargetCombo.SelectedItem = versions.FirstOrDefault(v =>
                                        string.Equals(v.Id, selectedId, StringComparison.OrdinalIgnoreCase))
                                    ?? versions.FirstOrDefault();
+        TargetHint.Text = versions.Count == 0
+            ? "没有扫描到版本实例，请先到「版本」页安装或刷新。"
+            : "";
+        TargetHint.Visibility = versions.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
     }
 
     private void Type_Checked(object sender, RoutedEventArgs e)
