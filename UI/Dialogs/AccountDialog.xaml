@@ -22,11 +22,16 @@
                                    Foreground="{DynamicResource TextMutedBrush}" HorizontalAlignment="Right"
                                    VerticalAlignment="Center" />
                     </Grid>
+                    <TextBlock Text="登录过 Microsoft / 外置账号后会保留在这里，点账号即可切换。"
+                               FontSize="10" Foreground="{DynamicResource TextMutedBrush}" Margin="0,4,0,0"
+                               TextWrapping="Wrap" />
                     <ScrollViewer MaxHeight="220" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
                         <ItemsControl x:Name="SavedList" Margin="0,8,0,0">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
-                                <Grid Height="36">
+                                <Grid Height="36" Background="Transparent" Cursor="Hand"
+                                      Tag="{Binding Id}" MouseLeftButtonUp="SavedAccount_Click"
+                                      ToolTip="点击切换到这个账号">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="*" />
                                         <ColumnDefinition Width="Auto" />

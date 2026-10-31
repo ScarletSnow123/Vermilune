@@ -54,7 +54,20 @@ public partial class AccountDialog : Window
 
     private void SwitchAccount_Click(object sender, RoutedEventArgs e)
     {
+        e.Handled = true;
         if (sender is not Button { Tag: string id } || string.IsNullOrEmpty(id)) return;
+        SwitchTo(id);
+    }
+
+    private void SavedAccount_Click(object sender, MouseButtonEventArgs e)
+    {
+        if (sender is not FrameworkElement { Tag: string id } || string.IsNullOrEmpty(id)) return;
+        e.Handled = true;
+        SwitchTo(id);
+    }
+
+    private void SwitchTo(string id)
+    {
         if (!LauncherApp.I.SwitchAccount(id)) return;
         Changed = true;
         Close();
