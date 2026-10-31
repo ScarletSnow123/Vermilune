@@ -1,6 +1,7 @@
-﻿<Window x:Class="Vermilune.UI.Dialogs.CapePickerDialog"
+<Window x:Class="Vermilune.UI.Dialogs.CapePickerDialog"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:controls="clr-namespace:Vermilune.UI.Controls"
         Width="520" Height="450" WindowStyle="None" AllowsTransparency="True"
         Background="Transparent" ResizeMode="NoResize" ShowInTaskbar="False"
         WindowStartupLocation="CenterOwner" FontFamily="{DynamicResource UiFont}">
@@ -58,8 +59,10 @@
                                         <ColumnDefinition Width="*" />
                                         <ColumnDefinition Width="Auto" />
                                     </Grid.ColumnDefinitions>
-                                    <Image Source="{Binding ImageUrl}" Width="40" Height="20" Stretch="Uniform"
-                                           VerticalAlignment="Center" />
+                                    <controls:AsyncImage Uri="{Binding ImageUrl}" Crop="0,0,10,16"
+                                                        Width="22" Height="36" Stretch="Uniform"
+                                                        VerticalAlignment="Center"
+                                                        RenderOptions.BitmapScalingMode="HighQuality" />
                                     <TextBlock Grid.Column="1" Text="{Binding DisplayName}" FontSize="12"
                                                VerticalAlignment="Center" Margin="7,0,0,0" TextTrimming="CharacterEllipsis" />
                                     <TextBlock Grid.Column="2" Text="{Binding StateText}" FontSize="9.5"

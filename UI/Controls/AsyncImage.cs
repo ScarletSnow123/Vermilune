@@ -30,21 +30,46 @@ public sealed class AsyncImage : Image
         if (d is AsyncImage image) _ = image.LoadAsync(e.NewValue as string);
     }
 
+    public static readonly DependencyProperty CropProperty = DependencyProperty.Register(
+        nameof(Crop), typeof(Int32Rect), typeof(AsyncImage),
+        new PropertyMetadata(new Int32Rect(0, 0, 0, 0), OnCropChanged));
+
+    public Int32Rect Crop
+    {
+        get => (Int32Rect)GetValue(CropProperty);
+        set => SetValue(CropProperty, value);
+    }
+
+    private static void OnCropChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+    {
+        if (d is AsyncImage image) _ = image.LoadAsync(image.Uri);
+    }
+
     private async Task LoadAsync(string? url)
     {
         if (string.IsNullOrWhiteSpace(url)) return;
-        if (Memory.TryGetValue(url, out var cached))
-        {
-            Source = cached;
-            return;
-        }
+        var source = CropBitmap(Memory.TryGetValue(url, out var cached) ? cached : await LoadSourceAsync(url));
+        if (string.Equals(Uri, url, StringComparison.Ordinal)) Source = source;
+    }
 
+    private async Task<BitmapSource?> LoadSourceAsync(string url)
+    {
         var task = Pending.GetOrAdd(url, LoadCoreAsync);
         var bitmap = await task;
         Pending.TryRemove(url, out _);
-        if (bitmap is null || !string.Equals(Uri, url, StringComparison.Ordinal)) return;
+        if (bitmap is null) return null;
         Memory[url] = bitmap;
-        Source = bitmap;
+        return bitmap;
+    }
+
+    private BitmapSource? CropBitmap(BitmapSource? bitmap)
+    {
+        if (bitmap is null) return null;
+        var crop = Crop;
+        if (crop.Width <= 0 || crop.Height <= 0) return bitmap;
+        if (crop.X < 0 || crop.Y < 0 || crop.X + crop.Width > bitmap.PixelWidth || crop.Y + crop.Height > bitmap.PixelHeight)
+            return bitmap;
+        return new CroppedBitmap(bitmap, crop);
     }
 
     private static async Task<BitmapSource?> LoadCoreAsync(string url)
