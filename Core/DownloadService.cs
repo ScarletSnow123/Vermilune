@@ -118,7 +118,12 @@ public sealed class DownloadService
         if (string.IsNullOrWhiteSpace(remote.Url)) throw new InvalidOperationException("该版本没有可用的 JSON 地址。");
         var versionDir = Path.Combine(mcDir, "versions", remote.Id);
         Directory.CreateDirectory(versionDir);
-        try { File.Delete(Path.Combine(versionDir, ".vermilune-hidden")); } catch { }
+        try
+        {
+            File.Delete(Path.Combine(versionDir, ".vermilune-hidden"));
+            File.WriteAllText(Path.Combine(versionDir, ".vermilune-visible"), "explicitly installed");
+        }
+        catch { }
         progress?.Report(new DownloadProgress { Stage = "拉取版本信息", Current = 0, Total = 1, Detail = remote.Id });
         var json = await HttpService.GetStringAsync(remote.Url, ct);
         var jsonPath = Path.Combine(versionDir, remote.Id + ".json");
@@ -200,7 +205,10 @@ public sealed class DownloadService
             await InstallVanillaAsync(baseVer, mcDir, progress, ct);
         }
         // 安装 Fabric 时，原版只作为继承基础，不在版本列表里重复显示。
-        try { File.WriteAllText(Path.Combine(baseDir, ".vermilune-hidden"), "fabric dependency"); } catch { }
+        if (!File.Exists(Path.Combine(baseDir, ".vermilune-visible")))
+        {
+            try { File.WriteAllText(Path.Combine(baseDir, ".vermilune-hidden"), "fabric dependency"); } catch { }
+        }
 
         progress?.Report(new DownloadProgress { Stage = "生成 Fabric 配置", Detail = $"Loader {loader.Version}" });
         var profileUrl = $"https://meta.fabricmc.net/v2/versions/loader/{Uri.EscapeDataString(mcVersion)}/{Uri.EscapeDataString(loader.Version)}/profile/json";

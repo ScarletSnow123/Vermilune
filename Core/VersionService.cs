@@ -34,6 +34,7 @@ public sealed class VersionService
         try
         {
             if (!Directory.Exists(VersionsDir)) return result;
+            HideInheritedVanillaBases();
             foreach (var dir in Directory.EnumerateDirectories(VersionsDir))
             {
                 var folder = Path.GetFileName(dir);
@@ -85,6 +86,45 @@ public sealed class VersionService
             .ToList();
         lock (_lock) _versions = result;
         return result;
+    }
+
+    private void HideInheritedVanillaBases()
+    {
+        try
+        {
+            var parents = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            foreach (var dir in Directory.EnumerateDirectories(VersionsDir))
+            {
+                var id = Path.GetFileName(dir);
+                var json = _resolver.FindJsonPath(id);
+                if (string.IsNullOrEmpty(json)) continue;
+                try
+                {
+                    var root = JsonNode.Parse(File.ReadAllText(json)) as JsonObject;
+                    var parent = root?["inheritsFrom"]?.GetValue<string>() ?? "";
+                    if (!string.IsNullOrEmpty(parent)) parents.Add(parent);
+                }
+                catch { }
+            }
+
+            foreach (var parent in parents)
+            {
+                var dir = Path.Combine(VersionsDir, parent);
+                if (!Directory.Exists(dir)) continue;
+                if (File.Exists(Path.Combine(dir, ".vermilune-visible"))) continue;
+                if (File.Exists(Path.Combine(dir, ".vermilune-hidden"))) continue;
+                var resolved = _resolver.Resolve(parent);
+                if (resolved is null || resolved.Loader != LoaderKind.Vanilla) continue;
+                var mods = Path.Combine(dir, "mods");
+                if (Directory.Exists(mods) && Directory.EnumerateFiles(mods).Any()) continue;
+                try { File.WriteAllText(Path.Combine(dir, ".vermilune-hidden"), "auto hidden vanilla base"); }
+                catch { }
+            }
+        }
+        catch (Exception ex)
+        {
+            Log.Warn("自动隐藏原版基础版本失败：" + ex.Message);
+        }
     }
 
     public VersionInfo? Find(string id)
