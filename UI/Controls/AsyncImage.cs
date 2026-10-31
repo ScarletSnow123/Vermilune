@@ -93,7 +93,6 @@ public sealed class AsyncImage : Image
             var image = new BitmapImage();
             image.BeginInit();
             image.CacheOption = BitmapCacheOption.OnLoad;
-            image.DecodePixelWidth = 128;
             image.StreamSource = stream;
             image.EndInit();
             image.Freeze();
