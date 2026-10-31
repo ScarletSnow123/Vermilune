@@ -7,6 +7,7 @@ namespace Vermilune.Core;
 
 public sealed class AccountSettings
 {
+    public string Id { get; set; } = "";
     public string Type { get; set; } = "offline"; // offline | microsoft | yggdrasil
     public string Name { get; set; } = "Player";
     public string Uuid { get; set; } = "";
@@ -25,6 +26,8 @@ public sealed class AccountSettings
     [JsonIgnore] public bool IsYggdrasil => string.Equals(Type, "yggdrasil", StringComparison.OrdinalIgnoreCase);
     [JsonIgnore] public bool IsOnline => IsMicrosoft || IsYggdrasil;
     [JsonIgnore] public bool HasCachedSession => IsMicrosoft && !string.IsNullOrEmpty(RefreshTokenProtected);
+
+    public AccountSettings Clone() => (AccountSettings)MemberwiseClone();
 }
 
 public sealed class RecentEntry
@@ -63,6 +66,7 @@ public sealed class AppSettings
     public bool Maximized { get; set; }
     public bool FirstRun { get; set; } = true;
     public List<RecentEntry> Recent { get; set; } = new();
+    public List<AccountSettings> Accounts { get; set; } = new();
     public AccountSettings Account { get; set; } = new();
 
     public void Normalize()
@@ -77,6 +81,13 @@ public sealed class AppSettings
         if (Recent is null) Recent = new();
         if (Recent.Count > 24) Recent = Recent.OrderByDescending(r => r.LastPlayedUtc).Take(24).ToList();
         Account ??= new AccountSettings();
+        if (string.IsNullOrEmpty(Account.Id)) Account.Id = Guid.NewGuid().ToString("N");
+        if (Accounts is null) Accounts = new();
+        foreach (var saved in Accounts)
+            if (string.IsNullOrEmpty(saved.Id)) saved.Id = Guid.NewGuid().ToString("N");
+        if (Accounts.Count == 0) Accounts.Add(Account.Clone());
+        else if (Accounts.All(a => !string.Equals(a.Id, Account.Id, StringComparison.OrdinalIgnoreCase)))
+            Accounts.Add(Account.Clone());
     }
 
     public void TouchRecent(string versionId)

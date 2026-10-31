@@ -139,8 +139,71 @@ public sealed class LauncherApp
         }
     }
 
-    public void Save() => SettingsStore.Save(Settings);
-    public void SaveDebounced() => SettingsStore.SaveDebounced(Settings);
+    public void Save()
+    {
+        SyncActiveAccount();
+        SettingsStore.Save(Settings);
+    }
+
+    public void SaveDebounced()
+    {
+        SyncActiveAccount();
+        SettingsStore.SaveDebounced(Settings);
+    }
+
+    /// <summary>把当前账号写入已保存账号列表，供之后直接切换。</summary>
+    public void RememberAccount(AccountSettings account)
+    {
+        if (string.IsNullOrEmpty(account.Id)) account.Id = Guid.NewGuid().ToString("N");
+        Settings.Accounts ??= new List<AccountSettings>();
+        var existing = Settings.Accounts.FirstOrDefault(a =>
+            string.Equals(a.Id, account.Id, StringComparison.OrdinalIgnoreCase));
+        if (existing is null)
+        {
+            existing = Settings.Accounts.FirstOrDefault(a => SameAccountIdentity(a, account));
+        }
+        if (existing is null)
+        {
+            Settings.Accounts.Add(account.Clone());
+        }
+        else
+        {
+            account.Id = existing.Id;
+            var index = Settings.Accounts.IndexOf(existing);
+            Settings.Accounts[index] = account.Clone();
+        }
+        Settings.Account = account.Clone();
+    }
+
+    public bool SwitchAccount(string id)
+    {
+        var saved = Settings.Accounts?.FirstOrDefault(a =>
+            string.Equals(a.Id, id, StringComparison.OrdinalIgnoreCase));
+        if (saved is null) return false;
+        Settings.Account = saved.Clone();
+        Save();
+        SettingsChanged?.Invoke();
+        return true;
+    }
+
+    private void SyncActiveAccount()
+    {
+        if (Settings.Account is null) return;
+        if (string.IsNullOrEmpty(Settings.Account.Id)) Settings.Account.Id = Guid.NewGuid().ToString("N");
+        Settings.Accounts ??= new List<AccountSettings>();
+        var index = Settings.Accounts.FindIndex(a =>
+            string.Equals(a.Id, Settings.Account.Id, StringComparison.OrdinalIgnoreCase));
+        if (index >= 0) Settings.Accounts[index] = Settings.Account.Clone();
+        else Settings.Accounts.Add(Settings.Account.Clone());
+    }
+
+    private static bool SameAccountIdentity(AccountSettings a, AccountSettings b)
+    {
+        if (!string.Equals(a.Type, b.Type, StringComparison.OrdinalIgnoreCase)) return false;
+        if (a.IsMicrosoft || a.IsYggdrasil)
+            return !string.IsNullOrEmpty(a.Uuid) && string.Equals(a.Uuid, b.Uuid, StringComparison.OrdinalIgnoreCase);
+        return string.Equals(a.Name, b.Name, StringComparison.OrdinalIgnoreCase);
+    }
 
     public void ReloadVersions()
     {

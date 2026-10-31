@@ -1,4 +1,5 @@
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Input;
 using Vermilune.Core;
 
@@ -20,6 +21,43 @@ public partial class AccountDialog : Window
             YggServer.Text = account.YggdrasilServer;
             YggUser.Text = account.Name;
         }
+        BuildSavedList();
+    }
+
+    private sealed class SavedAccountRow
+    {
+        public string Id { get; init; } = "";
+        public string Name { get; init; } = "";
+        public string TypeText { get; init; } = "";
+        public string ActionText { get; init; } = "";
+        public bool CanSwitch { get; init; }
+    }
+
+    private void BuildSavedList()
+    {
+        var currentId = LauncherApp.I.Settings.Account.Id;
+        var rows = (LauncherApp.I.Settings.Accounts ?? new List<AccountSettings>())
+            .Where(a => !string.IsNullOrEmpty(a.Id))
+            .OrderByDescending(a => string.Equals(a.Id, currentId, StringComparison.OrdinalIgnoreCase))
+            .ThenBy(a => a.Name)
+            .Select(a => new SavedAccountRow
+            {
+                Id = a.Id,
+                Name = string.IsNullOrWhiteSpace(a.Name) ? "Player" : a.Name,
+                TypeText = AccountTypeText(a),
+                ActionText = string.Equals(a.Id, currentId, StringComparison.OrdinalIgnoreCase) ? "使用中" : "切换",
+                CanSwitch = !string.Equals(a.Id, currentId, StringComparison.OrdinalIgnoreCase)
+            })
+            .ToList();
+        SavedList.ItemsSource = rows;
+    }
+
+    private void SwitchAccount_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is not Button { Tag: string id } || string.IsNullOrEmpty(id)) return;
+        if (!LauncherApp.I.SwitchAccount(id)) return;
+        Changed = true;
+        Close();
     }
 
     private static string AccountTypeText(AccountSettings account) =>
@@ -37,9 +75,10 @@ public partial class AccountDialog : Window
     {
         var profile = MicrosoftLoginDialog.Show(this);
         if (profile is null) return;
-        var account = LauncherApp.I.Settings.Account;
+        var account = new AccountSettings();
         AccountService.ApplyProfile(account, profile);
         account.Type = "microsoft";
+        LauncherApp.I.RememberAccount(account);
         LauncherApp.I.Save();
         LauncherApp.I.RaiseSettingsChanged();
         Changed = true;
@@ -55,17 +94,13 @@ public partial class AccountDialog : Window
             OfflineError.Visibility = Visibility.Visible;
             return;
         }
-        var account = LauncherApp.I.Settings.Account;
-        account.Type = "offline";
-        account.Name = name;
-        account.Uuid = AccountService.OfflineUuid(name);
-        account.SkinUrl = "";
-        account.Xuid = "";
-        account.YggdrasilServer = "";
-        account.ClientTokenProtected = "";
-        account.RefreshTokenProtected = "";
-        account.AccessTokenProtected = "";
-        account.AccessTokenExpiresUtc = DateTime.MinValue;
+        var account = new AccountSettings
+        {
+            Type = "offline",
+            Name = name,
+            Uuid = AccountService.OfflineUuid(name)
+        };
+        LauncherApp.I.RememberAccount(account);
         LauncherApp.I.Save();
         LauncherApp.I.RaiseSettingsChanged();
         Changed = true;
@@ -97,8 +132,9 @@ public partial class AccountDialog : Window
         {
             var server = YggdrasilService.NormalizeServer(serverText);
             var profile = await YggdrasilService.AuthenticateAsync(server, user, password);
-            var account = LauncherApp.I.Settings.Account;
+            var account = new AccountSettings();
             YggdrasilService.Apply(account, profile);
+            LauncherApp.I.RememberAccount(account);
             LauncherApp.I.Save();
             LauncherApp.I.RaiseSettingsChanged();
             Changed = true;

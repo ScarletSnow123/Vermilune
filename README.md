@@ -13,6 +13,7 @@
 - 版本扫描、Java 自动检测、启动参数与内存配置
 - Microsoft 设备代码登录、离线账号
 - Yggdrasil / LittleSkin 外置登录（authlib-injector）
+- 多账号保存与切换，不用重复登录
 - Forge / Fabric / NeoForge 安装
 - Modrinth、CurseForge 资源搜索
 - 整合包搜索与一键安装
