@@ -313,6 +313,28 @@ public sealed class SkinService
         return 1;
     }
 
+    public async Task<BitmapSource?> LoadTextureAsync(string url, CancellationToken ct = default)
+    {
+        try
+        {
+            var bytes = await GetTextureBytesAsync(url, ct);
+            using var stream = new MemoryStream(bytes);
+            var image = new BitmapImage();
+            image.BeginInit();
+            image.CacheOption = BitmapCacheOption.OnLoad;
+            image.CreateOptions = BitmapCreateOptions.PreservePixelFormat;
+            image.StreamSource = stream;
+            image.EndInit();
+            image.Freeze();
+            return image;
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            Log.Warn("读取纹理失败：" + ex.Message);
+            return null;
+        }
+    }
+
     private static async Task<byte[]> GetTextureBytesAsync(string url, CancellationToken ct)
     {
         var candidates = new List<string>();

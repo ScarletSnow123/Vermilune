@@ -64,6 +64,13 @@ public partial class SkinPreview3D : UserControl
         Rebuild();
     }
 
+    public void SetView(double yaw, double pitch)
+    {
+        _angleY = yaw;
+        _angleX = Math.Clamp(pitch, -55, 55);
+        Rebuild();
+    }
+
     private void OnMouseDown(object sender, MouseButtonEventArgs e)
     {
         _dragging = true;
@@ -115,12 +122,17 @@ public partial class SkinPreview3D : UserControl
         if (_cape is not null)
         {
             var capeTexture = PrepareTexture(_cape);
-            AddBox(new Point3D(0, -1, -3.1), 10, 16, 0.15, new[]
+            // 与 Minecraft 披风模型一致：10×16 的平面，正面/背面各用披风贴图的前后区域。
+            AddCapePlane(new[]
             {
-                new Rect(0, 0, capeTexture.Width, capeTexture.Height), new Rect(0, 0, capeTexture.Width, capeTexture.Height),
-                new Rect(0, 0, capeTexture.Width, capeTexture.Height), new Rect(0, 0, capeTexture.Width, capeTexture.Height),
-                new Rect(0, 0, capeTexture.Width, capeTexture.Height), new Rect(0, 0, capeTexture.Width, capeTexture.Height)
-            }, capeTexture);
+                new Point3D(-5, -10, -2.2), new Point3D(5, -10, -2.2),
+                new Point3D(5, 6, -2.2), new Point3D(-5, 6, -2.2)
+            }, R(0, 0, 10, 16), capeTexture, 1);
+            AddCapePlane(new[]
+            {
+                new Point3D(5, -10, -2.35), new Point3D(-5, -10, -2.35),
+                new Point3D(-5, 6, -2.35), new Point3D(5, 6, -2.35)
+            }, R(12, 0, 10, 16), capeTexture, -1);
         }
 
         Hint.Text = _cape is null ? "拖动旋转 · 无披风" : "拖动旋转";
@@ -143,6 +155,27 @@ public partial class SkinPreview3D : UserControl
             R(u + td + tw, v, tw, td)                  // bottom
         };
         AddBox(center, w + inflate * 2, h + inflate * 2, d + inflate * 2, crops, texture);
+    }
+
+    private void AddCapePlane(Point3D[] points, Rect crop, TextureData texture, double nz)
+    {
+        var u0 = crop.X / texture.Width;
+        var u1 = crop.Right / texture.Width;
+        var v0 = crop.Y / texture.Height;
+        var v1 = crop.Bottom / texture.Height;
+        var uvs = nz < 0
+            ? new[] { (u1, v1), (u0, v1), (u0, v0), (u1, v0) }
+            : new[] { (u0, v1), (u1, v1), (u1, v0), (u0, v0) };
+        _faces.Add(new Face
+        {
+            Points = points,
+            Crop = crop,
+            Texture = texture,
+            NX = 0,
+            NY = 0,
+            NZ = nz,
+            UVs = uvs
+        });
     }
 
     private void AddBox(Point3D center, double w, double h, double d, Rect[] crops, TextureData texture)

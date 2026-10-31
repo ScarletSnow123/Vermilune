@@ -1,6 +1,7 @@
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using System.Windows.Media.Imaging;
 using Vermilune.Core;
 
 namespace Vermilune.UI.Dialogs;
@@ -18,6 +19,7 @@ public partial class CapePickerDialog : Window
     }
 
     private readonly CancellationTokenSource _cts = new();
+    private int _previewVersion;
 
     public CapePickerDialog()
     {
@@ -36,6 +38,7 @@ public partial class CapePickerDialog : Window
     private async Task LoadAsync()
     {
         AccountText.Text = LauncherApp.I.Settings.Account.Name;
+        Preview.SetView(180, 6);
         try
         {
             var capes = await LauncherApp.I.Auth.GetCapesAsync(_cts.Token);
@@ -57,6 +60,7 @@ public partial class CapePickerDialog : Window
             LoadingText.Visibility = Visibility.Collapsed;
             ApplyButton.IsEnabled = true;
             if (capes.Count == 0) StatusText.Text = "该账号当前没有可用的披风。";
+            await RefreshPreviewAsync();
         }
         catch (Exception ex)
         {
@@ -90,6 +94,35 @@ public partial class CapePickerDialog : Window
     private void Cancel_Click(object sender, RoutedEventArgs e) => DialogResult = false;
     private void Header_MouseLeftButtonDown(object sender, MouseButtonEventArgs e) => DragMove();
 
-    private void CapeList_SelectionChanged(object sender, SelectionChangedEventArgs e) =>
+    private async void CapeList_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
         ApplyButton.IsEnabled = CapeList.SelectedItem is CapeChoice;
+        await RefreshPreviewAsync();
+    }
+
+    private async Task RefreshPreviewAsync()
+    {
+        var version = ++_previewVersion;
+        if (CapeList.SelectedItem is not CapeChoice choice)
+        {
+            Preview.SetTextures(null, null, false);
+            SelectedName.Text = "未选择";
+            return;
+        }
+
+        SelectedName.Text = choice.DisplayName;
+        try
+        {
+            var skin = await LauncherApp.I.Skins.LoadSkinAsync(_cts.Token);
+            BitmapSource? cape = null;
+            if (!choice.IsNone && !string.IsNullOrEmpty(choice.ImageUrl))
+                cape = await LauncherApp.I.Skins.LoadTextureAsync(choice.ImageUrl, _cts.Token);
+            if (version != _previewVersion) return;
+            Preview.SetTextures(skin, cape, LauncherApp.I.Skins.IsSlim);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            Log.Warn("披风预览失败：" + ex.Message);
+        }
+    }
 }
