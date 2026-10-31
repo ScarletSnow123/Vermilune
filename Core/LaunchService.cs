@@ -78,6 +78,7 @@ public sealed class LaunchService
             Directory.CreateDirectory(opt.NativesDir);
             if (!opt.Account.IsMicrosoft && !opt.Account.IsYggdrasil)
                 LauncherApp.I.Skins.ApplyOfflinePack(opt.GameDir, opt.Resolved.MinecraftVersion);
+            ApplyDefaultLanguage(opt);
             var mcDir = opt.MinecraftDir;
             if (string.IsNullOrWhiteSpace(mcDir))
                 throw new InvalidOperationException("未指定 Minecraft 目录。");
@@ -378,6 +379,28 @@ public sealed class LaunchService
         {
             Log.Warn("准备 natives 目录失败：" + ex.Message);
             throw new IOException("无法准备 natives 目录（可能被游戏占用）：" + ex.Message, ex);
+        }
+    }
+
+    private static void ApplyDefaultLanguage(LaunchOptions opt)
+    {
+        try
+        {
+            var path = Path.Combine(opt.GameDir, "options.txt");
+            if (!File.Exists(path))
+            {
+                File.WriteAllText(path, "lang:zh_cn\n");
+                return;
+            }
+
+            var lines = File.ReadAllLines(path);
+            if (lines.Any(l => l.StartsWith("lang:", StringComparison.OrdinalIgnoreCase))) return;
+            File.AppendAllText(path, (lines.Length > 0 ? "\n" : "") + "lang:zh_cn\n");
+            Log.Info("已为游戏设置默认中文语言：" + path);
+        }
+        catch (Exception ex)
+        {
+            Log.Warn("设置游戏默认语言失败：" + ex.Message);
         }
     }
 
