@@ -48,17 +48,20 @@ public sealed class AsyncImage : Image
     private async Task LoadAsync(string? url)
     {
         if (string.IsNullOrWhiteSpace(url)) return;
-        var source = CropBitmap(Memory.TryGetValue(url, out var cached) ? cached : await LoadSourceAsync(url));
+        var full = Crop.Width > 0 && Crop.Height > 0;
+        var key = full ? url + "|full" : url;
+        var source = CropBitmap(Memory.TryGetValue(key, out var cached) ? cached : await LoadSourceAsync(url, full));
         if (string.Equals(Uri, url, StringComparison.Ordinal)) Source = source;
     }
 
-    private async Task<BitmapSource?> LoadSourceAsync(string url)
+    private async Task<BitmapSource?> LoadSourceAsync(string url, bool full)
     {
-        var task = Pending.GetOrAdd(url, LoadCoreAsync);
+        var key = full ? url + "|full" : url;
+        var task = Pending.GetOrAdd(key, _ => LoadCoreAsync(url, full));
         var bitmap = await task;
-        Pending.TryRemove(url, out _);
+        Pending.TryRemove(key, out _);
         if (bitmap is null) return null;
-        Memory[url] = bitmap;
+        Memory[key] = bitmap;
         return bitmap;
     }
 
@@ -72,7 +75,7 @@ public sealed class AsyncImage : Image
         return new CroppedBitmap(bitmap, crop);
     }
 
-    private static async Task<BitmapSource?> LoadCoreAsync(string url)
+    private static async Task<BitmapSource?> LoadCoreAsync(string url, bool full)
     {
         try
         {
@@ -93,6 +96,8 @@ public sealed class AsyncImage : Image
             var image = new BitmapImage();
             image.BeginInit();
             image.CacheOption = BitmapCacheOption.OnLoad;
+            // 列表图标只需要 128px；只有需要精确裁剪的贴图才保留原始分辨率。
+            if (!full) image.DecodePixelWidth = 128;
             image.StreamSource = stream;
             image.EndInit();
             image.Freeze();
