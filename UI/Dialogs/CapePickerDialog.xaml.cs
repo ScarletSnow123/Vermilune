@@ -49,7 +49,7 @@ public partial class CapePickerDialog : Window
                 {
                     Id = cape.Id,
                     DisplayName = cape.DisplayName,
-                    ImageUrl = cape.Url,
+                    ImageUrl = ToHttp(cape.Url),
                     IsActive = cape.Active
                 });
             CapeList.ItemsSource = list;
@@ -65,6 +65,9 @@ public partial class CapePickerDialog : Window
             Log.Warn("读取披风失败：" + ex.Message);
         }
     }
+
+    private static string ToHttp(string url) =>
+        url.Replace("https://textures.minecraft.net/", "http://textures.minecraft.net/", StringComparison.OrdinalIgnoreCase);
 
     private async void Apply_Click(object sender, RoutedEventArgs e)
     {

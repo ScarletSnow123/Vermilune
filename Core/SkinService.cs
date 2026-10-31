@@ -43,11 +43,10 @@ public sealed class SkinService
             var url = LauncherApp.I.Settings.Account.SkinUrl;
             if (!string.IsNullOrWhiteSpace(url))
             {
-                url = url.Replace("http://textures.minecraft.net/", "https://textures.minecraft.net/", StringComparison.OrdinalIgnoreCase);
                 var cache = AccountCachePath("skin");
                 if (!File.Exists(cache) || new FileInfo(cache).Length < 64)
                 {
-                    var bytes = await HttpService.GetBytesAsync(url, ct);
+                    var bytes = await GetTextureBytesAsync(url, ct);
                     Directory.CreateDirectory(Path.GetDirectoryName(cache)!);
                     await File.WriteAllBytesAsync(cache, bytes, ct);
                 }
@@ -70,11 +69,10 @@ public sealed class SkinService
         {
             var url = LauncherApp.I.Settings.Account.CapeUrl;
             if (string.IsNullOrWhiteSpace(url)) return null;
-            url = url.Replace("http://textures.minecraft.net/", "https://textures.minecraft.net/", StringComparison.OrdinalIgnoreCase);
             var cache = AccountCachePath("cape");
             if (!File.Exists(cache) || new FileInfo(cache).Length < 64)
             {
-                var bytes = await HttpService.GetBytesAsync(url, ct);
+                var bytes = await GetTextureBytesAsync(url, ct);
                 Directory.CreateDirectory(Path.GetDirectoryName(cache)!);
                 await File.WriteAllBytesAsync(cache, bytes, ct);
             }
@@ -313,6 +311,35 @@ public sealed class SkinService
         if (mc.StartsWith("1.13", StringComparison.OrdinalIgnoreCase) || mc.StartsWith("1.14", StringComparison.OrdinalIgnoreCase)) return 4;
         if (mc.StartsWith("1.11", StringComparison.OrdinalIgnoreCase) || mc.StartsWith("1.12", StringComparison.OrdinalIgnoreCase)) return 3;
         return 1;
+    }
+
+    private static async Task<byte[]> GetTextureBytesAsync(string url, CancellationToken ct)
+    {
+        var candidates = new List<string>();
+        if (url.Contains("textures.minecraft.net", StringComparison.OrdinalIgnoreCase))
+        {
+            if (url.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
+            {
+                candidates.Add(url);
+                candidates.Add("http://" + url[8..]);
+            }
+            else
+            {
+                candidates.Add(url);
+            }
+        }
+        else
+        {
+            candidates.Add(url);
+        }
+
+        Exception? last = null;
+        foreach (var candidate in candidates)
+        {
+            try { return await HttpService.GetBytesAsync(candidate, ct); }
+            catch (Exception ex) when (ex is not OperationCanceledException) { last = ex; }
+        }
+        throw last ?? new InvalidOperationException("无法下载皮肤纹理。");
     }
 
     private static string AccountCachePath(string kind)
