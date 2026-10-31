@@ -200,8 +200,12 @@ public sealed class LauncherApp
     private static bool SameAccountIdentity(AccountSettings a, AccountSettings b)
     {
         if (!string.Equals(a.Type, b.Type, StringComparison.OrdinalIgnoreCase)) return false;
-        if (a.IsMicrosoft || a.IsYggdrasil)
+        if (a.IsMicrosoft)
             return !string.IsNullOrEmpty(a.Uuid) && string.Equals(a.Uuid, b.Uuid, StringComparison.OrdinalIgnoreCase);
+        if (a.IsYggdrasil)
+            return !string.IsNullOrEmpty(a.Uuid) &&
+                   string.Equals(a.Uuid, b.Uuid, StringComparison.OrdinalIgnoreCase) &&
+                   string.Equals(a.YggdrasilServer, b.YggdrasilServer, StringComparison.OrdinalIgnoreCase);
         return string.Equals(a.Name, b.Name, StringComparison.OrdinalIgnoreCase);
     }
 
