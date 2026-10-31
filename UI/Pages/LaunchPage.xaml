@@ -522,7 +522,7 @@
                             <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
                         <StackPanel>
-                            <TextBlock Text="Vermilune   ·   v1.2.4-beta" FontSize="10"
+                            <TextBlock Text="Vermilune   ·   v1.2.5-beta" FontSize="10"
                                        Foreground="{DynamicResource TextMutedBrush}" />
                             <TextBlock Text="Minecraft 资源版权归 Mojang Studios 与各 Mod 作者所有" FontSize="10"
                                        Foreground="{DynamicResource TextMutedBrush}" Margin="0,4,0,0" />
