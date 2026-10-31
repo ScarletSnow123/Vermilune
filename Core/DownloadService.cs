@@ -198,8 +198,9 @@ public sealed class DownloadService
             var baseVer = manifest.FirstOrDefault(v => v.Id == mcVersion)
                 ?? throw new InvalidOperationException("找不到基础版本：" + mcVersion);
             await InstallVanillaAsync(baseVer, mcDir, progress, ct);
-            try { File.WriteAllText(Path.Combine(baseDir, ".vermilune-hidden"), "fabric dependency"); } catch { }
         }
+        // 安装 Fabric 时，原版只作为继承基础，不在版本列表里重复显示。
+        try { File.WriteAllText(Path.Combine(baseDir, ".vermilune-hidden"), "fabric dependency"); } catch { }
 
         progress?.Report(new DownloadProgress { Stage = "生成 Fabric 配置", Detail = $"Loader {loader.Version}" });
         var profileUrl = $"https://meta.fabricmc.net/v2/versions/loader/{Uri.EscapeDataString(mcVersion)}/{Uri.EscapeDataString(loader.Version)}/profile/json";
