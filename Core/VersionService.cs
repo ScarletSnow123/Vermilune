@@ -37,6 +37,8 @@ public sealed class VersionService
             foreach (var dir in Directory.EnumerateDirectories(VersionsDir))
             {
                 var folder = Path.GetFileName(dir);
+                // Fabric / Forge 自动补全的原版基础版本会写入这个标记，不在版本列表里重复显示。
+                if (File.Exists(Path.Combine(dir, ".vermilune-hidden"))) continue;
                 var jsonPath = _resolver.FindJsonPath(folder);
                 if (string.IsNullOrEmpty(jsonPath)) continue;
                 try

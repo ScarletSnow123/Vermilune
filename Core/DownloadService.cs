@@ -1,4 +1,4 @@
-﻿using System.IO;
+using System.IO;
 using System.Text.Json.Nodes;
 
 namespace Vermilune.Core;
@@ -118,6 +118,7 @@ public sealed class DownloadService
         if (string.IsNullOrWhiteSpace(remote.Url)) throw new InvalidOperationException("该版本没有可用的 JSON 地址。");
         var versionDir = Path.Combine(mcDir, "versions", remote.Id);
         Directory.CreateDirectory(versionDir);
+        try { File.Delete(Path.Combine(versionDir, ".vermilune-hidden")); } catch { }
         progress?.Report(new DownloadProgress { Stage = "拉取版本信息", Current = 0, Total = 1, Detail = remote.Id });
         var json = await HttpService.GetStringAsync(remote.Url, ct);
         var jsonPath = Path.Combine(versionDir, remote.Id + ".json");
@@ -188,13 +189,16 @@ public sealed class DownloadService
             ? loaders.FirstOrDefault(l => l.Stable) ?? loaders[0]
             : loaders.FirstOrDefault(l => l.Version == loaderVersion) ?? loaders[0];
 
-        // 先确保原版基础版本存在
-        if (!File.Exists(Path.Combine(mcDir, "versions", mcVersion, mcVersion + ".json")))
+        // 先确保原版基础版本存在；如果是为了 Fabric 自动补的，就隐藏它，避免版本列表里多出一个原版。
+        var baseDir = Path.Combine(mcDir, "versions", mcVersion);
+        var baseExisted = File.Exists(Path.Combine(baseDir, mcVersion + ".json"));
+        if (!baseExisted)
         {
             var manifest = await GetVersionManifestAsync(false, ct);
             var baseVer = manifest.FirstOrDefault(v => v.Id == mcVersion)
                 ?? throw new InvalidOperationException("找不到基础版本：" + mcVersion);
             await InstallVanillaAsync(baseVer, mcDir, progress, ct);
+            try { File.WriteAllText(Path.Combine(baseDir, ".vermilune-hidden"), "fabric dependency"); } catch { }
         }
 
         progress?.Report(new DownloadProgress { Stage = "生成 Fabric 配置", Detail = $"Loader {loader.Version}" });

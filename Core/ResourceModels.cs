@@ -195,7 +195,13 @@ public static class ModpackInstaller
 
     public static async Task<string> EnsureForgeAsync(string mc, string forgeVersion, IProgress<DownloadProgress>? progress, CancellationToken ct)
     {
+        var baseDir = Path.Combine(LauncherApp.I.MinecraftDir, "versions", mc);
+        var baseExisted = File.Exists(Path.Combine(baseDir, mc + ".json"));
         await LauncherApp.I.Downloads.EnsureVanillaAsync(mc, LauncherApp.I.MinecraftDir, progress, ct);
+        if (!baseExisted)
+        {
+            try { File.WriteAllText(Path.Combine(baseDir, ".vermilune-hidden"), "forge dependency"); } catch { }
+        }
         await LauncherApp.I.EnsureJavaAsync();
         var major = VersionResolver.InferJavaMajor(mc, "");
         var java = LauncherApp.I.Java.Pick(major, LauncherApp.I.Settings.JavaPath)
