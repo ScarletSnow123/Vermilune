@@ -145,7 +145,8 @@
                     <ComboBox x:Name="VersionCombo" Height="34" SelectionChanged="Version_SelectionChanged" />
                     <StackPanel x:Name="TargetPanel" Margin="0,9,0,0">
                         <TextBlock Text="安装到实例" Style="{StaticResource FormLabel}" />
-                        <ComboBox x:Name="TargetCombo" Height="34" DisplayMemberPath="DisplayName" />
+                        <ComboBox x:Name="TargetCombo" Height="34" DisplayMemberPath="DisplayName"
+                                  DropDownOpened="TargetCombo_DropDownOpened" />
                     </StackPanel>
                     <Button x:Name="InstallButton" Style="{StaticResource PrimaryButton}" Height="38" Margin="0,14,0,0"
                             Content="安装" IsEnabled="False" Click="Install_Click" />

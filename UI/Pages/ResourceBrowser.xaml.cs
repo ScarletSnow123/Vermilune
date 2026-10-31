@@ -30,6 +30,7 @@ public partial class ResourceBrowser : UserControl
     public void OnShown()
     {
         EnsureInitialized();
+        RefreshTargets();
         if (!_searched) _ = SearchAsync(true);
     }
 
@@ -46,6 +47,20 @@ public partial class ResourceBrowser : UserControl
         TargetCombo.ItemsSource = versions;
         TargetCombo.SelectedItem = LauncherApp.I.CurrentVersion ?? versions.FirstOrDefault();
         UpdateTypeUi();
+    }
+
+    private void TargetCombo_DropDownOpened(object sender, EventArgs e) => RefreshTargets();
+
+    private void RefreshTargets()
+    {
+        var selectedId = (TargetCombo.SelectedItem as VersionInfo)?.Id
+                         ?? LauncherApp.I.CurrentVersion?.Id
+                         ?? "";
+        var versions = LauncherApp.I.Versions.Versions.ToList();
+        TargetCombo.ItemsSource = versions;
+        TargetCombo.SelectedItem = versions.FirstOrDefault(v =>
+                                       string.Equals(v.Id, selectedId, StringComparison.OrdinalIgnoreCase))
+                                   ?? versions.FirstOrDefault();
     }
 
     private void Type_Checked(object sender, RoutedEventArgs e)
