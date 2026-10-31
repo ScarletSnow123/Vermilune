@@ -483,6 +483,36 @@ public static class ModScanner
                 };
             }
             var main = result.Mods[0];
+            var depends = new List<ModDependency>();
+            var breaks = new List<string>();
+            foreach (var d in result.Dependencies)
+            {
+                var depId = d.GetValueOrDefault("modId", "");
+                if (string.IsNullOrWhiteSpace(depId)) continue;
+                var range = d.GetValueOrDefault("versionRange", "");
+                var side = d.GetValueOrDefault("side", "");
+                var type = d.GetValueOrDefault("type", "required");
+                var mandatory = !d.GetValueOrDefault("mandatory", "true")
+                    .Equals("false", StringComparison.OrdinalIgnoreCase);
+
+                // NeoForge / Forge 的 type：required / optional / incompatible / discouraged。
+                // incompatible 和 discouraged 表示“如果装了就冲突”，不是缺失前置；
+                // optional 表示可选的兼容项，缺失也不应报错。
+                if (type.Equals("incompatible", StringComparison.OrdinalIgnoreCase) ||
+                    type.Equals("discouraged", StringComparison.OrdinalIgnoreCase))
+                {
+                    breaks.Add(depId);
+                    continue;
+                }
+
+                depends.Add(new ModDependency
+                {
+                    ModId = depId,
+                    Range = range,
+                    Mandatory = mandatory && !type.Equals("optional", StringComparison.OrdinalIgnoreCase),
+                    Side = side
+                });
+            }
             return new ModInfo
             {
                 FilePath = path,
@@ -498,13 +528,8 @@ public static class ModScanner
                 Size = TrySize(path),
                 ParentFile = parent ?? "",
                 Bundled = parent is not null,
-                Depends = result.Dependencies.Select(d => new ModDependency
-                {
-                    ModId = d.GetValueOrDefault("modId", ""),
-                    Range = d.GetValueOrDefault("versionRange", ""),
-                    Mandatory = !d.GetValueOrDefault("mandatory", "true").Equals("false", StringComparison.OrdinalIgnoreCase),
-                    Side = d.GetValueOrDefault("side", "")
-                }).ToList(),
+                Depends = depends,
+                Breaks = breaks,
                 MinecraftRange = result.Dependencies.FirstOrDefault(d => d.GetValueOrDefault("modId") == "minecraft")?.GetValueOrDefault("versionRange", "") ?? ""
             };
         }
