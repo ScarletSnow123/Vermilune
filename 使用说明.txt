@@ -1,0 +1,41 @@
+﻿Vermilune 1.2.0-beta · Minecraft 启动器
+========================================
+
+双击 Vermilune.exe 直接启动，无需安装。
+需要 .NET 10 Desktop Runtime（本机已安装）。
+
+数据目录：exe 旁边的 Vermilune 文件夹
+  launcher.json        启动器设置
+  instances/           每个版本的启动参数
+  logs/                启动器日志、游戏日志
+  cache/               头像、整合包与安装器缓存
+
+首次使用：
+1. 启动页左侧「切换」→ 选择 Microsoft 正版登录，或输入离线昵称。
+2. 在版本下拉框选择要玩的实例。
+3. 点击「启动游戏」。
+
+下载：
+- 游戏版本：原版直装；版本详情里可勾选「同时安装加载器」，先下载本体会自动继续装 Fabric / Forge。
+- Fabric：可选择具体 Loader 版本；默认同时安装与 Minecraft 版本匹配的 Fabric API（可关闭）。
+- Forge / NeoForge：选择版本后「一键安装 Forge」；失败时可用本地 installer。
+- 资源 / 整合包：Modrinth 免 Key；CurseForge 在「设置 → 下载」填写自己的 API Key。
+  - 整合包：自动安装加载器并创建独立实例。
+  - Mod：安装到所选实例的 mods，自动处理必需前置。
+  - 资源包 / 光影：安装到 resourcepacks / shaderpacks。
+
+说明：
+- 配置与日志保存在 exe 旁的 Vermilune 文件夹。
+- 透明度：标题栏水滴按钮，或「设置 → 外观 → 界面不透明度」。
+- 背景图片：点「设置 → 外观 → 打开背景文件夹」，把图片放进 Vermilune\Pictures 后点「刷新」。
+- 深浅色：设置 → 外观 → 浅色模式，切换深色 / 浅色主题。
+- 强调色：设置里可选预设、输入 #RRGGBB，或用 RGB 调试滑块实时调色。
+- 版本图标：版本文件夹里有 icon.png / icon.jpg 时会自动显示；整合包安装后会自动保存封面图标。
+- 皮肤与披风：点「切换皮肤」打开皮肤库，右下角「导入」支持单张图片或整个文件夹；本地皮肤放在 Vermilune\Skins，自动识别 Steve/Alex，并可用模型下拉框手动调整粗细手臂。披风只支持 Microsoft 账号拥有的披风，不支持本地披风文件。
+- 3D 皮肤几何与 UV 参考 SkinPilot 的 skinGeometry.ts。
+- 微软登录：登录码会自动复制到剪贴板并打开浏览器。
+- 版本修改：左侧「版本」→ 选择实例 → 「修改」。
+- 报错分析：「报错」页面；会扫描 logs、crash-reports 与 mods 文件夹。
+- 命令行：Vermilune.exe --launch "版本名"；Vermilune.exe --page versions。
+
+完整说明见 Vermilune-说明.md。

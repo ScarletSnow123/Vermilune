@@ -1,0 +1,37 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>latest</LangVersion>
+    <AssemblyName>Vermilune</AssemblyName>
+    <RootNamespace>Vermilune</RootNamespace>
+    <ApplicationIcon>Assets\Vermilune.ico</ApplicationIcon>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <Version>1.2.0-beta</Version>
+    <FileVersion>1.2.0.0</FileVersion>
+    <AssemblyVersion>1.2.0.0</AssemblyVersion>
+    <InformationalVersion>1.2.0-beta</InformationalVersion>
+    <Product>Vermilune</Product>
+    <Company>Vermilune Project</Company>
+    <Description>Vermilune Minecraft 启动器</Description>
+    <Copyright>© 2026 Vermilune Project</Copyright>
+    <SatelliteResourceLanguages>zh-Hans;en</SatelliteResourceLanguages>
+    <InvariantGlobalization>false</InvariantGlobalization>
+    <PublishSingleFile>false</PublishSingleFile>
+    <SelfContained>false</SelfContained>
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
+    <NoWarn>$(NoWarn);CA1416;WPF0001</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Resource Include="Assets\Vermilune.ico" />
+    <Resource Include="Assets\Satori.jpg" />
+    <Resource Include="Assets\VermiluneRing.png" />
+    <Resource Include="Assets\VermiluneIcon.png" />
+  </ItemGroup>
+
+</Project>
