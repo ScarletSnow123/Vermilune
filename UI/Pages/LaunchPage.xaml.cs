@@ -1,4 +1,4 @@
-﻿using System.Collections.ObjectModel;
+using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Globalization;
 using System.IO;
@@ -390,7 +390,23 @@ public partial class LaunchPage : UserControl, IPage, INotifyPropertyChanged
         _ = LaunchSelectedAsync(version);
     }
 
+    private readonly SemaphoreSlim _launchGate = new(1, 1);
+
     public async Task LaunchSelectedAsync(VersionInfo? version)
+    {
+        // 防止按钮双击 / 回车和点击同时触发，导致重复启动并弹出“游戏已经在运行中”。
+        if (!_launchGate.Wait(0)) return;
+        try
+        {
+            await LaunchSelectedCoreAsync(version);
+        }
+        finally
+        {
+            _launchGate.Release();
+        }
+    }
+
+    private async Task LaunchSelectedCoreAsync(VersionInfo? version)
     {
         if (version is null)
         {

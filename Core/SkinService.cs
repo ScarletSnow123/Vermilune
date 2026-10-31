@@ -219,6 +219,7 @@ public sealed class SkinService
                          mcVersion.StartsWith("26.", StringComparison.OrdinalIgnoreCase);
             var packFormat = PackFormat(mcVersion);
 
+            try { if (File.Exists(zipPath)) File.Delete(zipPath); } catch { }
             using var zip = ZipFile.Open(zipPath, ZipArchiveMode.Create);
             WriteEntry(zip, "pack.mcmeta", System.Text.Encoding.UTF8.GetBytes(
                 "{\"pack\":{\"pack_format\":" + packFormat + ",\"description\":\"Vermilune 皮肤\"}}"));
