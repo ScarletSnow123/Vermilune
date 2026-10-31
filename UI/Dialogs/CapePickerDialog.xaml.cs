@@ -38,7 +38,7 @@ public partial class CapePickerDialog : Window
     private async Task LoadAsync()
     {
         AccountText.Text = LauncherApp.I.Settings.Account.Name;
-        Preview.SetView(180, 6);
+        Preview.SetView(-24, 6);
         try
         {
             var capes = await LauncherApp.I.Auth.GetCapesAsync(_cts.Token);
