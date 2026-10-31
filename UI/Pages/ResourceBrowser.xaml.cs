@@ -13,7 +13,8 @@ public partial class ResourceBrowser : UserControl
     private readonly List<ResourceProject> _projects = new();
     private List<ResourceFileInfo> _files = new();
     private ResourceProject? _selected;
-    private bool _loading;
+    private int _searchVersion;
+    private CancellationTokenSource? _searchCts;
     private bool _installing;
     private bool _initialized;
     private bool _searched;
@@ -114,7 +115,11 @@ public partial class ResourceBrowser : UserControl
 
     private async Task SearchAsync(bool reset)
     {
-        if (_loading) return;
+        // 快速切换资源类型时，取消上一次搜索，只让最后一次请求更新界面。
+        var version = ++_searchVersion;
+        try { _searchCts?.Cancel(); } catch { }
+        _searchCts = new CancellationTokenSource();
+
         if (_source == ResourceSource.CurseForge && !LauncherApp.I.CurseForge.HasKey)
         {
             SearchStatus.Text = "";
@@ -124,8 +129,9 @@ public partial class ResourceBrowser : UserControl
             EmptyText.Visibility = Visibility.Collapsed;
             return;
         }
-        _loading = true;
-        using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(15));
+
+        using var timeout = CancellationTokenSource.CreateLinkedTokenSource(_searchCts.Token);
+        timeout.CancelAfter(TimeSpan.FromSeconds(15));
         try
         {
             if (reset)
@@ -146,6 +152,7 @@ public partial class ResourceBrowser : UserControl
             var list = _source == ResourceSource.Modrinth
                 ? await LauncherApp.I.Modrinth.SearchAsync(_type, QueryBox.Text?.Trim() ?? "", mc, loader, _offset, timeout.Token)
                 : await LauncherApp.I.CurseForge.SearchAsync(_type, QueryBox.Text?.Trim() ?? "", mc, loader, _offset, timeout.Token);
+            if (version != _searchVersion) return;
             _projects.AddRange(list);
             ProjectList.ItemsSource = null;
             ProjectList.ItemsSource = _projects;
@@ -158,18 +165,19 @@ public partial class ResourceBrowser : UserControl
         }
         catch (OperationCanceledException)
         {
+            if (version != _searchVersion) return;
             SearchStatus.Text = "搜索超时";
             EmptyText.Text = "网络连接超时，请点击「搜索」重试。";
             EmptyText.Visibility = Visibility.Visible;
         }
         catch (Exception ex)
         {
+            if (version != _searchVersion) return;
             Log.Error(ex, "资源搜索失败");
             SearchStatus.Text = "搜索失败";
             EmptyText.Text = ex.Message;
             EmptyText.Visibility = Visibility.Visible;
         }
-        finally { _loading = false; }
     }
 
     private async void ProjectList_SelectionChanged(object sender, SelectionChangedEventArgs e)
