@@ -127,12 +127,12 @@ public partial class SkinPreview3D : UserControl
             {
                 new Point3D(-5, -10, -2.2), new Point3D(5, -10, -2.2),
                 new Point3D(5, 6, -2.2), new Point3D(-5, 6, -2.2)
-            }, R(1, 1, 10, 16), capeTexture, 1);
+            }, R(12, 1, 10, 16), capeTexture, 1);
             AddCapePlane(new[]
             {
                 new Point3D(5, -10, -2.35), new Point3D(-5, -10, -2.35),
                 new Point3D(-5, 6, -2.35), new Point3D(5, 6, -2.35)
-            }, R(12, 1, 10, 16), capeTexture, -1);
+            }, R(1, 1, 10, 16), capeTexture, -1);
         }
 
         Hint.Text = _cape is null ? "拖动旋转 · 无披风" : "拖动旋转";
