@@ -122,17 +122,16 @@ public partial class SkinPreview3D : UserControl
         if (_cape is not null)
         {
             var capeTexture = PrepareTexture(_cape);
-            // 与 Minecraft 披风模型一致：10×16 的平面，正面/背面各用披风贴图的前后区域。
-            AddCapePlane(new[]
+            // 与 Minecraft 披风 Box 模型一致：10×16×1，含正面、背面、左右侧边和上下边。
+            AddBox(new Point3D(0, -2, -2.9), 10, 16, 1, new[]
             {
-                new Point3D(-5, -10, -2.2), new Point3D(5, -10, -2.2),
-                new Point3D(5, 6, -2.2), new Point3D(-5, 6, -2.2)
-            }, R(12, 1, 10, 16), capeTexture, 1);
-            AddCapePlane(new[]
-            {
-                new Point3D(5, -10, -2.35), new Point3D(-5, -10, -2.35),
-                new Point3D(-5, 6, -2.35), new Point3D(5, 6, -2.35)
-            }, R(1, 1, 10, 16), capeTexture, -1);
+                R(12, 1, 10, 16),  // 朝向身体的一面
+                R(1, 1, 10, 16),   // 朝外的一面
+                R(0, 1, 1, 16),    // +X 侧边
+                R(11, 1, 1, 16),   // -X 侧边
+                R(1, 0, 10, 1),    // 上边
+                R(11, 0, 10, 1)    // 下边
+            }, capeTexture);
         }
 
         Hint.Text = _cape is null ? "拖动旋转 · 无披风" : "拖动旋转";
@@ -155,25 +154,6 @@ public partial class SkinPreview3D : UserControl
             R(u + td + tw, v, tw, td)                  // bottom
         };
         AddBox(center, w + inflate * 2, h + inflate * 2, d + inflate * 2, crops, texture);
-    }
-
-    private void AddCapePlane(Point3D[] points, Rect crop, TextureData texture, double nz)
-    {
-        var u0 = crop.X / texture.Width;
-        var u1 = crop.Right / texture.Width;
-        var v0 = crop.Y / texture.Height;
-        var v1 = crop.Bottom / texture.Height;
-        var uvs = new[] { (u0, v1), (u1, v1), (u1, v0), (u0, v0) };
-        _faces.Add(new Face
-        {
-            Points = points,
-            Crop = crop,
-            Texture = texture,
-            NX = 0,
-            NY = 0,
-            NZ = nz,
-            UVs = uvs
-        });
     }
 
     private void AddBox(Point3D center, double w, double h, double d, Rect[] crops, TextureData texture)
