@@ -1,4 +1,4 @@
-﻿using System.IO;
+using System.IO;
 using System.IO.Compression;
 using System.Text.Json.Nodes;
 
@@ -297,6 +297,70 @@ public sealed class ModrinthService
         var overrides = ModpackInstaller.ExtractOverrides(zip, gameDir, "overrides", "client-overrides");
         progress?.Report(new DownloadProgress { Stage = "整合包安装完成", Current = 1, Total = 1, Detail = name });
         Log.Info($"Modrinth 整合包安装完成：{name} → {id}，文件 {count}，覆盖 {overrides}");
+        return new ResourceInstallResult { Id = id, Name = name, Path = gameDir, Files = count + overrides };
+    }
+
+    public async Task<ResourceInstallResult> InstallLocalModpackAsync(string archive, string? fallbackName,
+        IProgress<DownloadProgress>? progress, CancellationToken ct)
+    {
+        await using var stream = File.OpenRead(archive);
+        using var zip = new ZipArchive(stream, ZipArchiveMode.Read);
+        var indexEntry = zip.GetEntry("modrinth.index.json")
+                         ?? throw new InvalidOperationException("不是有效的 Modrinth 整合包（缺少 modrinth.index.json）。");
+        string indexText;
+        using (var reader = new StreamReader(indexEntry.Open()))
+            indexText = await reader.ReadToEndAsync(ct);
+        var index = JsonNode.Parse(indexText) as JsonObject ?? throw new InvalidOperationException("整合包索引解析失败。");
+        var name = index["name"]?.GetValue<string>() ?? fallbackName ?? Path.GetFileNameWithoutExtension(archive);
+        var mcVersion = index["dependencies"]?["minecraft"]?.GetValue<string>()
+                        ?? throw new InvalidOperationException("整合包没有声明 Minecraft 版本。");
+        var deps = index["dependencies"] as JsonObject ?? new JsonObject();
+        var fabric = deps["fabric-loader"]?.GetValue<string>();
+        var forge = deps["forge"]?.GetValue<string>();
+        var neo = deps["neoforge"]?.GetValue<string>();
+        var quilt = deps["quilt-loader"]?.GetValue<string>();
+
+        progress?.Report(new DownloadProgress { Stage = "准备加载器", Detail = mcVersion });
+        string loaderId;
+        if (!string.IsNullOrEmpty(fabric))
+            loaderId = await ModpackInstaller.EnsureFabricLoaderAsync(mcVersion, fabric, progress, ct);
+        else if (!string.IsNullOrEmpty(forge))
+            loaderId = await ModpackInstaller.EnsureForgeAsync(mcVersion, forge, progress, ct);
+        else if (!string.IsNullOrEmpty(neo))
+            throw new InvalidOperationException("暂不支持一键安装 NeoForge 整合包，请先手动安装对应 NeoForge，再安装整合包文件。");
+        else if (!string.IsNullOrEmpty(quilt))
+            throw new InvalidOperationException("暂不支持一键安装 Quilt 整合包。");
+        else
+            throw new InvalidOperationException("整合包没有声明受支持的加载器。");
+
+        var id = ModpackInstaller.UniqueInstanceId(name);
+        var gameDir = ModpackInstaller.CreateVersion(LauncherApp.I.MinecraftDir, id, loaderId, mcVersion, name);
+        progress?.Report(new DownloadProgress { Stage = "创建实例", Detail = id });
+
+        var packFiles = new List<PackFile>();
+        if (index["files"] is JsonArray files)
+        {
+            foreach (var node in files.OfType<JsonObject>())
+            {
+                var env = node["env"] as JsonObject;
+                var client = env?["client"]?.GetValue<string>() ?? "required";
+                var downloads = node["downloads"] as JsonArray;
+                var url = downloads?.FirstOrDefault()?.GetValue<string>() ?? "";
+                if (string.IsNullOrEmpty(url)) continue;
+                packFiles.Add(new PackFile
+                {
+                    Path = node["path"]?.GetValue<string>() ?? "",
+                    Url = url,
+                    Sha1 = node["hashes"]?["sha1"]?.GetValue<string>() ?? "",
+                    Size = node["fileSize"]?.GetValue<long>() ?? 0,
+                    ClientSupported = client != "unsupported"
+                });
+            }
+        }
+        var count = await ModpackInstaller.DownloadFilesAsync(packFiles, gameDir, progress, ct);
+        var overrides = ModpackInstaller.ExtractOverrides(zip, gameDir, "overrides", "client-overrides");
+        progress?.Report(new DownloadProgress { Stage = "整合包安装完成", Current = 1, Total = 1, Detail = name });
+        Log.Info($"本地 Modrinth 整合包安装完成：{name} → {id}，文件 {count}，覆盖 {overrides}");
         return new ResourceInstallResult { Id = id, Name = name, Path = gameDir, Files = count + overrides };
     }
 

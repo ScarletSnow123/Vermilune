@@ -1,4 +1,4 @@
-﻿using System.ComponentModel;
+using System.ComponentModel;
 using System.IO;
 using System.Windows;
 using System.Windows.Controls;
@@ -446,6 +446,93 @@ public partial class MainWindow : Window
             LauncherApp.I.Save();
         }
         catch { }
+    }
+
+    private CancellationTokenSource? _dropCts;
+    private bool _dropInstalling;
+
+    private void Window_DragOver(object sender, DragEventArgs e)
+    {
+        e.Handled = true;
+        if (_dropInstalling || !e.Data.GetDataPresent(DataFormats.FileDrop))
+        {
+            e.Effects = DragDropEffects.None;
+            return;
+        }
+        var files = e.Data.GetData(DataFormats.FileDrop) as string[];
+        var zip = files?.FirstOrDefault(f => f.EndsWith(".zip", StringComparison.OrdinalIgnoreCase));
+        e.Effects = zip is null ? DragDropEffects.None : DragDropEffects.Copy;
+    }
+
+    private async void Window_Drop(object sender, DragEventArgs e)
+    {
+        e.Handled = true;
+        if (_dropInstalling || !e.Data.GetDataPresent(DataFormats.FileDrop)) return;
+        var files = e.Data.GetData(DataFormats.FileDrop) as string[];
+        var archive = files?.FirstOrDefault(f => f.EndsWith(".zip", StringComparison.OrdinalIgnoreCase));
+        if (archive is null || !File.Exists(archive)) return;
+
+        if (!MessageDialog.Show(this, "安装整合包",
+                $"检测到整合包：\n{Path.GetFileName(archive)}\n\n" +
+                "启动器会自动识别 CurseForge / Modrinth 格式，安装对应加载器并下载文件。\n" +
+                "CurseForge 整合包需要配置 API Key。\n\n继续吗？",
+                "开始安装", "取消"))
+            return;
+
+        _dropInstalling = true;
+        _dropCts = new CancellationTokenSource();
+        DropOverlay.Visibility = Visibility.Visible;
+        DropProgress.IsIndeterminate = true;
+        DropProgress.Value = 0;
+        DropStatusText.Text = "正在识别整合包格式…";
+        DropCancelButton.IsEnabled = true;
+
+        var progress = new Progress<DownloadProgress>(p =>
+        {
+            DropStatusText.Text = string.IsNullOrWhiteSpace(p.Detail) ? p.Stage : $"{p.Stage} · {p.Detail}";
+            if (p.Fraction is double fraction)
+            {
+                DropProgress.IsIndeterminate = false;
+                DropProgress.Value = fraction * 100;
+            }
+            else
+            {
+                DropProgress.IsIndeterminate = true;
+            }
+        });
+
+        try
+        {
+            var result = await LocalModpackService.InstallAsync(archive, Path.GetFileNameWithoutExtension(archive),
+                progress, _dropCts.Token);
+            LauncherApp.I.ReloadVersions();
+            NavigateToVersions(result.Id);
+            MessageDialog.Show(this, "整合包安装完成",
+                $"「{result.Name}」已安装。\n共处理 {result.Files} 个文件，版本已自动创建。", "知道了");
+        }
+        catch (OperationCanceledException)
+        {
+            MessageDialog.Show(this, "已取消", "整合包安装已取消，已下载的文件会保留。", "知道了");
+        }
+        catch (Exception ex)
+        {
+            Log.Error(ex, "拖入整合包安装失败");
+            MessageDialog.Show(this, "整合包安装失败", ex.Message, "关闭", danger: true);
+        }
+        finally
+        {
+            _dropInstalling = false;
+            _dropCts?.Dispose();
+            _dropCts = null;
+            DropOverlay.Visibility = Visibility.Collapsed;
+        }
+    }
+
+    private void DropCancel_Click(object sender, RoutedEventArgs e)
+    {
+        try { _dropCts?.Cancel(); } catch { }
+        DropStatusText.Text = "正在取消…";
+        DropCancelButton.IsEnabled = false;
     }
 
     private void OnPreviewKeyDown(object sender, KeyEventArgs e)

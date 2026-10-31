@@ -5,6 +5,7 @@
         Title="Vermilune" Width="1280" Height="800" MinWidth="1100" MinHeight="700"
         WindowStyle="None" AllowsTransparency="True" Background="Transparent"
         ResizeMode="CanResize" WindowStartupLocation="CenterScreen"
+        AllowDrop="True" DragOver="Window_DragOver" Drop="Window_Drop"
         UseLayoutRounding="True" SnapsToDevicePixels="True"
         TextOptions.TextFormattingMode="Display" TextOptions.TextRenderingMode="ClearType"
         FontFamily="{DynamicResource UiFont}" Foreground="{DynamicResource TextBrush}">
@@ -208,6 +209,27 @@
                 </StackPanel>
             </Border>
         </Popup>
+
+        <!-- 拖入整合包安装进度 -->
+        <Border x:Name="DropOverlay" Visibility="Collapsed" Background="#99000000" CornerRadius="10"
+                Panel.ZIndex="75">
+            <Border Width="430" Background="{DynamicResource Surface3Brush}" BorderBrush="{DynamicResource StrokeStrongBrush}"
+                    BorderThickness="1" CornerRadius="12" Padding="22"
+                    HorizontalAlignment="Center" VerticalAlignment="Center">
+                <Border.Effect>
+                    <DropShadowEffect BlurRadius="26" ShadowDepth="6" Opacity="0.5" Color="#000000" />
+                </Border.Effect>
+                <StackPanel>
+                    <TextBlock Text="正在安装整合包" FontFamily="{DynamicResource DisplayFont}" FontSize="18"
+                               FontWeight="SemiBold" />
+                    <TextBlock x:Name="DropStatusText" Text="准备中…" Style="{StaticResource MutedText}"
+                               Margin="0,8,0,0" TextWrapping="Wrap" />
+                    <ProgressBar x:Name="DropProgress" Height="5" IsIndeterminate="True" Margin="0,14,0,0" />
+                    <Button x:Name="DropCancelButton" Content="取消" Style="{StaticResource ButtonBase}"
+                            HorizontalAlignment="Right" Margin="0,16,0,0" Click="DropCancel_Click" />
+                </StackPanel>
+            </Border>
+        </Border>
 
         <!-- 无边框缩放 -->
         <Thumb x:Name="ThumbLeft" Width="6" HorizontalAlignment="Left" VerticalAlignment="Stretch"

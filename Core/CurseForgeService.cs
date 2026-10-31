@@ -1,4 +1,4 @@
-﻿using System.IO;
+using System.IO;
 using System.IO.Compression;
 using System.Net.Http;
 using System.Text.Json.Nodes;
@@ -278,6 +278,72 @@ public sealed class CurseForgeService
         var overridesFolder = manifest["overrides"]?.GetValue<string>() ?? "overrides";
         var overrides = ModpackInstaller.ExtractOverrides(zip, gameDir, overridesFolder);
         progress?.Report(new DownloadProgress { Stage = "整合包安装完成", Current = 1, Total = 1, Detail = name });
+        return new ResourceInstallResult { Id = id, Name = name, Path = gameDir, Files = downloaded + overrides };
+    }
+
+    public async Task<ResourceInstallResult> InstallLocalModpackAsync(string archive, string? fallbackName,
+        IProgress<DownloadProgress>? progress, CancellationToken ct)
+    {
+        if (string.IsNullOrWhiteSpace(LauncherApp.I.Settings.CurseForgeApiKey))
+            throw new InvalidOperationException("安装 CurseForge 整合包需要在设置中填写 CurseForge API Key。\n" +
+                                                "也可以在资源页改用 Modrinth 整合包，或先解压手动放入实例。");
+        await using var stream = File.OpenRead(archive);
+        using var zip = new ZipArchive(stream, ZipArchiveMode.Read);
+        var manifestEntry = zip.GetEntry("manifest.json")
+                            ?? throw new InvalidOperationException("不是有效的 CurseForge 整合包（缺少 manifest.json）。");
+        string manifestText;
+        using (var reader = new StreamReader(manifestEntry.Open()))
+            manifestText = await reader.ReadToEndAsync(ct);
+        var manifest = JsonNode.Parse(manifestText) as JsonObject ?? throw new InvalidOperationException("整合包 manifest 解析失败。");
+        var mc = manifest["minecraft"]?["version"]?.GetValue<string>()
+                 ?? throw new InvalidOperationException("整合包没有声明 Minecraft 版本。");
+        var name = manifest["name"]?.GetValue<string>() ?? fallbackName ?? Path.GetFileNameWithoutExtension(archive);
+        var loaderId = manifest["minecraft"]?["modLoaders"] as JsonArray;
+        var primaryLoader = loaderId?.OfType<JsonObject>().FirstOrDefault(x => x["primary"]?.GetValue<bool>() == true)
+                            ?? loaderId?.OfType<JsonObject>().FirstOrDefault();
+        var loaderString = primaryLoader?["id"]?.GetValue<string>() ?? "";
+        string installedLoader;
+        if (loaderString.StartsWith("forge-", StringComparison.OrdinalIgnoreCase))
+            installedLoader = await ModpackInstaller.EnsureForgeAsync(mc, loaderString["forge-".Length..], progress, ct);
+        else if (loaderString.StartsWith("fabric-", StringComparison.OrdinalIgnoreCase))
+            installedLoader = await ModpackInstaller.EnsureFabricLoaderAsync(mc, loaderString["fabric-".Length..], progress, ct);
+        else if (loaderString.StartsWith("neoforge-", StringComparison.OrdinalIgnoreCase))
+            throw new InvalidOperationException("暂不支持一键安装 NeoForge 整合包。");
+        else if (loaderString.StartsWith("quilt-", StringComparison.OrdinalIgnoreCase))
+            throw new InvalidOperationException("暂不支持一键安装 Quilt 整合包。");
+        else
+            throw new InvalidOperationException("整合包没有声明受支持的加载器：" + loaderString);
+
+        var id = ModpackInstaller.UniqueInstanceId(name);
+        var gameDir = ModpackInstaller.CreateVersion(LauncherApp.I.MinecraftDir, id, installedLoader, mc, name);
+        var packFiles = new List<PackFile>();
+        if (manifest["files"] is JsonArray files)
+        {
+            foreach (var node in files.OfType<JsonObject>())
+            {
+                var projectId = node["projectID"]?.GetValue<int>().ToString() ?? "";
+                var fileId = node["fileID"]?.GetValue<int>().ToString() ?? "";
+                if (string.IsNullOrEmpty(projectId) || string.IsNullOrEmpty(fileId)) continue;
+                try
+                {
+                    var cfFile = await GetFileAsync(projectId, fileId, ct);
+                    if (cfFile is null) continue;
+                    packFiles.Add(new PackFile
+                    {
+                        Path = "mods/" + cfFile.FileName,
+                        Url = cfFile.Url,
+                        Sha1 = cfFile.Sha1,
+                        Size = cfFile.Size
+                    });
+                }
+                catch (Exception ex) { Log.Warn("CurseForge 整合包文件解析失败：" + projectId + "/" + fileId + " " + ex.Message); }
+            }
+        }
+        var downloaded = await ModpackInstaller.DownloadFilesAsync(packFiles, gameDir, progress, ct);
+        var overridesFolder = manifest["overrides"]?.GetValue<string>() ?? "overrides";
+        var overrides = ModpackInstaller.ExtractOverrides(zip, gameDir, overridesFolder);
+        progress?.Report(new DownloadProgress { Stage = "整合包安装完成", Current = 1, Total = 1, Detail = name });
+        Log.Info($"本地 CurseForge 整合包安装完成：{name} → {id}，文件 {downloaded}，覆盖 {overrides}");
         return new ResourceInstallResult { Id = id, Name = name, Path = gameDir, Files = downloaded + overrides };
     }
 
