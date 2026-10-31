@@ -119,7 +119,7 @@ public partial class LaunchPage : UserControl, IPage, INotifyPropertyChanged
 
             var account = app.Settings.Account;
             AccountName = string.IsNullOrWhiteSpace(account.Name) ? "Player" : account.Name;
-            AccountSub = account.IsMicrosoft ? "Microsoft 正版 · 已登录" : "离线账号 · 本地档案";
+            AccountSub = AccountSubText(account);
             AvatarInitial = (AccountName.Length > 0 ? AccountName[..1] : "P").ToUpperInvariant();
             WelcomeText = $"欢迎回来，{AccountName}";
             DateText = DateTime.Now.ToString("yyyy.MM.dd  dddd", CultureInfo.GetCultureInfo("zh-CN"));
@@ -238,7 +238,7 @@ public partial class LaunchPage : UserControl, IPage, INotifyPropertyChanged
         {
             var account = LauncherApp.I.Settings.Account;
             AccountName = string.IsNullOrWhiteSpace(account.Name) ? "Player" : account.Name;
-            AccountSub = account.IsMicrosoft ? "Microsoft 正版 · 已登录" : "离线账号 · 本地档案";
+            AccountSub = AccountSubText(account);
             AvatarInitial = (AccountName.Length > 0 ? AccountName[..1] : "P").ToUpperInvariant();
             WelcomeText = $"欢迎回来，{AccountName}";
         }
@@ -294,6 +294,18 @@ public partial class LaunchPage : UserControl, IPage, INotifyPropertyChanged
         LaunchSub = v.DisplayName;
         if (LauncherApp.I.Launch.IsRunning && LauncherApp.I.Launch.CurrentVersionId == v.Id)
             LaunchTitle = "游戏运行中";
+    }
+
+    private static string AccountSubText(AccountSettings account)
+    {
+        if (account.IsMicrosoft) return "Microsoft 正版 · 已登录";
+        if (account.IsYggdrasil)
+        {
+            var host = account.YggdrasilServer;
+            try { host = new Uri(account.YggdrasilServer).Host; } catch { }
+            return "外置登录 · " + host;
+        }
+        return "离线账号 · 本地档案";
     }
 
     private void UpdateLaunchUi()
@@ -425,20 +437,22 @@ public partial class LaunchPage : UserControl, IPage, INotifyPropertyChanged
         }
 
         var account = app.Settings.Account;
-        if (account.IsMicrosoft)
+        if (account.IsOnline)
         {
-            SetStatus("正在刷新账号令牌…", LaunchState.Preparing);
+            SetStatus(account.IsYggdrasil ? "正在验证外置登录…" : "正在刷新账号令牌…", LaunchState.Preparing);
             var ready = await app.EnsureAccountReadyAsync();
             if (!ready)
             {
-                if (MessageDialog.Show(Window.GetWindow(this), "登录已失效",
-                        "Microsoft 登录令牌已失效，需要重新登录后才能启动正版账号。\n也可以先切换到离线账号。",
+                var message = account.IsYggdrasil
+                    ? "外置登录令牌已失效，需要重新登录后才能启动。\n也可以先切换到离线账号。"
+                    : "Microsoft 登录令牌已失效，需要重新登录后才能启动正版账号。\n也可以先切换到离线账号。";
+                if (MessageDialog.Show(Window.GetWindow(this), "登录已失效", message,
                         "重新登录", "取消", danger: true))
                 {
                     if (!AccountDialog.Show(Window.GetWindow(this))) return;
                     account = app.Settings.Account;
                 }
-                if (account.IsMicrosoft && !await app.EnsureAccountReadyAsync())
+                if (account.IsOnline && !await app.EnsureAccountReadyAsync())
                 {
                     SetStatus("账号未就绪，启动已取消。", LaunchState.Idle);
                     return;

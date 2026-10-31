@@ -13,9 +13,17 @@ public partial class AccountDialog : Window
         InitializeComponent();
         MouseLeftButtonDown += (_, _) => { try { DragMove(); } catch { } };
         var account = LauncherApp.I.Settings.Account;
-        CurrentText.Text = $"当前：{account.Name}（{(account.IsMicrosoft ? "Microsoft 正版" : "离线")}）";
-        OfflineName.Text = account.IsMicrosoft ? "" : account.Name;
+        CurrentText.Text = $"当前：{account.Name}（{AccountTypeText(account)}）";
+        OfflineName.Text = account.IsOnline ? "" : account.Name;
+        if (account.IsYggdrasil)
+        {
+            YggServer.Text = account.YggdrasilServer;
+            YggUser.Text = account.Name;
+        }
     }
+
+    private static string AccountTypeText(AccountSettings account) =>
+        account.IsMicrosoft ? "Microsoft 正版" : account.IsYggdrasil ? "外置登录" : "离线";
 
     public static bool Show(Window? owner)
     {
@@ -53,6 +61,8 @@ public partial class AccountDialog : Window
         account.Uuid = AccountService.OfflineUuid(name);
         account.SkinUrl = "";
         account.Xuid = "";
+        account.YggdrasilServer = "";
+        account.ClientTokenProtected = "";
         account.RefreshTokenProtected = "";
         account.AccessTokenProtected = "";
         account.AccessTokenExpiresUtc = DateTime.MinValue;
@@ -63,4 +73,51 @@ public partial class AccountDialog : Window
     }
 
     private void Close_Click(object sender, RoutedEventArgs e) => Close();
+
+    private async void Yggdrasil_Click(object sender, RoutedEventArgs e)
+    {
+        YggError.Visibility = Visibility.Collapsed;
+        var serverText = YggServer.Text.Trim();
+        var user = YggUser.Text.Trim();
+        var password = YggPassword.Password;
+        if (string.IsNullOrWhiteSpace(user))
+        {
+            ShowYggError("请填写邮箱或用户名。");
+            return;
+        }
+        if (string.IsNullOrEmpty(password))
+        {
+            ShowYggError("请填写密码。");
+            return;
+        }
+
+        YggButton.IsEnabled = false;
+        YggButton.Content = "登录中…";
+        try
+        {
+            var server = YggdrasilService.NormalizeServer(serverText);
+            var profile = await YggdrasilService.AuthenticateAsync(server, user, password);
+            var account = LauncherApp.I.Settings.Account;
+            YggdrasilService.Apply(account, profile);
+            LauncherApp.I.Save();
+            LauncherApp.I.RaiseSettingsChanged();
+            Changed = true;
+            Close();
+        }
+        catch (Exception ex)
+        {
+            ShowYggError(ex.Message);
+        }
+        finally
+        {
+            YggButton.IsEnabled = true;
+            YggButton.Content = "登录外置账号";
+        }
+    }
+
+    private void ShowYggError(string message)
+    {
+        YggError.Text = message;
+        YggError.Visibility = Visibility.Visible;
+    }
 }

@@ -7,19 +7,23 @@ namespace Vermilune.Core;
 
 public sealed class AccountSettings
 {
-    public string Type { get; set; } = "offline"; // offline | microsoft
+    public string Type { get; set; } = "offline"; // offline | microsoft | yggdrasil
     public string Name { get; set; } = "Player";
     public string Uuid { get; set; } = "";
     public string SkinUrl { get; set; } = "";
     public string CapeUrl { get; set; } = "";
     public string SkinModel { get; set; } = "classic";
     public string Xuid { get; set; } = "";
+    public string YggdrasilServer { get; set; } = "";
     public string RefreshTokenProtected { get; set; } = "";
+    public string ClientTokenProtected { get; set; } = "";
     public string AccessTokenProtected { get; set; } = "";
     public DateTime AccessTokenExpiresUtc { get; set; }
     public DateTime LastLoginUtc { get; set; }
 
     [JsonIgnore] public bool IsMicrosoft => string.Equals(Type, "microsoft", StringComparison.OrdinalIgnoreCase);
+    [JsonIgnore] public bool IsYggdrasil => string.Equals(Type, "yggdrasil", StringComparison.OrdinalIgnoreCase);
+    [JsonIgnore] public bool IsOnline => IsMicrosoft || IsYggdrasil;
     [JsonIgnore] public bool HasCachedSession => IsMicrosoft && !string.IsNullOrEmpty(RefreshTokenProtected);
 }
 

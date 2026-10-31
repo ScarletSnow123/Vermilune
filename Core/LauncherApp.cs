@@ -100,6 +100,24 @@ public sealed class LauncherApp
 
     public async Task<bool> EnsureAccountReadyAsync()
     {
+        if (Settings.Account.IsYggdrasil)
+        {
+            if (string.IsNullOrEmpty(Settings.Account.AccessTokenProtected)) return false;
+            if (Settings.Account.AccessTokenExpiresUtc > DateTime.UtcNow.AddMinutes(5)) return true;
+            try
+            {
+                var profile = await YggdrasilService.RefreshAsync(Settings.Account, CancellationToken.None);
+                YggdrasilService.Apply(Settings.Account, profile);
+                Save();
+                SettingsChanged?.Invoke();
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Log.Warn("刷新外置登录令牌失败：" + ex.Message);
+                return false;
+            }
+        }
         if (!Settings.Account.IsMicrosoft) return true;
         if (Settings.Account.AccessTokenExpiresUtc > DateTime.UtcNow.AddMinutes(5) &&
             !string.IsNullOrEmpty(Settings.Account.AccessTokenProtected))

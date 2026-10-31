@@ -76,7 +76,7 @@ public sealed class LaunchService
 
             Directory.CreateDirectory(opt.GameDir);
             Directory.CreateDirectory(opt.NativesDir);
-            if (!opt.Account.IsMicrosoft)
+            if (!opt.Account.IsMicrosoft && !opt.Account.IsYggdrasil)
                 LauncherApp.I.Skins.ApplyOfflinePack(opt.GameDir, opt.Resolved.MinecraftVersion);
             var mcDir = opt.MinecraftDir;
             if (string.IsNullOrWhiteSpace(mcDir))
@@ -196,7 +196,14 @@ public sealed class LaunchService
                 .Append(opt.Resolved.ClientJarPath)
                 .Distinct(StringComparer.OrdinalIgnoreCase));
 
-            var args = BuildArguments(opt, features, classpath, libDir, mcDir, logConfigPath);
+            string? authlibJar = null;
+            if (opt.Account.IsYggdrasil)
+            {
+                Report(LaunchState.Preparing, "准备外置登录组件…", 0.84);
+                authlibJar = await AuthlibInjector.EnsureAsync(ct);
+            }
+
+            var args = BuildArguments(opt, features, classpath, libDir, mcDir, logConfigPath, authlibJar);
             var psi = new ProcessStartInfo
             {
                 FileName = opt.JavaPath,
@@ -375,7 +382,7 @@ public sealed class LaunchService
     }
 
     private List<string> BuildArguments(LaunchOptions opt, LaunchFeatures features, string classpath,
-        string libDir, string mcDir, string? logConfigPath)
+        string libDir, string mcDir, string? logConfigPath, string? authlibJar = null)
     {
         var resolved = opt.Resolved;
         var account = opt.Account;
@@ -385,7 +392,7 @@ public sealed class LaunchService
         var uuid = AccountService.EnsureUuid(account);
         var token = string.IsNullOrEmpty(account.AccessTokenProtected) ? "0" : Dpapi.Unprotect(account.AccessTokenProtected);
         if (string.IsNullOrEmpty(token)) token = "0";
-        var userType = account.IsMicrosoft ? "msa" : "legacy";
+        var userType = account.IsMicrosoft ? "msa" : account.IsYggdrasil ? "mojang" : "legacy";
 
         var placeholders = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
         {
@@ -426,6 +433,8 @@ public sealed class LaunchService
         }
 
         var jvm = new List<string>();
+        if (!string.IsNullOrEmpty(authlibJar) && !string.IsNullOrWhiteSpace(account.YggdrasilServer))
+            jvm.Add($"-javaagent:{authlibJar}={account.YggdrasilServer}");
         var memory = Math.Clamp(opt.MemoryMb, 512, 65536);
         jvm.Add($"-Xmx{memory}m");
         jvm.Add($"-Xms{Math.Min(1024, Math.Max(512, memory / 4))}m");
@@ -530,7 +539,7 @@ public sealed class LaunchService
     private static string BuildDisplayCommand(string java, List<string> args, AccountSettings account)
     {
         var masked = args.Select(a =>
-            a.Length > 20 && account.IsMicrosoft && !a.StartsWith("-") && !a.Contains('\\') && !a.Contains('/')
+            a.Length > 20 && account.IsOnline && !a.StartsWith("-") && !a.Contains('\\') && !a.Contains('/')
                 ? "******" : a);
         return "\"" + java + "\" " + string.Join(' ', masked.Select(Quote));
     }

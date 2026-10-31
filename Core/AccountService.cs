@@ -312,7 +312,7 @@ public sealed class AccountService
 
     public static string EnsureUuid(AccountSettings account)
     {
-        if (account.IsMicrosoft && !string.IsNullOrWhiteSpace(account.Uuid)) return account.Uuid;
+        if (account.IsOnline && !string.IsNullOrWhiteSpace(account.Uuid)) return account.Uuid;
         // 离线账号的 UUID 必须随用户名变化，否则换名后服务端会认为是同一个人
         return OfflineUuid(string.IsNullOrWhiteSpace(account.Name) ? "Player" : account.Name);
     }
@@ -435,6 +435,8 @@ public sealed class AccountService
         account.SkinModel = profile.SkinModel;
         account.AccessTokenProtected = Dpapi.Protect(profile.AccessToken);
         account.RefreshTokenProtected = Dpapi.Protect(profile.RefreshToken);
+        account.YggdrasilServer = "";
+        account.ClientTokenProtected = "";
         account.AccessTokenExpiresUtc = profile.ExpiresUtc;
         account.LastLoginUtc = DateTime.UtcNow;
     }
