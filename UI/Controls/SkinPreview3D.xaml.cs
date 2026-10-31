@@ -163,9 +163,7 @@ public partial class SkinPreview3D : UserControl
         var u1 = crop.Right / texture.Width;
         var v0 = crop.Y / texture.Height;
         var v1 = crop.Bottom / texture.Height;
-        var uvs = nz < 0
-            ? new[] { (u1, v1), (u0, v1), (u0, v0), (u1, v0) }
-            : new[] { (u0, v1), (u1, v1), (u1, v0), (u0, v0) };
+        var uvs = new[] { (u0, v1), (u1, v1), (u1, v0), (u0, v0) };
         _faces.Add(new Face
         {
             Points = points,
