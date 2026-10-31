@@ -192,7 +192,7 @@ public partial class LaunchPage : UserControl, IPage, INotifyPropertyChanged
                 MessageDialog.Show(Window.GetWindow(this), "上传皮肤失败", ex.Message, "关闭", danger: true);
             }
         }
-        await RefreshSkinAsync();
+        RefreshState();
     }
 
     private async void ToggleSkinModel_Click(object sender, RoutedEventArgs e)
@@ -207,6 +207,7 @@ public partial class LaunchPage : UserControl, IPage, INotifyPropertyChanged
         }
         await RefreshSkinAsync();
         LauncherApp.I.Notify("皮肤模型", slim ? "已切换为 Alex（细手臂）" : "已切换为 Steve（粗手臂）");
+        RefreshState();
     }
 
     private async void SwitchCape_Click(object sender, RoutedEventArgs e)
@@ -225,10 +226,10 @@ public partial class LaunchPage : UserControl, IPage, INotifyPropertyChanged
             await RefreshSkinAsync();
     }
 
-    private async void UseAccountSkin_Click(object sender, RoutedEventArgs e)
+    private void UseAccountSkin_Click(object sender, RoutedEventArgs e)
     {
         LauncherApp.I.Skins.UseAccountSkin();
-        await RefreshSkinAsync();
+        RefreshState();
         LauncherApp.I.Notify("已恢复账号皮肤", "启动器会重新读取账号皮肤与披风。");
     }
 
@@ -338,36 +339,43 @@ public partial class LaunchPage : UserControl, IPage, INotifyPropertyChanged
 
     private async Task LoadAvatarAsync(AccountSettings account)
     {
-        if (!account.IsMicrosoft || string.IsNullOrEmpty(account.Uuid))
-        {
-            AvatarImage.Source = null;
-            AvatarInitialText.Visibility = Visibility.Visible;
-            return;
-        }
         try
         {
-            var file = Path.Combine(AppPaths.SkinCacheDir, account.Uuid + ".png");
-            if (!File.Exists(file) || DateTime.UtcNow - File.GetLastWriteTimeUtc(file) > TimeSpan.FromDays(7))
+            // 直接从当前皮肤裁头部，不再依赖 mc-heads 的远程头像缓存。
+            // 这样切换皮肤后头像会立即更新，后台挂着代理/VPN 也不会卡住。
+            var skin = await LauncherApp.I.Skins.LoadSkinAsync();
+            if (skin is not null)
             {
-                var bytes = await HttpService.Client.GetByteArrayAsync($"https://mc-heads.net/avatar/{account.Uuid}/96");
-                if (bytes.Length > 100) await File.WriteAllBytesAsync(file, bytes);
+                AvatarImage.Source = CreateHead(skin);
+                AvatarInitialText.Visibility = Visibility.Collapsed;
+                return;
             }
-            if (!File.Exists(file)) return;
-            var bmp = new BitmapImage();
-            bmp.BeginInit();
-            bmp.CacheOption = BitmapCacheOption.OnLoad;
-            bmp.UriSource = new Uri(file);
-            bmp.EndInit();
-            bmp.Freeze();
-            AvatarImage.Source = bmp;
-            AvatarInitialText.Visibility = Visibility.Collapsed;
         }
         catch (Exception ex)
         {
             Log.Info("头像加载失败（不影响启动）：" + ex.Message);
-            AvatarImage.Source = null;
-            AvatarInitialText.Visibility = Visibility.Visible;
         }
+        AvatarImage.Source = null;
+        AvatarInitialText.Visibility = Visibility.Visible;
+    }
+
+    private static BitmapSource CreateHead(BitmapSource skin)
+    {
+        var visual = new DrawingVisual();
+        using (var dc = visual.RenderOpen())
+        {
+            var head = new CroppedBitmap(skin, new Int32Rect(8, 8, 8, 8));
+            dc.DrawImage(head, new Rect(0, 0, 8, 8));
+            if (skin.PixelWidth >= 48 && skin.PixelHeight >= 16)
+            {
+                var hat = new CroppedBitmap(skin, new Int32Rect(40, 8, 8, 8));
+                dc.DrawImage(hat, new Rect(0, 0, 8, 8));
+            }
+        }
+        var bitmap = new RenderTargetBitmap(8, 8, 96, 96, PixelFormats.Pbgra32);
+        bitmap.Render(visual);
+        bitmap.Freeze();
+        return bitmap;
     }
 
     private void VersionCombo_SelectionChanged(object sender, SelectionChangedEventArgs e)

@@ -328,6 +328,26 @@ public sealed class AccountService
 
     public async Task<List<MinecraftCape>> GetCapesAsync(CancellationToken ct)
     {
+        try
+        {
+            return await GetCapesOfficialAsync(ct);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            Log.Warn("读取完整披风列表失败，尝试只读取当前披风：" + ex.Message);
+            var fallback = await GetCapeFromSessionServerAsync(ct);
+            if (fallback is not null)
+            {
+                LauncherApp.I.Settings.Account.CapeUrl = fallback.Url;
+                LauncherApp.I.SaveDebounced();
+                return new List<MinecraftCape> { fallback };
+            }
+            return new List<MinecraftCape>();
+        }
+    }
+
+    private async Task<List<MinecraftCape>> GetCapesOfficialAsync(CancellationToken ct)
+    {
         using var request = new HttpRequestMessage(HttpMethod.Get, "https://api.minecraftservices.com/minecraft/profile");
         request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", GetAccessToken());
         using var response = await HttpService.Client.SendAsync(request, ct);
@@ -352,6 +372,38 @@ public sealed class AccountService
         LauncherApp.I.Settings.Account.CapeUrl = active?.Url ?? "";
         LauncherApp.I.SaveDebounced();
         return list;
+    }
+
+    private async Task<MinecraftCape?> GetCapeFromSessionServerAsync(CancellationToken ct)
+    {
+        var account = LauncherApp.I.Settings.Account;
+        if (string.IsNullOrWhiteSpace(account.Uuid)) return null;
+        var uuid = account.Uuid.Replace("-", "");
+        using var request = new HttpRequestMessage(HttpMethod.Get,
+            "https://sessionserver.mojang.com/session/minecraft/profile/" + uuid);
+        using var response = await HttpService.Client.SendAsync(request, ct);
+        if (!response.IsSuccessStatusCode) return null;
+        var text = await response.Content.ReadAsStringAsync(ct);
+        var root = TryParse(text) as JsonObject;
+        if (root?["properties"] is not JsonArray properties) return null;
+        foreach (var item in properties.OfType<JsonObject>())
+        {
+            if (!string.Equals(item["name"]?.GetValue<string>(), "textures", StringComparison.OrdinalIgnoreCase))
+                continue;
+            var encoded = item["value"]?.GetValue<string>() ?? "";
+            if (string.IsNullOrEmpty(encoded)) continue;
+            try
+            {
+                var decoded = Encoding.UTF8.GetString(Convert.FromBase64String(encoded));
+                var textures = (TryParse(decoded) as JsonObject)?["textures"] as JsonObject;
+                var cape = textures?["CAPE"] as JsonObject;
+                var url = cape?["url"]?.GetValue<string>() ?? "";
+                if (!string.IsNullOrEmpty(url))
+                    return new MinecraftCape { Id = "", Alias = "当前披风", Url = url, Active = true };
+            }
+            catch { }
+        }
+        return null;
     }
 
     public async Task SetCapeAsync(string? capeId, CancellationToken ct)

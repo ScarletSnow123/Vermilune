@@ -76,6 +76,11 @@ public partial class CapePickerDialog : Window
     private async void Apply_Click(object sender, RoutedEventArgs e)
     {
         if (CapeList.SelectedItem is not CapeChoice choice) return;
+        if (!choice.IsNone && string.IsNullOrEmpty(choice.Id))
+        {
+            StatusText.Text = "当前网络只能读取到正在使用的披风，无法切换其他披风。";
+            return;
+        }
         ApplyButton.IsEnabled = false;
         StatusText.Text = choice.IsNone ? "正在取消披风…" : "正在切换披风…";
         try
