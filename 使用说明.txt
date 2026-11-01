@@ -1,4 +1,4 @@
-﻿Vermilune 1.2.13-beta · Minecraft 启动器
+﻿Vermilune 1.2.14-beta · Minecraft 启动器
 ========================================
 
 双击 Vermilune.exe 直接启动，无需安装。
