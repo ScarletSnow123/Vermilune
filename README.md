@@ -1,6 +1,6 @@
 # Vermilune
 
-一个使用 **.NET 10 + WPF** 编写的 Windows Minecraft 启动器，当前版本 **v1.2.9-beta**。
+一个使用 **.NET 10 + WPF** 编写的 Windows Minecraft 启动器，当前版本 **v1.2.10-beta**。
 
 界面、版本管理、下载、登录与皮肤预览均在本地完成。
 

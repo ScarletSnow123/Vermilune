@@ -162,7 +162,7 @@
                             </StackPanel>
 
                             <StackPanel Grid.Row="1" Margin="0,0,0,14" HorizontalAlignment="Center">
-                                <TextBlock x:Name="RailVersion" Text="v1.2.9-beta" FontSize="9"
+                                <TextBlock x:Name="RailVersion" Text="v1.2.10-beta" FontSize="9"
                                            Foreground="{DynamicResource TextMutedBrush}" HorizontalAlignment="Center" />
                             </StackPanel>
                         </Grid>
