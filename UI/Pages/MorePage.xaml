@@ -30,7 +30,7 @@
                             <TextBlock Text="Vermilune" FontFamily="{DynamicResource DisplayFont}" FontSize="24" FontWeight="SemiBold" />
                             <TextBlock Text="Minecraft 启动器 · .NET 10 / WPF" FontSize="11.5"
                                        Foreground="{DynamicResource TextMutedBrush}" Margin="0,6,0,0" />
-                            <TextBlock Text="版本 1.2.6-beta" FontSize="10.5" Foreground="{DynamicResource TextMutedBrush}" Margin="0,4,0,0" />
+                            <TextBlock Text="版本 1.2.7-beta" FontSize="10.5" Foreground="{DynamicResource TextMutedBrush}" Margin="0,4,0,0" />
                         </StackPanel>
                         <StackPanel Grid.Column="2" VerticalAlignment="Center">
                             <Button Style="{StaticResource PrimaryButton}" Height="34" Content="打开数据目录" Click="OpenData_Click" />
