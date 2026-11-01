@@ -181,6 +181,55 @@ public static class CrashAnalyzer
             "按日志里的 Mod ID 安装对应前置，或移除要求它的 Mod。",
             @"Missing or unsupported mandatory dependencies|Missing dependencies");
 
+        AddPattern(findings, all, "FORGE_MOD_LOAD", ModIssueSeverity.Critical,
+            @"ModLoadingException|Mod loading has failed|Loading errors encountered|InvalidModFileException|Invalid mod file|not a valid mod file|Missing coremod|Coremod .* (?:missing|failed)",
+            "Forge Mod 加载失败",
+            "Forge 在构建 Mod 列表时发现某个 jar 不是有效 Mod、缺少 coremod 或加载器版本不匹配。",
+            "先移除最近安装的 Mod；确认它是 Forge 版而不是 Fabric 版；检查 mods.toml / neoforge.mods.toml 是否完整。",
+            @"ModLoadingException|Mod loading has failed|InvalidModFileException|not a valid mod file|Missing coremod");
+
+        AddPattern(findings, all, "NATIVE_LIB", ModIssueSeverity.Critical,
+            @"UnsatisfiedLinkError|no [\w.-]+ in java\.library\.path|Failed to locate library|Native library .* already loaded|java\.lang\.UnsatisfiedLinkError",
+            "本地运行库 / Java 架构不匹配",
+            "游戏加载 LWJGL、OpenGL 或其他本地库失败，常见于 32 位 Java、natives 缺失或与其他启动器混用运行库。",
+            "确认使用 64 位 Java；在版本「修改」里重新补全运行库；不要混用不同启动器的 natives 目录。",
+            @"UnsatisfiedLinkError|java\.library\.path|Failed to locate library");
+
+        AddPattern(findings, all, "MOD_CONFIG", ModIssueSeverity.Critical,
+            @"ConfigException|Failed to load config|Could not load config|NightConfig|Error loading config|TOML.*(?:parse|config)|JsonParseException.*config",
+            "Mod 配置文件损坏",
+            "某个 Mod 的配置文件无法解析，常见于版本更新后旧配置格式不兼容。",
+            "删除 config 目录中对应 Mod 的配置文件后重启；或先备份再让游戏重新生成。",
+            @"ConfigException|Failed to load config|NightConfig|Error loading config");
+
+        AddPattern(findings, all, "DATAPACK", ModIssueSeverity.Warning,
+            @"Failed to load datapack|Couldn't parse pack\.mcmeta|pack\.mcmeta|Invalid pack format|DataPack.*(?:error|failed)|Failed to load pack",
+            "数据包 / 资源包格式不兼容",
+            "pack.mcmeta 中的 pack_format 与当前 Minecraft 版本不匹配，或数据包内容损坏。",
+            "移除最近添加的数据包/资源包；确认 pack_format 与游戏版本一致，或改用适配当前版本的版本。",
+            @"Failed to load datapack|pack\.mcmeta|Invalid pack format|Failed to load pack");
+
+        AddPattern(findings, all, "WORLD_CORRUPT", ModIssueSeverity.Critical,
+            @"Region file .* is missing|Chunk .* is missing|Exception reading .*\.mca|RegionFile|corrupt chunk|Failed to load world|Level .* (?:corrupt|missing)|Error loading world",
+            "存档 / 区域文件损坏",
+            "世界存档中的区域文件缺失或损坏，游戏无法读取该区块。",
+            "先从 backups 恢复存档；不要直接删除 region 文件；如果只在某个 Mod 更新后出现，回退该 Mod 或新建世界测试。",
+            @"Region file .* is missing|Chunk .* is missing|Exception reading .*\.mca|Failed to load world");
+
+        AddPattern(findings, all, "NETWORK", ModIssueSeverity.Warning,
+            @"UnknownHostException|ConnectException|SSLHandshakeException|Connection refused|Failed to connect|Connection timed out",
+            "网络连接失败",
+            "游戏或登录服务连接超时/被拒绝，可能是服务器离线、DNS、代理或防火墙导致。",
+            "检查服务器地址和端口；关闭代理/VPN 后重试；确认防火墙没有拦截 Java。",
+            @"UnknownHostException|ConnectException|SSLHandshakeException|Connection refused|Connection timed out");
+
+        AddPattern(findings, all, "AUTH_SESSION", ModIssueSeverity.Warning,
+            @"AuthenticationException|Invalid session|Failed to login: Invalid session|Multiplayer login failed|Failed to verify username",
+            "登录会话失效",
+            "账号令牌或会话已失效，常见于切换账号、长时间未启动或服务端开启正版验证。",
+            "重新登录账号后再启动；确认服务端 online-mode 与客户端账号类型一致。",
+            @"Invalid session|Failed to login: Invalid session|AuthenticationException");
+
         // 从崩溃报告里提取 Suspected Mods
         var suspected = new List<string>();
         if (hasCrash)
