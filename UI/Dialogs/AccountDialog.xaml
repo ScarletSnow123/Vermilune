@@ -98,7 +98,7 @@
                             <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
                         <TextBox x:Name="OfflineName" Style="{StaticResource InputBox}" Height="34"
-                                 Tag="输入游戏内昵称（1-16 个字符）" MaxLength="16" />
+                                 Tag="输入游戏内昵称（1-64 个字符；1.20.3+ 最多 16）" MaxLength="64" />
                         <Button Grid.Column="2" Content="使用离线账号" Style="{StaticResource ButtonBase}" Height="34"
                                 Click="Offline_Click" />
                     </Grid>

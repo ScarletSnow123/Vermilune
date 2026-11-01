@@ -304,7 +304,7 @@ public sealed class AccountService
     public static bool IsValidOfflineName(string name)
     {
         if (string.IsNullOrWhiteSpace(name)) return false;
-        if (name.Length < 1 || name.Length > 16) return false;
+        if (name.Length < 1 || name.Length > 64) return false;
         foreach (var c in name)
             if (c < 0x20) return false;
         return name.Trim() == name;

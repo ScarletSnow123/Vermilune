@@ -103,7 +103,14 @@ public partial class AccountDialog : Window
         var name = OfflineName.Text.Trim();
         if (!AccountService.IsValidOfflineName(name))
         {
-            OfflineError.Text = "昵称需为 1-16 个字符，不能包含控制字符。";
+            OfflineError.Text = "昵称需为 1-64 个字符，不能包含控制字符，且首尾不能有空格。";
+            OfflineError.Visibility = Visibility.Visible;
+            return;
+        }
+        var mcVersion = LauncherApp.I.CurrentVersion?.MinecraftVersion ?? "";
+        if (Version.TryParse(mcVersion, out var version) && version >= new Version(1, 20, 3) && name.Length > 16)
+        {
+            OfflineError.Text = "Minecraft 1.20.3 及以后最多只能使用 16 个字符的玩家名。";
             OfflineError.Visibility = Visibility.Visible;
             return;
         }
