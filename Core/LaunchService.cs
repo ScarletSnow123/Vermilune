@@ -76,7 +76,7 @@ public sealed class LaunchService
 
             Directory.CreateDirectory(opt.GameDir);
             Directory.CreateDirectory(opt.NativesDir);
-            if (!opt.Account.IsMicrosoft && !opt.Account.IsYggdrasil)
+            if (!opt.Account.IsOnline)
                 LauncherApp.I.Skins.ApplyOfflinePack(opt.GameDir, opt.Resolved.MinecraftVersion);
             ApplyDefaultLanguage(opt);
             var mcDir = opt.MinecraftDir;
@@ -199,6 +199,7 @@ public sealed class LaunchService
 
             string? authlibJar = null;
             string? authlibPrefetch = null;
+            string? nideJar = null;
             if (opt.Account.IsYggdrasil)
             {
                 Report(LaunchState.Preparing, "准备外置登录组件…", 0.84);
@@ -213,8 +214,14 @@ public sealed class LaunchService
                     Log.Warn("预取外置登录元数据失败，将直接连接服务器：" + ex.Message);
                 }
             }
+            else if (opt.Account.IsNide)
+            {
+                Report(LaunchState.Preparing, "准备统一通行证组件…", 0.84);
+                nideJar = await Nide8Service.EnsureJarAsync(opt.Account.NideServer, ct);
+            }
 
-            var args = BuildArguments(opt, features, classpath, libDir, mcDir, logConfigPath, authlibJar, authlibPrefetch);
+            var args = BuildArguments(opt, features, classpath, libDir, mcDir, logConfigPath, authlibJar,
+                authlibPrefetch, nideJar);
             var psi = new ProcessStartInfo
             {
                 FileName = opt.JavaPath,
@@ -415,7 +422,8 @@ public sealed class LaunchService
     }
 
     private List<string> BuildArguments(LaunchOptions opt, LaunchFeatures features, string classpath,
-        string libDir, string mcDir, string? logConfigPath, string? authlibJar = null, string? authlibPrefetch = null)
+        string libDir, string mcDir, string? logConfigPath, string? authlibJar = null, string? authlibPrefetch = null,
+        string? nideJar = null)
     {
         var resolved = opt.Resolved;
         var account = opt.Account;
@@ -425,7 +433,7 @@ public sealed class LaunchService
         var uuid = AccountService.EnsureUuid(account);
         var token = string.IsNullOrEmpty(account.AccessTokenProtected) ? "0" : Dpapi.Unprotect(account.AccessTokenProtected);
         if (string.IsNullOrEmpty(token)) token = "0";
-        var userType = account.IsMicrosoft ? "msa" : account.IsYggdrasil ? "mojang" : "legacy";
+        var userType = account.IsMicrosoft ? "msa" : account.IsOnline ? "mojang" : "legacy";
 
         var placeholders = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
         {
@@ -474,6 +482,8 @@ public sealed class LaunchService
             if (!string.IsNullOrEmpty(authlibPrefetch))
                 jvm.Add("-Dauthlibinjector.yggdrasil.prefetched=" + authlibPrefetch);
         }
+        if (!string.IsNullOrEmpty(nideJar) && !string.IsNullOrWhiteSpace(account.NideServer))
+            jvm.Add("-javaagent:" + nideJar + "=" + account.NideServer);
         var memory = Math.Clamp(opt.MemoryMb, 512, 65536);
         jvm.Add($"-Xmx{memory}m");
         jvm.Add($"-Xms{Math.Min(1024, Math.Max(512, memory / 4))}m");

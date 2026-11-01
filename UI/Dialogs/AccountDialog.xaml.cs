@@ -21,6 +21,24 @@ public partial class AccountDialog : Window
             YggServer.Text = account.YggdrasilServer;
             YggUser.Text = account.Name;
         }
+        if (account.IsNide)
+        {
+            NideServer.Text = account.NideServer;
+            NideUser.Text = account.Name;
+        }
+        var showRoles = account.YggdrasilCharacters.Count > 1;
+        YggRoleButton.Visibility = account.IsYggdrasil && showRoles ? Visibility.Visible : Visibility.Collapsed;
+        NideRoleButton.Visibility = account.IsNide && showRoles ? Visibility.Visible : Visibility.Collapsed;
+        if (account.IsYggdrasil && showRoles)
+        {
+            YggRoleHint.Text = $"已保存 {account.YggdrasilCharacters.Count} 个角色，可切换";
+            YggRoleHint.Visibility = Visibility.Visible;
+        }
+        if (account.IsNide && showRoles)
+        {
+            NideRoleHint.Text = $"已保存 {account.YggdrasilCharacters.Count} 个角色，可切换";
+            NideRoleHint.Visibility = Visibility.Visible;
+        }
         BuildSavedList();
     }
 
@@ -74,7 +92,9 @@ public partial class AccountDialog : Window
     }
 
     private static string AccountTypeText(AccountSettings account) =>
-        account.IsMicrosoft ? "Microsoft 正版" : account.IsYggdrasil ? "外置登录" : "离线";
+        account.IsMicrosoft ? "Microsoft 正版" :
+        account.IsYggdrasil ? "外置登录" :
+        account.IsNide ? "统一通行证" : "离线";
 
     public static bool Show(Window? owner)
     {
@@ -190,5 +210,76 @@ public partial class AccountDialog : Window
     {
         YggError.Text = message;
         YggError.Visibility = Visibility.Visible;
+    }
+
+    private async void Nide_Click(object sender, RoutedEventArgs e)
+    {
+        NideError.Visibility = Visibility.Collapsed;
+        var serverId = NideServer.Text.Trim();
+        var user = NideUser.Text.Trim();
+        var password = NidePassword.Password;
+        if (string.IsNullOrWhiteSpace(user)) { ShowNideError("请填写邮箱或统一通行证账号。"); return; }
+        if (string.IsNullOrEmpty(password)) { ShowNideError("请填写密码。"); return; }
+
+        NideButton.IsEnabled = false;
+        NideButton.Content = "登录中…";
+        try
+        {
+            serverId = Nide8Service.NormalizeServerId(serverId);
+            var profile = await Nide8Service.AuthenticateAsync(serverId, user, password);
+            if (profile.Characters.Count > 1)
+            {
+                var chosen = YggdrasilCharacterDialog.Show(this, profile.Characters, profile.Uuid);
+                if (chosen is null) return;
+                profile = new YggdrasilProfile
+                {
+                    Name = chosen.Name,
+                    Uuid = chosen.Id,
+                    AccessToken = profile.AccessToken,
+                    ClientToken = profile.ClientToken,
+                    Server = profile.Server,
+                    Characters = profile.Characters
+                };
+            }
+            var account = new AccountSettings();
+            Nide8Service.Apply(account, profile, serverId);
+            await YggdrasilService.UpdateTexturesAsync(account);
+            LauncherApp.I.RememberAccount(account);
+            LauncherApp.I.Save();
+            LauncherApp.I.RaiseSettingsChanged();
+            Changed = true;
+            Close();
+        }
+        catch (Exception ex)
+        {
+            ShowNideError(ex.Message);
+        }
+        finally
+        {
+            NideButton.IsEnabled = true;
+            NideButton.Content = "登录统一通行证";
+        }
+    }
+
+    private void ShowNideError(string message)
+    {
+        NideError.Text = message;
+        NideError.Visibility = Visibility.Visible;
+    }
+
+    private async void ThirdPartyRole_Click(object sender, RoutedEventArgs e)
+    {
+        var account = LauncherApp.I.Settings.Account;
+        if (account.YggdrasilCharacters.Count < 2) return;
+        var chosen = YggdrasilCharacterDialog.Show(this, account.YggdrasilCharacters, account.Uuid);
+        if (chosen is null) return;
+
+        account.Name = chosen.Name;
+        account.Uuid = chosen.Id;
+        await YggdrasilService.UpdateTexturesAsync(account);
+        LauncherApp.I.Save();
+        LauncherApp.I.RaiseSettingsChanged();
+        Changed = true;
+        Close();
     }
 }

@@ -16,6 +16,8 @@ public sealed class AccountSettings
     public string SkinModel { get; set; } = "classic";
     public string Xuid { get; set; } = "";
     public string YggdrasilServer { get; set; } = "";
+    public string NideServer { get; set; } = "";
+    public List<YggdrasilCharacter> YggdrasilCharacters { get; set; } = new();
     public string RefreshTokenProtected { get; set; } = "";
     public string ClientTokenProtected { get; set; } = "";
     public string AccessTokenProtected { get; set; } = "";
@@ -24,7 +26,8 @@ public sealed class AccountSettings
 
     [JsonIgnore] public bool IsMicrosoft => string.Equals(Type, "microsoft", StringComparison.OrdinalIgnoreCase);
     [JsonIgnore] public bool IsYggdrasil => string.Equals(Type, "yggdrasil", StringComparison.OrdinalIgnoreCase);
-    [JsonIgnore] public bool IsOnline => IsMicrosoft || IsYggdrasil;
+    [JsonIgnore] public bool IsNide => string.Equals(Type, "nide", StringComparison.OrdinalIgnoreCase);
+    [JsonIgnore] public bool IsOnline => IsMicrosoft || IsYggdrasil || IsNide;
     [JsonIgnore] public bool HasCachedSession => IsMicrosoft && !string.IsNullOrEmpty(RefreshTokenProtected);
 
     public AccountSettings Clone() => (AccountSettings)MemberwiseClone();

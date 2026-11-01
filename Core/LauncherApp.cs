@@ -78,7 +78,7 @@ public sealed class LauncherApp
     public async Task RefreshAccountAsync()
     {
         var account = Settings.Account;
-        if (account.IsYggdrasil)
+        if (account.IsYggdrasil || account.IsNide)
         {
             if (string.IsNullOrEmpty(account.AccessTokenProtected)) return;
             try
@@ -118,14 +118,21 @@ public sealed class LauncherApp
 
     public async Task<bool> EnsureAccountReadyAsync()
     {
-        if (Settings.Account.IsYggdrasil)
+        if (Settings.Account.IsYggdrasil || Settings.Account.IsNide)
         {
             if (string.IsNullOrEmpty(Settings.Account.AccessTokenProtected)) return false;
             if (Settings.Account.AccessTokenExpiresUtc > DateTime.UtcNow.AddMinutes(5)) return true;
             try
             {
+                var wasNide = Settings.Account.IsNide;
+                var nideServer = Settings.Account.NideServer;
                 var profile = await YggdrasilService.RefreshAsync(Settings.Account, CancellationToken.None);
                 YggdrasilService.Apply(Settings.Account, profile);
+                if (wasNide)
+                {
+                    Settings.Account.Type = "nide";
+                    Settings.Account.NideServer = nideServer;
+                }
                 Save();
                 SettingsChanged?.Invoke();
                 return true;
@@ -201,7 +208,7 @@ public sealed class LauncherApp
         Settings.Account = saved.Clone();
         Save();
         SettingsChanged?.Invoke();
-        if (Settings.Account.IsYggdrasil) _ = RefreshAccountAsync();
+        if (Settings.Account.IsYggdrasil || Settings.Account.IsNide) _ = RefreshAccountAsync();
         return true;
     }
 
@@ -225,6 +232,10 @@ public sealed class LauncherApp
             return !string.IsNullOrEmpty(a.Uuid) &&
                    string.Equals(a.Uuid, b.Uuid, StringComparison.OrdinalIgnoreCase) &&
                    string.Equals(a.YggdrasilServer, b.YggdrasilServer, StringComparison.OrdinalIgnoreCase);
+        if (a.IsNide)
+            return !string.IsNullOrEmpty(a.Uuid) &&
+                   string.Equals(a.Uuid, b.Uuid, StringComparison.OrdinalIgnoreCase) &&
+                   string.Equals(a.NideServer, b.NideServer, StringComparison.OrdinalIgnoreCase);
         return string.Equals(a.Name, b.Name, StringComparison.OrdinalIgnoreCase);
     }
 

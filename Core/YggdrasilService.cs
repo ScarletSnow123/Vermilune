@@ -136,7 +136,8 @@ public static class YggdrasilService
             Uuid = account.Uuid,
             AccessToken = token,
             ClientToken = root?["clientToken"]?.GetValue<string>() ?? client,
-            Server = server
+            Server = server,
+            Characters = account.YggdrasilCharacters.ToList()
         };
     }
 
@@ -152,6 +153,8 @@ public static class YggdrasilService
         account.AccessTokenExpiresUtc = DateTime.UtcNow.AddHours(hours);
         account.LastLoginUtc = DateTime.UtcNow;
         account.Xuid = "";
+        if (profile.Characters.Count > 0)
+            account.YggdrasilCharacters = profile.Characters.ToList();
     }
 
     /// <summary>读取皮肤站 profile 里的 SKIN / CAPE 纹理。</summary>

@@ -306,6 +306,7 @@ public partial class LaunchPage : UserControl, IPage, INotifyPropertyChanged
             try { host = new Uri(account.YggdrasilServer).Host; } catch { }
             return "外置登录 · " + host;
         }
+        if (account.IsNide) return "统一通行证 · " + account.NideServer;
         return "离线账号 · 本地档案";
     }
 
