@@ -1,4 +1,4 @@
-﻿Vermilune 1.2.11-beta · Minecraft 启动器
+﻿Vermilune 1.2.12-beta · Minecraft 启动器
 ========================================
 
 双击 Vermilune.exe 直接启动，无需安装。
@@ -38,4 +38,4 @@
 - 报错分析：「报错」页面；会扫描 logs、crash-reports 与 mods 文件夹。
 - 命令行：Vermilune.exe --launch "版本名"；Vermilune.exe --page versions。
 
-完整说明见 Vermilune-说明.md
+完整说明见 Vermilune-说明.md。
