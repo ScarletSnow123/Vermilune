@@ -81,6 +81,7 @@ public sealed class ForgeService
         IProgress<DownloadProgress>? progress, CancellationToken ct)
     {
         EnsureLauncherProfiles(mcDir);
+        RotateExistingForgeVersion(mcDir, mcVersion, forgeVersion);
         var versionsDir = Path.Combine(mcDir, "versions");
         var before = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         if (Directory.Exists(versionsDir))
@@ -134,14 +135,17 @@ public sealed class ForgeService
         {
             CleanupNewForgeVersions(mcDir, before, mcVersion, forgeVersion);
             var detail = Tail(log.ToString());
+            var installerLog = Path.Combine(mcDir, "installer.log");
+            var logHint = File.Exists(installerLog) ? $"\n\n完整安装日志：{installerLog}" : "";
             if (detail.Contains("piston-data.mojang.com", StringComparison.OrdinalIgnoreCase) ||
                 detail.Contains("UnknownHostException", StringComparison.OrdinalIgnoreCase))
             {
                 throw new InvalidOperationException(
                     "Forge 安装失败：无法访问 piston-data.mojang.com（Mojang 映射表服务器）。\n" +
-                    "请切换下载源、更换 DNS 或挂代理后重试；也可以先删除这个 Forge 版本再安装。\n\n" + detail);
+                    "请切换下载源、更换 DNS 或挂代理后重试；也可以先删除这个 Forge 版本再安装。" +
+                    logHint + "\n\n" + detail);
             }
-            throw new InvalidOperationException("Forge 部署器退出码 " + process.ExitCode + "：\n" + detail);
+            throw new InvalidOperationException("Forge 部署器退出码 " + process.ExitCode + "：" + logHint + "\n" + detail);
         }
 
         var targetId = FindInstalledVersion(mcDir, mcVersion, forgeVersion, start);
@@ -300,15 +304,72 @@ public sealed class ForgeService
         }
     }
 
+    private static void RotateExistingForgeVersion(string mcDir, string mcVersion, string forgeVersion)
+    {
+        try
+        {
+            var versions = Path.Combine(mcDir, "versions");
+            if (!Directory.Exists(versions)) return;
+            var candidates = Directory.EnumerateDirectories(versions)
+                .Where(d =>
+                {
+                    var name = Path.GetFileName(d);
+                    return name.Contains("forge", StringComparison.OrdinalIgnoreCase) &&
+                           name.Contains(mcVersion, StringComparison.OrdinalIgnoreCase) &&
+                           name.Contains(forgeVersion, StringComparison.OrdinalIgnoreCase);
+                })
+                .ToList();
+            if (candidates.Count == 0) return;
+
+            var backupRoot = Path.Combine(AppPaths.DataDir, "backup", "forge-versions");
+            Directory.CreateDirectory(backupRoot);
+            foreach (var existing in candidates)
+            {
+                var name = Path.GetFileName(existing);
+                var backup = Path.Combine(backupRoot, name + "-" + DateTime.Now.ToString("yyyyMMdd-HHmmss"));
+                try
+                {
+                    Directory.Move(existing, backup);
+                    Log.Info("旧 Forge 版本已备份：" + backup);
+                }
+                catch
+                {
+                    try { Directory.Delete(existing, true); }
+                    catch (Exception ex) { Log.Warn("移除旧 Forge 版本失败：" + ex.Message); }
+                }
+            }
+        }
+        catch (Exception ex) { Log.Warn("准备 Forge 安装目录失败：" + ex.Message); }
+    }
+
     private static void EnsureLauncherProfiles(string mcDir)
     {
         try
         {
             Directory.CreateDirectory(mcDir);
             var path = Path.Combine(mcDir, "launcher_profiles.json");
-            if (File.Exists(path) && new FileInfo(path).Length > 16) return;
-            File.WriteAllText(path, "{\"profiles\":{},\"settings\":{\"language\":\"zh_cn\"},\"version\":3}",
-                new UTF8Encoding(false));
+            var valid = false;
+            if (File.Exists(path) && new FileInfo(path).Length > 16)
+            {
+                try
+                {
+                    var root = JsonNode.Parse(File.ReadAllText(path)) as JsonObject;
+                    valid = root?["profiles"] is JsonObject;
+                }
+                catch { }
+            }
+
+            if (!valid)
+            {
+                try
+                {
+                    if (File.Exists(path))
+                        File.Copy(path, path + ".bak", true);
+                }
+                catch { }
+                File.WriteAllText(path, "{\"profiles\":{},\"settings\":{\"language\":\"zh_cn\"},\"version\":3}",
+                    new UTF8Encoding(false));
+            }
         }
         catch (Exception ex) { Log.Warn("创建 launcher_profiles.json 失败：" + ex.Message); }
     }
