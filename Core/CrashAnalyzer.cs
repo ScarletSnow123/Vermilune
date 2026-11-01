@@ -118,6 +118,8 @@ public static class CrashAnalyzer
             var b = moduleConflict.Groups[2].Value;
             var package = moduleConflict.Groups[3].Value;
             var target = moduleConflict.Groups[4].Value;
+            var connector = all.Contains("Connector-", StringComparison.OrdinalIgnoreCase) ||
+                            all.Contains("Sinytra", StringComparison.OrdinalIgnoreCase);
             findings.Add(new CrashFinding
             {
                 Code = "MODULE_CONFLICT",
@@ -127,7 +129,10 @@ public static class CrashAnalyzer
                          "这通常出现在 Forge 上使用 Sinytra Connector 加载 Fabric 渲染 Mod 时。",
                 Suggestion = $"先在 mods 文件夹里搜索并移除与模块 {target} 对应的 Mod（它可能是通过 Sinytra Connector 加载的 Fabric Mod）。\n" +
                              "如果目标模块是 sodium / embeddium / sodiumextras，只保留一个渲染器；否则直接移除该 Mod 再试。\n" +
-                             "如果仍然报错，移除 Sinytra Connector 以及依赖它的 Fabric Mod，或换用 Forge 原生版本。",
+                             "如果仍然报错，移除 Sinytra Connector 以及依赖它的 Fabric Mod，或换用 Forge 原生版本。" +
+                             (connector
+                                 ? "\n日志中检测到 Sinytra Connector：如果移除一个 Mod 后又换成另一个模块冲突，说明 Connector 整体不兼容，建议直接移除 Connector 和依赖它的 Fabric Mod，或改用 Fabric 实例。"
+                                 : ""),
                 Evidence = $"模块 {a} / {b} 重复导出 {package}；目标模块：{target}"
             });
         }
