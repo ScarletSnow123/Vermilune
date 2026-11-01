@@ -11,14 +11,15 @@ public static class Shell
         {
             if (Directory.Exists(path))
             {
+                // 始终交给 explorer.exe 打开目录，避免 ShellExecute 把同名文件当成程序启动。
                 try
                 {
-                    Process.Start(new ProcessStartInfo { FileName = path, UseShellExecute = true });
+                    Process.Start(new ProcessStartInfo("explorer.exe", "\"" + path + "\"") { UseShellExecute = true });
                     return;
                 }
                 catch
                 {
-                    Process.Start(new ProcessStartInfo("explorer.exe", "\"" + path + "\"") { UseShellExecute = true });
+                    Process.Start(new ProcessStartInfo { FileName = path, UseShellExecute = true });
                     return;
                 }
             }
