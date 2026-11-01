@@ -1,4 +1,4 @@
-﻿using System.Diagnostics;
+using System.Diagnostics;
 using System.IO;
 using System.Text.Json.Nodes;
 using System.Text.RegularExpressions;
@@ -78,6 +78,12 @@ public sealed class ForgeService
     public async Task<string> InstallAsync(string mcVersion, string forgeVersion, string mcDir, string javaPath,
         IProgress<DownloadProgress>? progress, CancellationToken ct)
     {
+        var versionsDir = Path.Combine(mcDir, "versions");
+        var before = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        if (Directory.Exists(versionsDir))
+            foreach (var d in Directory.EnumerateDirectories(versionsDir))
+                before.Add(Path.GetFileName(d));
+
         var installerUrl = $"https://maven.minecraftforge.net/net/minecraftforge/forge/{mcVersion}-{forgeVersion}/forge-{mcVersion}-{forgeVersion}-installer.jar";
         var dir = Path.Combine(AppPaths.CacheDir, "installers");
         Directory.CreateDirectory(dir);
@@ -117,10 +123,22 @@ public sealed class ForgeService
         if (!exited)
         {
             try { process.Kill(true); } catch { }
+            CleanupNewForgeVersions(mcDir, before, mcVersion, forgeVersion);
             throw new TimeoutException("Forge 部署器超过 10 分钟未结束，已终止。");
         }
         if (process.ExitCode != 0)
-            throw new InvalidOperationException("Forge 部署器退出码 " + process.ExitCode + "：\n" + Tail(log.ToString()));
+        {
+            CleanupNewForgeVersions(mcDir, before, mcVersion, forgeVersion);
+            var detail = Tail(log.ToString());
+            if (detail.Contains("piston-data.mojang.com", StringComparison.OrdinalIgnoreCase) ||
+                detail.Contains("UnknownHostException", StringComparison.OrdinalIgnoreCase))
+            {
+                throw new InvalidOperationException(
+                    "Forge 安装失败：无法访问 piston-data.mojang.com（Mojang 映射表服务器）。\n" +
+                    "请切换下载源、更换 DNS 或挂代理后重试；也可以先删除这个 Forge 版本再安装。\n\n" + detail);
+            }
+            throw new InvalidOperationException("Forge 部署器退出码 " + process.ExitCode + "：\n" + detail);
+        }
 
         var targetId = FindInstalledVersion(mcDir, mcVersion, forgeVersion, start);
         if (string.IsNullOrEmpty(targetId))
@@ -129,9 +147,54 @@ public sealed class ForgeService
             targetId = FindAnyNewForgeVersion(mcDir, start);
         }
         if (string.IsNullOrEmpty(targetId))
+        {
+            CleanupNewForgeVersions(mcDir, before, mcVersion, forgeVersion);
             throw new InvalidOperationException("Forge 部署器已结束，但没有找到新生成的版本。请打开 versions 目录检查安装日志。");
+        }
+
+        // 部署器可能先写版本 JSON，再在下载映射表时失败；必须检查核心库是否完整。
+        var universal = Path.Combine(mcDir, "libraries", "net", "minecraftforge", "forge",
+            $"{mcVersion}-{forgeVersion}", $"forge-{mcVersion}-{forgeVersion}-universal.jar");
+        var targetJson = Path.Combine(mcDir, "versions", targetId, targetId + ".json");
+        var hasForgeLibrary = false;
+        try
+        {
+            var root = JsonNode.Parse(File.ReadAllText(targetJson)) as JsonObject;
+            if (root?["libraries"] is JsonArray libs)
+                hasForgeLibrary = libs.Any(l =>
+                    (l?["name"]?.GetValue<string>() ?? "").StartsWith("net.minecraftforge:forge:", StringComparison.OrdinalIgnoreCase));
+        }
+        catch (Exception ex) { Log.Warn("校验 Forge 版本 JSON 失败：" + ex.Message); }
+
+        if (!File.Exists(universal) || !File.Exists(targetJson) || !hasForgeLibrary)
+        {
+            CleanupNewForgeVersions(mcDir, before, mcVersion, forgeVersion);
+            throw new InvalidOperationException(
+                "Forge 安装不完整：版本 JSON 缺少 Forge 库，或缺少 forge-universal.jar。\n" +
+                "通常是网络无法访问 piston-data.mojang.com，请切换下载源后重装。");
+        }
+
         progress?.Report(new DownloadProgress { Stage = "Forge 部署完成", Current = 1, Total = 1, Detail = targetId });
         return targetId;
+    }
+
+    private static void CleanupNewForgeVersions(string mcDir, HashSet<string> before, string mcVersion, string forgeVersion)
+    {
+        try
+        {
+            var versions = Path.Combine(mcDir, "versions");
+            if (!Directory.Exists(versions)) return;
+            foreach (var dir in Directory.EnumerateDirectories(versions))
+            {
+                var name = Path.GetFileName(dir);
+                if (before.Contains(name)) continue;
+                if (!name.Contains("forge", StringComparison.OrdinalIgnoreCase)) continue;
+                if (!name.Contains(mcVersion, StringComparison.OrdinalIgnoreCase)) continue;
+                if (!name.Contains(forgeVersion, StringComparison.OrdinalIgnoreCase)) continue;
+                try { Directory.Delete(dir, true); } catch (Exception ex) { Log.Warn("清理失败的 Forge 版本失败：" + ex.Message); }
+            }
+        }
+        catch (Exception ex) { Log.Warn("清理失败的 Forge 版本失败：" + ex.Message); }
     }
 
     private static string Trim(string s) => s.Length > 120 ? s[..120] : s;
