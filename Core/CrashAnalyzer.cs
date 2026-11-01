@@ -125,8 +125,9 @@ public static class CrashAnalyzer
                 Title = "Mod 模块冲突（重复导出包）",
                 Detail = $"模块 {a} 和 {b} 都向 {target} 导出了包 {package}，Java 模块系统拒绝启动。\n" +
                          "这通常出现在 Forge 上使用 Sinytra Connector 加载 Fabric 渲染 Mod 时。",
-                Suggestion = "先在 mods 文件夹里搜索并移除与 " + target + " 对应的 Mod（常见是 Sodium Extras / Embeddium Extras）。\n" +
-                             "只保留 Sodium 或 Embeddium 其中一个；如果仍然报错，更新或移除 Sinytra Connector 以及依赖它的 Fabric Mod。",
+                Suggestion = $"先在 mods 文件夹里搜索并移除与模块 {target} 对应的 Mod（它可能是通过 Sinytra Connector 加载的 Fabric Mod）。\n" +
+                             "如果目标模块是 sodium / embeddium / sodiumextras，只保留一个渲染器；否则直接移除该 Mod 再试。\n" +
+                             "如果仍然报错，移除 Sinytra Connector 以及依赖它的 Fabric Mod，或换用 Forge 原生版本。",
                 Evidence = $"模块 {a} / {b} 重复导出 {package}；目标模块：{target}"
             });
         }
