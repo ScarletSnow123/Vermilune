@@ -55,7 +55,7 @@ public sealed class LaunchService
         catch (Exception ex) { Log.Warn("结束游戏进程失败：" + ex.Message); }
     }
 
-    private static void EnsureForgeInstallComplete(LaunchOptions opt)
+    private async Task EnsureForgeInstallCompleteAsync(LaunchOptions opt, CancellationToken ct)
     {
         if (opt.Resolved.Loader != LoaderKind.Forge) return;
         var id = opt.Resolved.Id;
@@ -67,11 +67,26 @@ public sealed class LaunchService
 
         var universal = Path.Combine(opt.MinecraftDir, "libraries", "net", "minecraftforge", "forge",
             $"{mcVersion}-{forgeVersion}", $"forge-{mcVersion}-{forgeVersion}-universal.jar");
-        if (File.Exists(universal)) return;
+        if (!File.Exists(universal))
+        {
+            Report(LaunchState.Downloading, "补全 Forge universal 库…", 0.01);
+            var url = $"https://maven.minecraftforge.net/net/minecraftforge/forge/{mcVersion}-{forgeVersion}/forge-{mcVersion}-{forgeVersion}-universal.jar";
+            try
+            {
+                Directory.CreateDirectory(Path.GetDirectoryName(universal)!);
+                await HttpService.DownloadFileAsync(url, universal, "", null, ct, 3);
+            }
+            catch (Exception ex) when (ex is not OperationCanceledException)
+            {
+                throw new InvalidOperationException(
+                    $"Forge {forgeVersion} 缺少 universal jar，自动补全失败：{ex.Message}\n" +
+                    "请检查网络后重新启动，或在下载页重装 Forge。", ex);
+            }
+        }
 
+        if (File.Exists(universal)) return;
         throw new InvalidOperationException(
             $"Forge {forgeVersion} 安装不完整，缺少 universal jar：\n{universal}\n" +
-            "通常是安装器下载映射表失败（piston-data.mojang.com 无法访问）。\n" +
             "请删除这个 Forge 版本，切换下载源后重新安装。");
     }
 
@@ -140,7 +155,7 @@ public sealed class LaunchService
                 throw new FileNotFoundException("找不到 Java 可执行文件，请到设置里重新选择 Java。", opt.JavaPath);
 
             await EnsureBaseVanillaAsync(opt, ct);
-            EnsureForgeInstallComplete(opt);
+            await EnsureForgeInstallCompleteAsync(opt, ct);
 
             if (!File.Exists(opt.Resolved.ClientJarPath) && string.IsNullOrEmpty(opt.Resolved.ClientJarUrl))
                 throw new FileNotFoundException("客户端 jar 缺失，且版本 JSON 没有提供下载地址。请重装该版本。", opt.Resolved.ClientJarPath);
