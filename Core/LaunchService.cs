@@ -198,13 +198,23 @@ public sealed class LaunchService
                 .Distinct(StringComparer.OrdinalIgnoreCase));
 
             string? authlibJar = null;
+            string? authlibPrefetch = null;
             if (opt.Account.IsYggdrasil)
             {
                 Report(LaunchState.Preparing, "准备外置登录组件…", 0.84);
                 authlibJar = await AuthlibInjector.EnsureAsync(ct);
+                try
+                {
+                    var metadata = await HttpService.GetStringAsync(opt.Account.YggdrasilServer, ct);
+                    authlibPrefetch = Convert.ToBase64String(Encoding.UTF8.GetBytes(metadata));
+                }
+                catch (Exception ex) when (ex is not OperationCanceledException)
+                {
+                    Log.Warn("预取外置登录元数据失败，将直接连接服务器：" + ex.Message);
+                }
             }
 
-            var args = BuildArguments(opt, features, classpath, libDir, mcDir, logConfigPath, authlibJar);
+            var args = BuildArguments(opt, features, classpath, libDir, mcDir, logConfigPath, authlibJar, authlibPrefetch);
             var psi = new ProcessStartInfo
             {
                 FileName = opt.JavaPath,
@@ -405,7 +415,7 @@ public sealed class LaunchService
     }
 
     private List<string> BuildArguments(LaunchOptions opt, LaunchFeatures features, string classpath,
-        string libDir, string mcDir, string? logConfigPath, string? authlibJar = null)
+        string libDir, string mcDir, string? logConfigPath, string? authlibJar = null, string? authlibPrefetch = null)
     {
         var resolved = opt.Resolved;
         var account = opt.Account;
@@ -457,7 +467,13 @@ public sealed class LaunchService
 
         var jvm = new List<string>();
         if (!string.IsNullOrEmpty(authlibJar) && !string.IsNullOrWhiteSpace(account.YggdrasilServer))
-            jvm.Add($"-javaagent:{authlibJar}={account.YggdrasilServer}");
+        {
+            jvm.Add("-javaagent:" + authlibJar + "=" + account.YggdrasilServer);
+            jvm.Add("-Dauthlibinjector.side=client");
+            jvm.Add("-Djavax.net.ssl.trustStoreType=WINDOWS-ROOT");
+            if (!string.IsNullOrEmpty(authlibPrefetch))
+                jvm.Add("-Dauthlibinjector.yggdrasil.prefetched=" + authlibPrefetch);
+        }
         var memory = Math.Clamp(opt.MemoryMb, 512, 65536);
         jvm.Add($"-Xmx{memory}m");
         jvm.Add($"-Xms{Math.Min(1024, Math.Max(512, memory / 4))}m");
