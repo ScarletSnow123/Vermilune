@@ -1,4 +1,4 @@
-﻿<UserControl x:Class="Vermilune.UI.Pages.MorePage"
+<UserControl x:Class="Vermilune.UI.Pages.MorePage"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              FontFamily="{DynamicResource UiFont}"
@@ -52,8 +52,6 @@
                             <TextBlock Text="启动、下载、版本管理与 Mod 分析都在本地完成。"
                                        Style="{StaticResource MutedText}" Margin="0,9,0,0" />
                             <TextBlock Text="配置与日志保存在启动器目录，不会改动游戏存档或 Mods。"
-                                       Style="{StaticResource MutedText}" Margin="0,7,0,0" />
-                            <TextBlock Text="主页右栏保留原有视觉，其他页面可以按自己的习惯使用。"
                                        Style="{StaticResource MutedText}" Margin="0,7,0,0" />
                         </StackPanel>
                     </Border>
