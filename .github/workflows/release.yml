@@ -53,18 +53,8 @@ jobs:
             $notes = Join-Path $PWD "release-notes.md"
             "Vermilune $tag" | Set-Content $notes -Encoding UTF8
           }
+          "NOTES=$notes" >> $env:GITHUB_ENV
 
-          # Release 标题已经显示版本号，正文只保留分点，去掉 Markdown 一级标题。
-          $body = Join-Path $PWD "dist\release-notes.md"
-          $lines = @(Get-Content $notes -Encoding UTF8)
-          if ($lines.Count -gt 0 -and $lines[0] -match '^#\s+') {
-            $lines = @($lines | Select-Object -Skip 1)
-          }
-          while ($lines.Count -gt 0 -and [string]::IsNullOrWhiteSpace($lines[0])) {
-            $lines = @($lines | Select-Object -Skip 1)
-          }
-          $lines | Set-Content $body -Encoding UTF8
-          "NOTES=$body" >> $env:GITHUB_ENV
           Get-Item dist/Vermilune.exe | Select-Object Name, Length
 
       - name: Remove old release if exists
@@ -96,8 +86,6 @@ jobs:
           name: Vermilune ${{ env.TAG }}
           body_path: ${{ env.NOTES }}
           files: dist/Vermilune.exe
-          draft: false
-          prerelease: ${{ contains(env.TAG, 'beta') }}
           generate_release_notes: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
