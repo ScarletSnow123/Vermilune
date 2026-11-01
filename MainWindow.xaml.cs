@@ -44,14 +44,13 @@ public partial class MainWindow : Window
         var s = LauncherApp.I.Settings;
         try
         {
-            if (s.WindowWidth >= MinWidth && s.WindowHeight >= MinHeight)
-            {
-                Width = s.WindowWidth;
-                Height = s.WindowHeight;
-            }
             var work = SystemParameters.WorkArea;
-            Left = Math.Clamp(Left, work.Left, Math.Max(work.Left, work.Right - Width));
-            Top = Math.Clamp(Top, work.Top, Math.Max(work.Top, work.Bottom - Height));
+            var targetWidth = s.WindowWidth >= MinWidth ? s.WindowWidth : 1280;
+            var targetHeight = s.WindowHeight >= MinHeight ? s.WindowHeight : 800;
+            Width = Math.Max(MinWidth, Math.Min(targetWidth, work.Width - 24));
+            Height = Math.Max(MinHeight, Math.Min(targetHeight, work.Height - 24));
+            Left = work.Left + Math.Max(0, (work.Width - Width) / 2);
+            Top = work.Top + Math.Max(0, (work.Height - Height) / 2);
         }
         catch { }
 
@@ -62,7 +61,7 @@ public partial class MainWindow : Window
         BgOpacitySlider.Value = s.BackgroundImageOpacity * 100;
         _updatingSliders = false;
         OpacityValue.Text = $"{s.UiOpacity * 100:0}%";
-        RailVersion.Text = "v1.2.19-beta";
+        RailVersion.Text = "v1.2.20-beta";
 
         LauncherApp.I.SettingsChanged += OnSettingsChanged;
         LauncherApp.I.VersionsChanged += OnVersionsChanged;
@@ -296,10 +295,11 @@ public partial class MainWindow : Window
         }
         else
         {
-            Left = _restoreBounds.Left;
-            Top = _restoreBounds.Top;
-            Width = Math.Max(MinWidth, _restoreBounds.Width);
-            Height = Math.Max(MinHeight, _restoreBounds.Height);
+            var wa = SystemParameters.WorkArea;
+            Width = Math.Max(MinWidth, Math.Min(_restoreBounds.Width, wa.Width));
+            Height = Math.Max(MinHeight, Math.Min(_restoreBounds.Height, wa.Height));
+            Left = Math.Clamp(_restoreBounds.Left, wa.Left, Math.Max(wa.Left, wa.Right - Width));
+            Top = Math.Clamp(_restoreBounds.Top, wa.Top, Math.Max(wa.Top, wa.Bottom - Height));
             _isMaximized = false;
         }
         UpdateMaximizeVisuals();
@@ -441,16 +441,11 @@ public partial class MainWindow : Window
         try
         {
             var s = LauncherApp.I.Settings;
-            if (_isMaximized)
-            {
-                s.WindowWidth = Math.Max(1100, _restoreBounds.Width);
-                s.WindowHeight = Math.Max(700, _restoreBounds.Height);
-            }
-            else
-            {
-                s.WindowWidth = Math.Max(1100, Width);
-                s.WindowHeight = Math.Max(700, Height);
-            }
+            var work = SystemParameters.WorkArea;
+            var saveWidth = _isMaximized ? _restoreBounds.Width : Width;
+            var saveHeight = _isMaximized ? _restoreBounds.Height : Height;
+            s.WindowWidth = (int)Math.Max(MinWidth, Math.Min(saveWidth, work.Width));
+            s.WindowHeight = (int)Math.Max(MinHeight, Math.Min(saveHeight, work.Height));
             s.Maximized = _isMaximized;
             LauncherApp.I.Save();
         }
