@@ -85,14 +85,32 @@ jobs:
           }
 
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: ${{ env.TAG }}
-          name: Vermilune ${{ env.TAG }}
-          body_path: ${{ env.NOTES }}
-          files: dist/Vermilune.exe
-          generate_release_notes: false
-          draft: false
-          prerelease: false
+        shell: pwsh
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          $headers = @{
+            Authorization = "Bearer $env:GITHUB_TOKEN"
+            Accept = "application/vnd.github+json"
+            "User-Agent" = "Vermilune"
+          }
+          $body = Get-Content "release-body.md" -Raw -Encoding UTF8
+          $payload = @{
+            tag_name = $env:TAG
+            name = "Vermilune $env:TAG"
+            body = $body
+            draft = $false
+            prerelease = $false
+          } | ConvertTo-Json -Depth 4
+
+          $release = Invoke-RestMethod -Method Post `
+            -Uri "https://api.github.com/repos/$env:GITHUB_REPOSITORY/releases" `
+            -Headers $headers -Body $payload -ContentType "application/json"
+
+          $upload = $release.upload_url -replace '\{.*\}$',''
+          Invoke-RestMethod -Method Post `
+            -Uri "$upload?name=Vermilune.exe" `
+            -Headers $headers -InFile "dist/Vermilune.exe" `
+            -ContentType "application/octet-stream"
+
+          Write-Host "Release 已创建：$($release.html_url)"
