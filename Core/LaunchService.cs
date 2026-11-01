@@ -67,22 +67,10 @@ public sealed class LaunchService
 
         var universal = Path.Combine(opt.MinecraftDir, "libraries", "net", "minecraftforge", "forge",
             $"{mcVersion}-{forgeVersion}", $"forge-{mcVersion}-{forgeVersion}-universal.jar");
-        if (File.Exists(universal))
-        {
-            var versionJson = Path.Combine(opt.MinecraftDir, "versions", id, id + ".json");
-            try
-            {
-                var root = JsonNode.Parse(File.ReadAllText(versionJson)) as JsonObject;
-                var hasForgeLibrary = root?["libraries"] is JsonArray libs &&
-                                      libs.Any(l => (l?["name"]?.GetValue<string>() ?? "")
-                                          .StartsWith("net.minecraftforge:forge:", StringComparison.OrdinalIgnoreCase));
-                if (hasForgeLibrary) return;
-            }
-            catch { }
-        }
+        if (File.Exists(universal)) return;
 
         throw new InvalidOperationException(
-            $"Forge {forgeVersion} 安装不完整，缺少 Forge 库或 universal jar：\n{universal}\n" +
+            $"Forge {forgeVersion} 安装不完整，缺少 universal jar：\n{universal}\n" +
             "通常是安装器下载映射表失败（piston-data.mojang.com 无法访问）。\n" +
             "请删除这个 Forge 版本，切换下载源后重新安装。");
     }
@@ -579,6 +567,19 @@ public sealed class LaunchService
             return Regex.Replace(s, @"\$\{[a-zA-Z0-9_]+\}", "");
         }
 
+        var baseJarName = string.IsNullOrWhiteSpace(resolved.MinecraftVersion)
+            ? ""
+            : resolved.MinecraftVersion + ".jar";
+        string ReplaceJvm(string s)
+        {
+            var value = Replace(s);
+            // Forge 的 ignoreList 指的是原版客户端 jar，不是 Forge 版本 id。
+            // 若误写成 1.20.1-forge-47.4.28.jar，原版 jar 会同时以自动模块和 minecraft 模块加载。
+            if (!string.IsNullOrEmpty(baseJarName) && resolved.Loader is LoaderKind.Forge or LoaderKind.NeoForge)
+                value = value.Replace(opt.Version.Id + ".jar", baseJarName, StringComparison.OrdinalIgnoreCase);
+            return value;
+        }
+
         var jvm = new List<string>();
         if (!string.IsNullOrEmpty(authlibJar) && !string.IsNullOrWhiteSpace(account.YggdrasilServer))
         {
@@ -622,7 +623,7 @@ public sealed class LaunchService
             jvm.Add(Replace(resolved.Logging.Argument.Replace("${path}", logConfigPath)));
 
         // 版本 JSON 的 JVM 参数
-        var versionJvm = ExpandArguments(resolved.JvmArguments, features, Replace);
+        var versionJvm = ExpandArguments(resolved.JvmArguments, features, ReplaceJvm);
         // 去掉重复的 -cp 对（保留最后一个）
         var cpIndexes = new List<int>();
         for (var i = 0; i < versionJvm.Count; i++)

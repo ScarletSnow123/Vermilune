@@ -1,5 +1,7 @@
 using System.Diagnostics;
 using System.IO;
+using System.IO.Compression;
+using System.Text;
 using System.Text.Json.Nodes;
 using System.Text.RegularExpressions;
 
@@ -95,6 +97,7 @@ public sealed class ForgeService
         }
 
         var start = DateTime.UtcNow;
+        var runInstaller = await PrepareOfflineMappingsAsync(mcVersion, forgeVersion, mcDir, installer, progress, ct);
         progress?.Report(new DownloadProgress { Stage = "运行 Forge 部署器", Detail = "正在写入 libraries 与版本 JSON，可能需要几分钟" });
         var psi = new ProcessStartInfo
         {
@@ -108,7 +111,7 @@ public sealed class ForgeService
             StandardErrorEncoding = System.Text.Encoding.UTF8
         };
         psi.ArgumentList.Add("-jar");
-        psi.ArgumentList.Add(installer);
+        psi.ArgumentList.Add(runInstaller);
         psi.ArgumentList.Add("--installClient");
         psi.ArgumentList.Add(mcDir);
 
@@ -156,21 +159,11 @@ public sealed class ForgeService
         var universal = Path.Combine(mcDir, "libraries", "net", "minecraftforge", "forge",
             $"{mcVersion}-{forgeVersion}", $"forge-{mcVersion}-{forgeVersion}-universal.jar");
         var targetJson = Path.Combine(mcDir, "versions", targetId, targetId + ".json");
-        var hasForgeLibrary = false;
-        try
-        {
-            var root = JsonNode.Parse(File.ReadAllText(targetJson)) as JsonObject;
-            if (root?["libraries"] is JsonArray libs)
-                hasForgeLibrary = libs.Any(l =>
-                    (l?["name"]?.GetValue<string>() ?? "").StartsWith("net.minecraftforge:forge:", StringComparison.OrdinalIgnoreCase));
-        }
-        catch (Exception ex) { Log.Warn("校验 Forge 版本 JSON 失败：" + ex.Message); }
-
-        if (!File.Exists(universal) || !File.Exists(targetJson) || !hasForgeLibrary)
+        if (!File.Exists(universal) || !File.Exists(targetJson))
         {
             CleanupNewForgeVersions(mcDir, before, mcVersion, forgeVersion);
             throw new InvalidOperationException(
-                "Forge 安装不完整：版本 JSON 缺少 Forge 库，或缺少 forge-universal.jar。\n" +
+                "Forge 安装不完整：缺少 forge-universal.jar 或版本 JSON。\n" +
                 "通常是网络无法访问 piston-data.mojang.com，请切换下载源后重装。");
         }
 
@@ -195,6 +188,115 @@ public sealed class ForgeService
             }
         }
         catch (Exception ex) { Log.Warn("清理失败的 Forge 版本失败：" + ex.Message); }
+    }
+
+    private async Task<string> PrepareOfflineMappingsAsync(string mcVersion, string forgeVersion, string mcDir,
+        string installer, IProgress<DownloadProgress>? progress, CancellationToken ct)
+    {
+        try
+        {
+            using var read = ZipFile.OpenRead(installer);
+            var profileEntry = read.GetEntry("install_profile.json");
+            if (profileEntry is null) return installer;
+            string profileJson;
+            using (var stream = profileEntry.Open())
+            using (var reader = new StreamReader(stream, Encoding.UTF8))
+                profileJson = await reader.ReadToEndAsync(ct);
+
+            var profile = JsonNode.Parse(profileJson) as JsonObject;
+            var raw = profile?["data"]?["MOJMAPS"]?["client"]?.GetValue<string>() ?? "";
+            var match = Regex.Match(raw, @"\[([^:]+):([^:]+):([^:\]]+):mappings@txt\]");
+            if (!match.Success) return installer;
+
+            var group = match.Groups[1].Value.Replace('.', '/');
+            var artifact = match.Groups[2].Value;
+            var mappingVersion = match.Groups[3].Value;
+            var mappingPath = Path.Combine(mcDir, "libraries", group, artifact, mappingVersion,
+                $"{artifact}-{mappingVersion}-mappings.txt");
+
+            if (!File.Exists(mappingPath) || new FileInfo(mappingPath).Length < 4096)
+            {
+                progress?.Report(new DownloadProgress { Stage = "下载 Mojang 映射表", Detail = mcVersion });
+                try
+                {
+                    var metaJson = await HttpService.GetStringAsync(
+                        $"https://bmclapi2.bangbang93.com/version/{Uri.EscapeDataString(mcVersion)}/json", ct);
+                    var download = (JsonNode.Parse(metaJson) as JsonObject)?["downloads"]?["client_mappings"];
+                    var officialUrl = download?["url"]?.GetValue<string>() ?? "";
+                    var sha1 = download?["sha1"]?.GetValue<string>() ?? "";
+                    var hash = officialUrl.Split('/').LastOrDefault() ?? "";
+                    var mirrorUrl = string.IsNullOrWhiteSpace(hash)
+                        ? ""
+                        : $"https://bmclapi2.bangbang93.com/v1/objects/{hash}/client.txt";
+                    Directory.CreateDirectory(Path.GetDirectoryName(mappingPath)!);
+                    var failed = false;
+                    if (!string.IsNullOrWhiteSpace(mirrorUrl))
+                    {
+                        try { await HttpService.DownloadFileAsync(mirrorUrl, mappingPath, sha1, null, ct, 3); }
+                        catch (Exception ex) when (ex is not OperationCanceledException)
+                        {
+                            failed = true;
+                            Log.Warn("BMCLAPI 映射表下载失败：" + ex.Message);
+                        }
+                    }
+                    if (failed || !File.Exists(mappingPath) || new FileInfo(mappingPath).Length < 4096)
+                    {
+                        if (!string.IsNullOrWhiteSpace(officialUrl))
+                            await HttpService.DownloadFileAsync(officialUrl, mappingPath, sha1, null, ct, 3);
+                    }
+                    if (File.Exists(mappingPath))
+                    {
+                        var head = new byte[2];
+                        using var fs = File.OpenRead(mappingPath);
+                        _ = fs.Read(head, 0, 2);
+                        if (head[0] == (byte)'P' && head[1] == (byte)'K')
+                        {
+                            File.Delete(mappingPath);
+                            Log.Warn("映射表下载结果不是文本，已丢弃");
+                        }
+                    }
+                }
+                catch (Exception ex) when (ex is not OperationCanceledException)
+                {
+                    Log.Warn("映射表准备失败：" + ex.Message);
+                }
+            }
+
+            if (!File.Exists(mappingPath)) return installer;
+
+            var patched = Path.Combine(Path.GetDirectoryName(installer)!, $"forge-{mcVersion}-{forgeVersion}-installer-nomojmaps.jar");
+            File.Copy(installer, patched, true);
+            using (var zip = ZipFile.Open(patched, ZipArchiveMode.Update))
+            {
+                var entry = zip.GetEntry("install_profile.json");
+                if (entry is null) return installer;
+                string json;
+                using (var stream = entry.Open())
+                using (var reader = new StreamReader(stream, Encoding.UTF8))
+                    json = await reader.ReadToEndAsync(ct);
+                var root = JsonNode.Parse(json) as JsonObject;
+                if (root?["processors"] is JsonArray processors)
+                {
+                    for (var i = processors.Count - 1; i >= 0; i--)
+                    {
+                        if (processors[i]?.ToJsonString().Contains("DOWNLOAD_MOJMAPS", StringComparison.Ordinal) == true)
+                            processors.RemoveAt(i);
+                    }
+                }
+                entry.Delete();
+                var replacement = zip.CreateEntry("install_profile.json", CompressionLevel.Optimal);
+                using var output = replacement.Open();
+                using var writer = new StreamWriter(output, new UTF8Encoding(false));
+                writer.Write(root?.ToJsonString() ?? json);
+            }
+            Log.Info("已准备本地映射表，跳过 Forge 的 DownloadMojmaps");
+            return patched;
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            Log.Warn("准备离线映射表失败：" + ex.Message);
+            return installer;
+        }
     }
 
     private static string Trim(string s) => s.Length > 120 ? s[..120] : s;
