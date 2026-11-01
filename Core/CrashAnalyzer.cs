@@ -88,7 +88,7 @@ public static class CrashAnalyzer
             "在版本「修改」中改用该版本要求的 Java（1.16.5 及以下通常用 Java 8，1.17 用 16/17，1.18-1.20.4 用 17，1.20.5+ 用 21）。",
             @"UnsupportedClassVersionError|class file version|requires Java");
 
-        AddDependencyFindings(findings, all);
+        AddDependencyFindings(findings, all, loader);
         AddPattern(findings, all, "MOD_DUPLICATE", ModIssueSeverity.Critical,
             @"Duplicate mods|duplicate mod|Found duplicate mods|DuplicateModsFoundException|duplicate Mod ID",
             "Mod 重复安装",
@@ -423,7 +423,7 @@ public static class CrashAnalyzer
         });
     }
 
-    private static void AddDependencyFindings(List<CrashFinding> list, string text)
+    private static void AddDependencyFindings(List<CrashFinding> list, string text, LoaderKind loader)
     {
         if (string.IsNullOrEmpty(text)) return;
         if (!Regex.IsMatch(text, @"Missing or unsupported mandatory dependencies|requires .* which is missing|Missing dependency",
@@ -433,16 +433,25 @@ public static class CrashAnalyzer
             .Where(x => x.Length > 0)
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .Take(6).ToList();
+        var fabricOnForge = (loader is LoaderKind.Forge or LoaderKind.NeoForge) &&
+                            ids.Any(id => id.Equals("fabric_api", StringComparison.OrdinalIgnoreCase) ||
+                                          id.Equals("connectormod", StringComparison.OrdinalIgnoreCase) ||
+                                          id.Equals("fabricloader", StringComparison.OrdinalIgnoreCase));
         var detail = ids.Count > 0
             ? "日志中提到的前置 Mod ID：" + string.Join("、", ids)
             : "日志显示某个 Mod 的强制前置缺失。";
         list.Add(new CrashFinding
         {
             Severity = ModIssueSeverity.Critical,
-            Code = "MISSING_DEPENDENCY",
-            Title = "前置 Mod 未安装",
-            Detail = detail,
-            Suggestion = "安装对应前置（注意与游戏、加载器版本一致）；如果已经安装，检查是否被禁用或版本范围不符。",
+            Code = fabricOnForge ? "FABRIC_ON_FORGE" : "MISSING_DEPENDENCY",
+            Title = fabricOnForge ? "Fabric Mod 缺少 Connector / Fabric API" : "前置 Mod 未安装",
+            Detail = fabricOnForge
+                ? detail + "\n当前是 Forge 环境，但日志里的 Mod 需要 Fabric API 或 Sinytra Connector。"
+                : detail,
+            Suggestion = fabricOnForge
+                ? "这些是 Fabric Mod，不能只把 jar 放进 Forge 的 mods 文件夹。\n" +
+                  "要么移除对应的 Fabric Mod（如 Continuity），要么安装匹配版本的 Sinytra Connector 和 Fabric API；更稳妥的做法是改用 Fabric 实例。"
+                : "安装对应前置（注意与游戏、加载器版本一致）；如果已经安装，检查是否被禁用或版本范围不符。",
             Evidence = ExtractEvidence(text, @"Missing or unsupported mandatory dependencies|Mod ID: '"),
             ModIds = ids
         });
