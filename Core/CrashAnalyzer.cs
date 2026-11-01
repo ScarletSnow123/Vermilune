@@ -110,6 +110,34 @@ public static class CrashAnalyzer
             "根据下方堆栈定位 Mod，更新或移除它；同时确认所有前置 Mod 与游戏版本一致。",
             @"NoSuchMethodError|NoClassDefFoundError|ClassNotFoundException|IncompatibleClassChangeError");
 
+        var missingLibrary = Regex.Match(all,
+            @"(?:Invalid paths argument, contained no existing paths|contained no existing paths)[:\s]*\[?([^\]\r\n]+)");
+        if (missingLibrary.Success)
+        {
+            var raw = missingLibrary.Groups[1].Value.Trim();
+            var path = raw.Split(',')[0].Trim().Trim('"', '[', ']');
+            findings.Add(new CrashFinding
+            {
+                Code = "MISSING_LIBRARY",
+                Severity = ModIssueSeverity.Critical,
+                Title = "运行库文件缺失",
+                Detail = "启动器把某个库加入了 classpath，但对应文件不存在。\n" +
+                         (path.Length > 0 ? "缺失路径：" + path + "\n" : "") +
+                         "常见于 Forge 库被删除、杀毒软件隔离或下载不完整。",
+                Suggestion = "在版本「修改」里重新安装 / 修复 Forge；确认 libraries 下对应文件存在；把 .minecraft 和 Java 加入杀毒白名单。",
+                Evidence = path.Length > 400 ? path[..400] : path
+            });
+        }
+        else
+        {
+            AddPattern(findings, all, "MISSING_LIBRARY", ModIssueSeverity.Critical,
+                @"Invalid paths argument|contained no existing paths|No existing paths",
+                "运行库文件缺失",
+                "游戏启动时找不到 classpath 中的某个库文件，通常是 Forge 库缺失或被杀毒软件隔离。",
+                "重新安装 / 修复 Forge，检查 libraries 目录，并把 .minecraft 加入杀毒白名单。",
+                @"Invalid paths argument|contained no existing paths");
+        }
+
         var moduleConflict = Regex.Match(all,
             @"java\.lang\.module\.ResolutionException:\s*Modules?\s+([^\s]+)\s+and\s+([^\s]+)\s+export package\s+([^\s]+)\s+to module\s+([^\s]+)");
         if (moduleConflict.Success)

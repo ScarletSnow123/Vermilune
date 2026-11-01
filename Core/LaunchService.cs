@@ -242,10 +242,33 @@ public sealed class LaunchService
             ExtractNatives(nativeLibs, enabledLibs, libDir, opt.NativesDir);
 
             // 6. 构造命令行
-            var classpath = string.Join(';', enabledLibs
-                .Select(l => Path.Combine(libDir, l.Path))
-                .Append(opt.Resolved.ClientJarPath)
-                .Distinct(StringComparer.OrdinalIgnoreCase));
+            var classpathItems = enabledLibs
+                .Select(l => (Lib: (LibraryEntry?)l, Path: Path.Combine(libDir, l.Path)))
+                .Append((Lib: (LibraryEntry?)null, Path: opt.Resolved.ClientJarPath))
+                .GroupBy(x => x.Path, StringComparer.OrdinalIgnoreCase)
+                .Select(g => g.First())
+                .ToList();
+            var missingClasspath = classpathItems.Where(x => !File.Exists(x.Path)).ToList();
+            if (missingClasspath.Count > 0)
+            {
+                Report(LaunchState.Downloading, $"补全缺失运行库（{missingClasspath.Count} 个）…", 0.84);
+                foreach (var item in missingClasspath)
+                {
+                    if (item.Lib is null) continue;
+                    var urls = item.Lib.AllUrls().ToList();
+                    if (urls.Count == 0) continue;
+                    try { await HttpService.DownloadFileAsync(urls, item.Path, item.Lib.Sha1, null, ct, 3); }
+                    catch (Exception ex) when (ex is not OperationCanceledException) { Log.Warn($"补全运行库失败 {item.Lib.Name}：{ex.Message}"); }
+                }
+                missingClasspath = classpathItems.Where(x => !File.Exists(x.Path)).ToList();
+                if (missingClasspath.Count > 0)
+                {
+                    var list = string.Join("\n", missingClasspath.Take(5).Select(x => x.Path));
+                    throw new InvalidOperationException(
+                        $"启动前检查发现运行库仍然缺失（{missingClasspath.Count} 个）：\n{list}\n请在版本「修改」里重新安装 Forge，或检查杀毒软件隔离区。");
+                }
+            }
+            var classpath = string.Join(';', classpathItems.Select(x => x.Path));
 
             string? authlibJar = null;
             string? authlibPrefetch = null;
