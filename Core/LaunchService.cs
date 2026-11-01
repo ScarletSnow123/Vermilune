@@ -55,6 +55,53 @@ public sealed class LaunchService
         catch (Exception ex) { Log.Warn("结束游戏进程失败：" + ex.Message); }
     }
 
+    private async Task EnsureBaseVanillaAsync(LaunchOptions opt, CancellationToken ct)
+    {
+        var baseId = opt.Resolved.BaseId;
+        var versionJson = Path.Combine(opt.MinecraftDir, "versions", opt.Version.Id, opt.Version.Id + ".json");
+        try
+        {
+            if (File.Exists(versionJson))
+            {
+                var root = JsonNode.Parse(File.ReadAllText(versionJson)) as JsonObject;
+                var inherited = root?["inheritsFrom"]?.GetValue<string>();
+                if (!string.IsNullOrWhiteSpace(inherited)) baseId = inherited;
+            }
+        }
+        catch { }
+
+        if (string.IsNullOrWhiteSpace(baseId) ||
+            string.Equals(baseId, opt.Resolved.Id, StringComparison.OrdinalIgnoreCase))
+            return;
+
+        var mcDir = opt.MinecraftDir;
+        if (string.IsNullOrWhiteSpace(mcDir)) return;
+        var baseJson = Path.Combine(mcDir, "versions", baseId, baseId + ".json");
+        var baseJar = Path.Combine(mcDir, "versions", baseId, baseId + ".jar");
+        if (File.Exists(baseJson) && File.Exists(baseJar)) return;
+
+        Report(LaunchState.Downloading, $"补全原版 {baseId}…", 0.01);
+        Log.Warn($"检测到继承版本 {baseId} 不完整，自动补全");
+        var progress = new Progress<DownloadProgress>(p =>
+            Report(LaunchState.Downloading, string.IsNullOrWhiteSpace(p.Detail) ? p.Stage : p.Detail, 0.02));
+        try
+        {
+            await LauncherApp.I.Downloads.EnsureVanillaAsync(baseId, mcDir, progress, ct);
+        }
+        catch (Exception ex)
+        {
+            Log.Error(ex, "自动补全原版失败");
+            throw new InvalidOperationException(
+                $"这个版本依赖原版 {baseId}，但自动补全失败：{ex.Message}\n请先在「下载」里安装原版 {baseId}，再启动。", ex);
+        }
+
+        var refreshed = LauncherApp.I.Versions.Resolve(opt.Version.Id);
+        if (refreshed is not null) opt.Resolved = refreshed;
+        if (!File.Exists(baseJar))
+            throw new FileNotFoundException(
+                $"原版 {baseId} 仍然缺少客户端 jar。请重新安装原版 {baseId}。", baseJar);
+    }
+
     public async Task LaunchAsync(LaunchOptions opt, CancellationToken ct)
     {
         await _launchLock.WaitAsync(ct);
@@ -71,6 +118,9 @@ public sealed class LaunchService
 
             if (!File.Exists(opt.JavaPath))
                 throw new FileNotFoundException("找不到 Java 可执行文件，请到设置里重新选择 Java。", opt.JavaPath);
+
+            await EnsureBaseVanillaAsync(opt, ct);
+
             if (!File.Exists(opt.Resolved.ClientJarPath) && string.IsNullOrEmpty(opt.Resolved.ClientJarUrl))
                 throw new FileNotFoundException("客户端 jar 缺失，且版本 JSON 没有提供下载地址。请重装该版本。", opt.Resolved.ClientJarPath);
 

@@ -211,9 +211,12 @@
                                    TextWrapping="Wrap" />
                         <Border Background="{DynamicResource OverlayBrush}" CornerRadius="7" Padding="9,7" Margin="0,9,0,0"
                                 Visibility="{Binding HasLog, Converter={StaticResource BoolToVisibility}}">
-                            <TextBlock Text="{Binding LogText}" FontFamily="{DynamicResource MonoFont}"
-                                       FontSize="9.5" Foreground="{DynamicResource TextMutedBrush}"
-                                       TextWrapping="Wrap" MaxHeight="58" />
+                            <ScrollViewer MaxHeight="120" VerticalScrollBarVisibility="Auto"
+                                          HorizontalScrollBarVisibility="Disabled" PanningMode="VerticalOnly">
+                                <TextBlock Text="{Binding LogText}" FontFamily="{DynamicResource MonoFont}"
+                                           FontSize="9.5" Foreground="{DynamicResource TextMutedBrush}"
+                                           TextWrapping="Wrap" />
+                            </ScrollViewer>
                         </Border>
                     </StackPanel>
                 </Border>
@@ -522,7 +525,7 @@
                             <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
                         <StackPanel>
-                            <TextBlock Text="Vermilune   ·   v1.2.12-beta" FontSize="10"
+                            <TextBlock Text="Vermilune   ·   v1.2.13-beta" FontSize="10"
                                        Foreground="{DynamicResource TextMutedBrush}" />
                             <TextBlock Text="Minecraft 资源版权归 Mojang Studios 与各 Mod 作者所有" FontSize="10"
                                        Foreground="{DynamicResource TextMutedBrush}" Margin="0,4,0,0" />

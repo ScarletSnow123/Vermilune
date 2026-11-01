@@ -105,7 +105,25 @@ public sealed class DownloadService
     public async Task EnsureVanillaAsync(string mcVersion, string mcDir,
         IProgress<DownloadProgress>? progress, CancellationToken ct)
     {
-        if (File.Exists(Path.Combine(mcDir, "versions", mcVersion, mcVersion + ".json"))) return;
+        var versionDir = Path.Combine(mcDir, "versions", mcVersion);
+        var jsonPath = Path.Combine(versionDir, mcVersion + ".json");
+        var jarPath = Path.Combine(versionDir, mcVersion + ".jar");
+        if (File.Exists(jsonPath) && File.Exists(jarPath)) return;
+
+        if (File.Exists(jsonPath))
+        {
+            // JSON 已存在但客户端 jar 被删了：只补 jar，不重装整个版本。
+            var resolved = new VersionResolver(mcDir).Resolve(mcVersion);
+            if (resolved is not null && !string.IsNullOrEmpty(resolved.ClientJarUrl))
+            {
+                if (string.IsNullOrEmpty(resolved.ClientJarPath)) throw new InvalidOperationException("原版客户端 jar 路径为空。");
+                progress?.Report(new DownloadProgress { Stage = "补全原版", Current = 0, Total = 1, Detail = mcVersion + " client.jar" });
+                await HttpService.DownloadFileAsync(resolved.ClientJarUrl, resolved.ClientJarPath,
+                    resolved.ClientJarSha1, null, ct);
+                if (File.Exists(resolved.ClientJarPath)) return;
+            }
+        }
+
         var manifest = await GetVersionManifestAsync(false, ct);
         var remote = manifest.FirstOrDefault(v => v.Id == mcVersion)
                      ?? throw new InvalidOperationException("版本清单中没有 Minecraft " + mcVersion);

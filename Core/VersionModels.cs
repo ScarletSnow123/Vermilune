@@ -1,4 +1,4 @@
-﻿using System.IO;
+using System.IO;
 using System.Text.Json.Nodes;
 using System.Text.RegularExpressions;
 
@@ -154,7 +154,7 @@ public sealed class LaunchFeatures
 public sealed class LaunchOptions
 {
     public VersionInfo Version { get; init; } = new();
-    public ResolvedVersion Resolved { get; init; } = null!;
+    public ResolvedVersion Resolved { get; set; } = null!;
     public InstanceSettings Instance { get; init; } = new();
     public AccountSettings Account { get; init; } = new();
     public string MinecraftDir { get; init; } = "";
@@ -169,7 +169,7 @@ public sealed class LaunchOptions
     public string ExtraJvmArgs { get; init; } = "";
     public string ExtraGameArgs { get; init; } = "";
     public string LauncherName { get; init; } = "Vermilune";
-    public string LauncherVersion { get; init; } = "1.2.12-beta";
+    public string LauncherVersion { get; init; } = "1.2.13-beta";
 }
 
 public static class RuleEvaluator
