@@ -208,9 +208,11 @@
                 </StackPanel>
             </Border>
 
-            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,18,0,0">
-                <Button Content="关闭" Style="{StaticResource ButtonBase}" Click="Close_Click" />
-            </StackPanel>
+            <Grid Margin="0,18,0,0">
+                <Button x:Name="LogoutButton" Content="退出当前账号" Style="{StaticResource ButtonBase}"
+                        Height="32" HorizontalAlignment="Left" Visibility="Collapsed" Click="Logout_Click" />
+                <Button Content="关闭" Style="{StaticResource ButtonBase}" HorizontalAlignment="Right" Click="Close_Click" />
+            </Grid>
         </StackPanel>
         </ScrollViewer>
     </Border>

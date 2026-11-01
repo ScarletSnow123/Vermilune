@@ -200,6 +200,28 @@ public sealed class LauncherApp
         Settings.Account = account.Clone();
     }
 
+    public bool LogoutCurrentAccount()
+    {
+        var current = Settings.Account;
+        if (!current.IsOnline) return false;
+        Settings.Accounts ??= new List<AccountSettings>();
+        Settings.Accounts.RemoveAll(a =>
+            string.Equals(a.Id, current.Id, StringComparison.OrdinalIgnoreCase) || SameAccountIdentity(a, current));
+
+        var next = Settings.Accounts.FirstOrDefault()
+                   ?? new AccountSettings
+                   {
+                       Type = "offline",
+                       Name = "Player",
+                       Uuid = AccountService.OfflineUuid("Player")
+                   };
+        Settings.Account = next.Clone();
+        Save();
+        SettingsChanged?.Invoke();
+        if (Settings.Account.IsYggdrasil || Settings.Account.IsNide) _ = RefreshAccountAsync();
+        return true;
+    }
+
     public bool SwitchAccount(string id)
     {
         var saved = Settings.Accounts?.FirstOrDefault(a =>

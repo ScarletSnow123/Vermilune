@@ -15,6 +15,7 @@ public partial class AccountDialog : Window
         MouseLeftButtonDown += (_, _) => { try { DragMove(); } catch { } };
         var account = LauncherApp.I.Settings.Account;
         CurrentText.Text = $"当前：{account.Name}（{AccountTypeText(account)}）";
+        LogoutButton.Visibility = account.IsOnline ? Visibility.Visible : Visibility.Collapsed;
         OfflineName.Text = account.IsOnline ? "" : account.Name;
         if (account.IsYggdrasil)
         {
@@ -143,6 +144,20 @@ public partial class AccountDialog : Window
         LauncherApp.I.RememberAccount(account);
         LauncherApp.I.Save();
         LauncherApp.I.RaiseSettingsChanged();
+        Changed = true;
+        Close();
+    }
+
+    private void Logout_Click(object sender, RoutedEventArgs e)
+    {
+        var account = LauncherApp.I.Settings.Account;
+        if (!account.IsOnline) return;
+        if (!MessageDialog.Show(this, "退出登录",
+                $"将退出「{account.Name}」，并清除这个账号保存的登录令牌。\n" +
+                "如果还有其他已保存账号，会自动切换到其中一个；否则回到离线账号 Player。\n\n确定退出吗？",
+                "退出登录", "取消", danger: true))
+            return;
+        if (!LauncherApp.I.LogoutCurrentAccount()) return;
         Changed = true;
         Close();
     }
