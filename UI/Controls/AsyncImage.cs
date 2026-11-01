@@ -4,6 +4,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using Vermilune.Core;
 
@@ -96,15 +97,21 @@ public sealed class AsyncImage : Image
             var image = new BitmapImage();
             image.BeginInit();
             image.CacheOption = BitmapCacheOption.OnLoad;
-            // 列表图标只需要 128px；只有需要精确裁剪的贴图才保留原始分辨率。
-            if (!full) image.DecodePixelWidth = 128;
             image.StreamSource = stream;
             image.EndInit();
             image.Freeze();
-            return image;
+
+            // 先完整解码，再缩小。直接设置 DecodePixelWidth 在部分 WebP 图标上会失败，
+            // 导致列表图标整块消失；TransformedBitmap 对 WebP/PNG 都更稳。
+            if (full || image.PixelWidth <= 128) return image;
+            var scale = 128.0 / image.PixelWidth;
+            var resized = new TransformedBitmap(image, new ScaleTransform(scale, scale));
+            resized.Freeze();
+            return resized;
         }
-        catch
+        catch (Exception ex)
         {
+            Log.Warn("图标解码失败：" + url + " " + ex.Message);
             return null;
         }
     }
