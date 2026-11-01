@@ -124,7 +124,21 @@ public sealed class ForgeService
         if (!process.Start()) throw new InvalidOperationException("无法启动 Forge 部署器。");
         process.BeginOutputReadLine();
         process.BeginErrorReadLine();
-        var exited = await Task.Run(() => process.WaitForExit(10 * 60 * 1000), ct);
+        using var cancelRegistration = ct.Register(() =>
+        {
+            try { if (!process.HasExited) process.Kill(true); } catch { }
+        });
+        bool exited;
+        try
+        {
+            exited = await Task.Run(() => process.WaitForExit(10 * 60 * 1000), ct);
+        }
+        catch (OperationCanceledException)
+        {
+            try { if (!process.HasExited) process.Kill(true); } catch { }
+            CleanupNewForgeVersions(mcDir, before, mcVersion, forgeVersion);
+            throw;
+        }
         if (!exited)
         {
             try { process.Kill(true); } catch { }

@@ -1,6 +1,7 @@
 using System.IO;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Threading;
 using Microsoft.Win32;
 using Vermilune.Core;
 using Vermilune.UI.Dialogs;
@@ -229,7 +230,7 @@ public partial class DownloadPage : UserControl, IPage
         {
             Log.Error(ex, "Forge 部署失败");
             SetInstalling(false, "Forge 部署失败：" + ex.Message);
-            MessageDialog.Show(Window.GetWindow(this), "Forge 部署失败", ex.Message, "关闭", danger: true);
+            await ShowInstallFailureAsync("Forge 部署失败", ex.Message);
         }
     }
 
@@ -316,7 +317,7 @@ public partial class DownloadPage : UserControl, IPage
         {
             Log.Error(ex, "安装版本失败");
             SetInstalling(false, "安装失败：" + ex.Message);
-            MessageDialog.Show(Window.GetWindow(this), "安装失败", ex.Message, "关闭", danger: true);
+            await ShowInstallFailureAsync("安装失败", ex.Message);
         }
     }
 
@@ -401,6 +402,13 @@ public partial class DownloadPage : UserControl, IPage
         }
     }
 
+    private async Task ShowInstallFailureAsync(string title, string message)
+    {
+        // 先让进度遮罩完成隐藏，否则用户会点到后面的“取消”按钮。
+        await Dispatcher.Yield(DispatcherPriority.Render);
+        MessageDialog.Show(Window.GetWindow(this), title, message, "关闭", danger: true);
+    }
+
     private void CancelInstall_Click(object sender, RoutedEventArgs e)
     {
         try { _cts?.Cancel(); } catch { }
@@ -481,7 +489,7 @@ public partial class DownloadPage : UserControl, IPage
         {
             Log.Error(ex, "部署 Fabric 失败");
             SetInstalling(false, "安装失败：" + ex.Message);
-            MessageDialog.Show(Window.GetWindow(this), "Fabric 安装失败", ex.Message, "关闭", danger: true);
+            await ShowInstallFailureAsync("Fabric 安装失败", ex.Message);
         }
     }
 
@@ -514,7 +522,7 @@ public partial class DownloadPage : UserControl, IPage
         catch (Exception ex)
         {
             ForgeStatus.Text = "启动安装器失败：" + ex.Message;
-            MessageDialog.Show(Window.GetWindow(this), "启动安装器失败", ex.Message, "关闭", danger: true);
+            await ShowInstallFailureAsync("启动安装器失败", ex.Message);
         }
     }
 
