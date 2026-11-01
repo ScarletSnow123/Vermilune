@@ -62,7 +62,7 @@ public partial class MainWindow : Window
         BgOpacitySlider.Value = s.BackgroundImageOpacity * 100;
         _updatingSliders = false;
         OpacityValue.Text = $"{s.UiOpacity * 100:0}%";
-        RailVersion.Text = "v1.2.18-beta";
+        RailVersion.Text = "v1.2.19-beta";
 
         LauncherApp.I.SettingsChanged += OnSettingsChanged;
         LauncherApp.I.VersionsChanged += OnVersionsChanged;
@@ -206,6 +206,15 @@ public partial class MainWindow : Window
 
     public void NavigateToVersions(string versionId)
     {
+        if (!string.IsNullOrWhiteSpace(versionId))
+        {
+            LauncherApp.I.SetCurrentVersion(versionId);
+            if (_pages.TryGetValue("launch", out var launchPage) && launchPage is LaunchPage lp)
+            {
+                var version = LauncherApp.I.Versions.Find(versionId);
+                if (version is not null) lp.SelectedVersion = version;
+            }
+        }
         NavigateTo("versions");
         if (_pages.TryGetValue("versions", out var page) && page is VersionsPage vp)
             vp.SelectVersion(versionId);

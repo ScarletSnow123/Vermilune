@@ -257,6 +257,7 @@ public partial class ResourceBrowser : UserControl
                     ? await LauncherApp.I.Modrinth.InstallModpackAsync(_selected, file, progress, _cts.Token)
                     : await LauncherApp.I.CurseForge.InstallModpackAsync(_selected, file, progress, _cts.Token);
                 LauncherApp.I.ReloadVersions();
+                LauncherApp.I.SetCurrentVersion(result.Id);
                 SetInstalling(false, $"整合包安装完成：{result.Name}（{result.Files} 个文件）");
                 LauncherApp.I.Notify("整合包安装完成", result.Name);
                 if (MessageDialog.Show(Window.GetWindow(this), "安装完成",
