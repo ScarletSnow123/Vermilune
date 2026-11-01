@@ -10,8 +10,19 @@ public static class Shell
         try
         {
             if (Directory.Exists(path))
-                Process.Start(new ProcessStartInfo("explorer.exe", "\"" + path + "\"") { UseShellExecute = true });
-            else if (File.Exists(path))
+            {
+                try
+                {
+                    Process.Start(new ProcessStartInfo { FileName = path, UseShellExecute = true });
+                    return;
+                }
+                catch
+                {
+                    Process.Start(new ProcessStartInfo("explorer.exe", "\"" + path + "\"") { UseShellExecute = true });
+                    return;
+                }
+            }
+            if (File.Exists(path))
                 Process.Start(new ProcessStartInfo("explorer.exe", "/select,\"" + path + "\"") { UseShellExecute = true });
             else
                 Log.Warn("打开目录失败，路径不存在：" + path);

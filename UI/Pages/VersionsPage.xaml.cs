@@ -388,9 +388,16 @@ public partial class VersionsPage : UserControl, IPage
     private void OpenModsFolder_Click(object sender, RoutedEventArgs e)
     {
         if (_selected is null) return;
-        var dir = LauncherApp.I.Versions.GetModsDir(_selected.Id, _instance, LauncherApp.I.Settings.VersionIsolation);
-        Directory.CreateDirectory(dir);
-        Shell.OpenFolder(dir);
+        try
+        {
+            var dir = LauncherApp.I.Versions.GetModsDir(_selected.Id, _instance, LauncherApp.I.Settings.VersionIsolation);
+            Directory.CreateDirectory(dir);
+            Shell.OpenFolder(dir);
+        }
+        catch (Exception ex)
+        {
+            MessageDialog.Show(Window.GetWindow(this), "打开 Mods 文件夹失败", ex.Message, "关闭", danger: true);
+        }
     }
 
     private async void AnalyzeMods_Click(object sender, RoutedEventArgs e)

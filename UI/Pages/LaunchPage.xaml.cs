@@ -700,10 +700,22 @@ public partial class LaunchPage : UserControl, IPage, INotifyPropertyChanged
 
     private void OpenModsFolder_Click(object sender, RoutedEventArgs e)
     {
-        if (SelectedVersion is null) return;
-        var dir = LauncherApp.I.Versions.GetModsDir(SelectedVersion.Id, null, LauncherApp.I.Settings.VersionIsolation);
-        Directory.CreateDirectory(dir);
-        Shell.OpenFolder(dir);
+        var id = SelectedVersion?.Id ?? LauncherApp.I.CurrentVersion?.Id;
+        if (string.IsNullOrWhiteSpace(id))
+        {
+            MessageDialog.Show(Window.GetWindow(this), "没有可用版本", "请先在「版本」页安装一个版本。", "知道了");
+            return;
+        }
+        try
+        {
+            var dir = LauncherApp.I.Versions.GetModsDir(id, null, LauncherApp.I.Settings.VersionIsolation);
+            Directory.CreateDirectory(dir);
+            Shell.OpenFolder(dir);
+        }
+        catch (Exception ex)
+        {
+            MessageDialog.Show(Window.GetWindow(this), "打开 Mods 文件夹失败", ex.Message, "关闭", danger: true);
+        }
     }
 
     private void OpenLog_Click(object sender, RoutedEventArgs e)

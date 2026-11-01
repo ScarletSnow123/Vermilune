@@ -460,8 +460,10 @@ public partial class MainWindow : Window
             return;
         }
         var files = e.Data.GetData(DataFormats.FileDrop) as string[];
-        var zip = files?.FirstOrDefault(f => f.EndsWith(".zip", StringComparison.OrdinalIgnoreCase));
-        e.Effects = zip is null ? DragDropEffects.None : DragDropEffects.Copy;
+        if (files is null) { e.Effects = DragDropEffects.None; return; }
+        var supported = files.Any(f => f.EndsWith(".zip", StringComparison.OrdinalIgnoreCase) ||
+                                       f.EndsWith(".jar", StringComparison.OrdinalIgnoreCase));
+        e.Effects = supported ? DragDropEffects.Copy : DragDropEffects.None;
     }
 
     private async void Window_Drop(object sender, DragEventArgs e)
@@ -469,8 +471,15 @@ public partial class MainWindow : Window
         e.Handled = true;
         if (_dropInstalling || !e.Data.GetDataPresent(DataFormats.FileDrop)) return;
         var files = e.Data.GetData(DataFormats.FileDrop) as string[];
-        var archive = files?.FirstOrDefault(f => f.EndsWith(".zip", StringComparison.OrdinalIgnoreCase));
-        if (archive is null || !File.Exists(archive)) return;
+        if (files is null) return;
+        var archive = files.FirstOrDefault(f => f.EndsWith(".zip", StringComparison.OrdinalIgnoreCase));
+        var mods = files.Where(f => f.EndsWith(".jar", StringComparison.OrdinalIgnoreCase) && File.Exists(f)).ToList();
+        if (archive is null)
+        {
+            if (mods.Count > 0) InstallDroppedMods(mods);
+            return;
+        }
+        if (!File.Exists(archive)) return;
 
         if (!MessageDialog.Show(this, "安装整合包",
                 $"检测到整合包：\n{Path.GetFileName(archive)}\n\n" +
@@ -525,6 +534,41 @@ public partial class MainWindow : Window
             _dropCts?.Dispose();
             _dropCts = null;
             DropOverlay.Visibility = Visibility.Collapsed;
+        }
+    }
+
+    private void InstallDroppedMods(List<string> mods)
+    {
+        VersionInfo? target = null;
+        if (_pages.TryGetValue("launch", out var page) && page is LaunchPage launch)
+            target = launch.SelectedVersion;
+        target ??= LauncherApp.I.CurrentVersion;
+        if (target is null)
+        {
+            MessageDialog.Show(this, "安装 Mod", "当前没有可用版本，请先安装一个 Minecraft 版本。", "知道了");
+            return;
+        }
+
+        var dir = LauncherApp.I.Versions.GetModsDir(target.Id, InstanceStore.Load(target.Id),
+            LauncherApp.I.Settings.VersionIsolation);
+        Directory.CreateDirectory(dir);
+        var conflicts = mods.Where(f => File.Exists(Path.Combine(dir, Path.GetFileName(f)))).ToList();
+        var message = $"将把 {mods.Count} 个 Mod 安装到实例「{target.DisplayName}」。";
+        if (conflicts.Count > 0) message += $"\n\n其中 {conflicts.Count} 个文件已存在，将继续并覆盖。";
+        if (!MessageDialog.Show(this, "安装 Mod", message + "\n\n继续吗？", "安装", "取消")) return;
+
+        try
+        {
+            foreach (var file in mods)
+                File.Copy(file, Path.Combine(dir, Path.GetFileName(file)), true);
+            LauncherApp.I.Notify("Mod 已安装", $"{mods.Count} 个文件 → {target.DisplayName}");
+            if (_pages.TryGetValue("versions", out var vp) && vp is VersionsPage versions)
+                versions.RefreshState();
+        }
+        catch (Exception ex)
+        {
+            Log.Error(ex, "拖入 Mod 安装失败");
+            MessageDialog.Show(this, "安装 Mod 失败", ex.Message, "关闭", danger: true);
         }
     }
 
