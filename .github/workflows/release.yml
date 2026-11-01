@@ -50,11 +50,11 @@ jobs:
             "publish/Vermilune.exe",
             "README.md",
             "使用说明.txt"
-          ) -DestinationPath "dist/Vermilune-$tag-便携版.zip" -Force
+          ) -DestinationPath "dist/Vermilune-$tag-portable.zip" -Force
 
           $exclude = @('bin', 'obj', 'publish', 'dist', '.git', '.github')
           $items = Get-ChildItem -Force | Where-Object { $exclude -notcontains $_.Name }
-          Compress-Archive -Path $items.FullName -DestinationPath "dist/Vermilune-$tag-源码.zip" -Force
+          Compress-Archive -Path $items.FullName -DestinationPath "dist/Vermilune-$tag-source.zip" -Force
 
           $notes = Join-Path $PWD "RELEASE_NOTES-$tag.md"
           if (!(Test-Path $notes)) {
