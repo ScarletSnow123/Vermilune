@@ -14,6 +14,13 @@ public sealed class YggdrasilProfile
     public string AccessToken { get; init; } = "";
     public string ClientToken { get; init; } = "";
     public string Server { get; init; } = "";
+    public List<YggdrasilCharacter> Characters { get; init; } = new();
+}
+
+public sealed class YggdrasilCharacter
+{
+    public string Id { get; init; } = "";
+    public string Name { get; init; } = "";
 }
 
 /// <summary>
@@ -68,13 +75,28 @@ public static class YggdrasilService
         var token = root?["accessToken"]?.GetValue<string>() ?? "";
         if (string.IsNullOrEmpty(token)) throw new AuthException("服务器没有返回 accessToken。");
 
+        var characters = new List<YggdrasilCharacter>();
+        if (root?["availableProfiles"] is JsonArray profiles)
+        {
+            foreach (var item in profiles.OfType<JsonObject>())
+            {
+                var id = item["id"]?.GetValue<string>() ?? "";
+                var characterName = item["name"]?.GetValue<string>() ?? "";
+                if (!string.IsNullOrEmpty(id)) characters.Add(new YggdrasilCharacter { Id = id, Name = characterName });
+            }
+        }
+
         var selected = root?["selectedProfile"] as JsonObject;
-        if (selected is null && root?["availableProfiles"] is JsonArray profiles && profiles.Count > 0)
-            selected = profiles[0] as JsonObject;
+        if (selected is null && characters.Count > 0)
+        {
+            var first = characters[0];
+            selected = new JsonObject { ["id"] = first.Id, ["name"] = first.Name };
+        }
 
         var uuid = selected?["id"]?.GetValue<string>() ?? "";
         var name = selected?["name"]?.GetValue<string>() ?? username;
         if (string.IsNullOrEmpty(uuid)) throw new AuthException("该外置账号还没有创建角色，请先在皮肤站创建角色。");
+        if (characters.Count == 0) characters.Add(new YggdrasilCharacter { Id = uuid, Name = name });
 
         return new YggdrasilProfile
         {
@@ -82,7 +104,8 @@ public static class YggdrasilService
             Uuid = uuid,
             AccessToken = token,
             ClientToken = root?["clientToken"]?.GetValue<string>() ?? clientToken,
-            Server = server
+            Server = server,
+            Characters = characters
         };
     }
 

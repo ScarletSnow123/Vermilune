@@ -152,6 +152,20 @@ public partial class AccountDialog : Window
         {
             var server = YggdrasilService.NormalizeServer(serverText);
             var profile = await YggdrasilService.AuthenticateAsync(server, user, password);
+            if (profile.Characters.Count > 1)
+            {
+                var chosen = YggdrasilCharacterDialog.Show(this, profile.Characters, profile.Uuid);
+                if (chosen is null) return;
+                profile = new YggdrasilProfile
+                {
+                    Name = chosen.Name,
+                    Uuid = chosen.Id,
+                    AccessToken = profile.AccessToken,
+                    ClientToken = profile.ClientToken,
+                    Server = profile.Server,
+                    Characters = profile.Characters
+                };
+            }
             var account = new AccountSettings();
             YggdrasilService.Apply(account, profile);
             await YggdrasilService.UpdateTexturesAsync(account);
