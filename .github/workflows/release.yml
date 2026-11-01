@@ -1,0 +1,77 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: '要发布的 tag，例如 v1.2.20-beta'
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.tag || github.ref }}
+          fetch-depth: 0
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Publish
+        shell: pwsh
+        run: |
+          dotnet publish Vermilune.csproj -c Release -r win-x64 `
+            --self-contained false `
+            -p:PublishSingleFile=true `
+            -p:IncludeNativeLibrariesForSelfExtract=true `
+            -p:DebugType=none `
+            -o publish
+
+      - name: Package
+        shell: pwsh
+        run: |
+          $tag = "${{ github.ref_name }}"
+          if ("${{ github.event_name }}" -eq "workflow_dispatch") { $tag = "${{ inputs.tag }}" }
+          "TAG=$tag" >> $env:GITHUB_ENV
+
+          New-Item -ItemType Directory -Force dist | Out-Null
+          Compress-Archive -Path @(
+            "publish/Vermilune.exe",
+            "README.md",
+            "使用说明.txt"
+          ) -DestinationPath "dist/Vermilune-$tag-便携版.zip" -Force
+
+          $exclude = @('bin', 'obj', 'publish', 'dist', '.git', '.github')
+          $items = Get-ChildItem -Force | Where-Object { $exclude -notcontains $_.Name }
+          Compress-Archive -Path $items.FullName -DestinationPath "dist/Vermilune-$tag-源码.zip" -Force
+
+          $notes = Join-Path $PWD "RELEASE_NOTES-$tag.md"
+          if (!(Test-Path $notes)) {
+            $notes = Join-Path $PWD "release-notes.md"
+            "Vermilune $tag" | Set-Content $notes -Encoding UTF8
+          }
+          "NOTES=$notes" >> $env:GITHUB_ENV
+          Get-ChildItem dist | Select-Object Name, Length
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ env.TAG }}
+          name: Vermilune ${{ env.TAG }}
+          body_path: ${{ env.NOTES }}
+          files: dist/*.zip
+          prerelease: ${{ contains(env.TAG, 'beta') }}
+          generate_release_notes: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
