@@ -77,19 +77,22 @@ public sealed class CurseForgeService
         string? loader, CancellationToken ct)
     {
         if (!int.TryParse(project.Id, out var modId)) return new();
-        var url = $"{Base}/mods/{modId}/files?pageSize=50";
-        if (!string.IsNullOrWhiteSpace(mcVersion)) url += "&gameVersion=" + Uri.EscapeDataString(mcVersion);
-        var loaderType = LoaderType(loader);
-        if (loaderType > 0 && project.Type is ResourceType.Mod or ResourceType.Modpack) url += "&modLoaderType=" + loaderType;
-        var root = await GetJsonAsync(url, ct);
         var result = new List<ResourceFileInfo>();
-        if (root["data"] is JsonArray data)
+        var seen = new HashSet<int>();
+        var loaderType = LoaderType(loader);
+        for (var index = 0; index < 500; index += 50)
         {
+            var url = $"{Base}/mods/{modId}/files?pageSize=50&index={index}";
+            if (!string.IsNullOrWhiteSpace(mcVersion)) url += "&gameVersion=" + Uri.EscapeDataString(mcVersion);
+            if (loaderType > 0 && project.Type is ResourceType.Mod or ResourceType.Modpack) url += "&modLoaderType=" + loaderType;
+            var root = await GetJsonAsync(url, ct);
+            if (root["data"] is not JsonArray data || data.Count == 0) break;
+            var added = 0;
             foreach (var node in data.OfType<JsonObject>())
             {
                 var id = node["id"]?.GetValue<int>() ?? 0;
                 var fileName = node["fileName"]?.GetValue<string>() ?? "";
-                if (id <= 0 || string.IsNullOrEmpty(fileName)) continue;
+                if (id <= 0 || string.IsNullOrEmpty(fileName) || !seen.Add(id)) continue;
                 var deps = new List<ResourceDependency>();
                 if (node["dependencies"] is JsonArray da)
                 {
@@ -118,7 +121,9 @@ public sealed class CurseForgeService
                     Loaders = new List<string>(),
                     Dependencies = deps
                 });
+                added++;
             }
+            if (data.Count < 50 || added == 0) break;
         }
         return result.OrderByDescending(x => x.Published).ToList();
     }
