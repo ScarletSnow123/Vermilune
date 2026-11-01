@@ -38,7 +38,7 @@ jobs:
             -p:DebugType=none `
             -o publish
 
-      - name: Package
+      - name: Prepare exe
         shell: pwsh
         run: |
           $tag = "${{ github.ref_name }}"
@@ -46,15 +46,7 @@ jobs:
           "TAG=$tag" >> $env:GITHUB_ENV
 
           New-Item -ItemType Directory -Force dist | Out-Null
-          Compress-Archive -Path @(
-            "publish/Vermilune.exe",
-            "README.md",
-            "使用说明.txt"
-          ) -DestinationPath "dist/Vermilune-$tag-portable.zip" -Force
-
-          $exclude = @('bin', 'obj', 'publish', 'dist', '.git', '.github')
-          $items = Get-ChildItem -Force | Where-Object { $exclude -notcontains $_.Name }
-          Compress-Archive -Path $items.FullName -DestinationPath "dist/Vermilune-$tag-source.zip" -Force
+          Copy-Item "publish/Vermilune.exe" "dist/Vermilune.exe" -Force
 
           $notes = Join-Path $PWD "RELEASE_NOTES-$tag.md"
           if (!(Test-Path $notes)) {
@@ -62,7 +54,29 @@ jobs:
             "Vermilune $tag" | Set-Content $notes -Encoding UTF8
           }
           "NOTES=$notes" >> $env:GITHUB_ENV
-          Get-ChildItem dist | Select-Object Name, Length
+          Get-Item dist/Vermilune.exe | Select-Object Name, Length
+
+      - name: Remove old release if exists
+        shell: pwsh
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          $headers = @{
+            Authorization = "Bearer $env:GITHUB_TOKEN"
+            Accept = "application/vnd.github+json"
+            "User-Agent" = "Vermilune"
+          }
+          $uri = "https://api.github.com/repos/$env:GITHUB_REPOSITORY/releases/tags/$env:TAG"
+          try {
+            $release = Invoke-RestMethod -Uri $uri -Headers $headers
+            Invoke-RestMethod -Method Delete -Uri "https://api.github.com/repos/$env:GITHUB_REPOSITORY/releases/$($release.id)" -Headers $headers
+            Start-Sleep -Seconds 2
+            Write-Host "已删除旧 Release：$($release.id)"
+          } catch {
+            $status = $_.Exception.Response.StatusCode.value__
+            if ($status -ne 404) { throw }
+            Write-Host "没有旧 Release，继续创建。"
+          }
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
@@ -70,7 +84,7 @@ jobs:
           tag_name: ${{ env.TAG }}
           name: Vermilune ${{ env.TAG }}
           body_path: ${{ env.NOTES }}
-          files: dist/*.zip
+          files: dist/Vermilune.exe
           prerelease: ${{ contains(env.TAG, 'beta') }}
           generate_release_notes: false
         env:
