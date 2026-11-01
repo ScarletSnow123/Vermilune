@@ -80,6 +80,7 @@ public sealed class ForgeService
     public async Task<string> InstallAsync(string mcVersion, string forgeVersion, string mcDir, string javaPath,
         IProgress<DownloadProgress>? progress, CancellationToken ct)
     {
+        EnsureLauncherProfiles(mcDir);
         var versionsDir = Path.Combine(mcDir, "versions");
         var before = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         if (Directory.Exists(versionsDir))
@@ -297,6 +298,19 @@ public sealed class ForgeService
             Log.Warn("准备离线映射表失败：" + ex.Message);
             return installer;
         }
+    }
+
+    private static void EnsureLauncherProfiles(string mcDir)
+    {
+        try
+        {
+            Directory.CreateDirectory(mcDir);
+            var path = Path.Combine(mcDir, "launcher_profiles.json");
+            if (File.Exists(path) && new FileInfo(path).Length > 16) return;
+            File.WriteAllText(path, "{\"profiles\":{},\"settings\":{\"language\":\"zh_cn\"},\"version\":3}",
+                new UTF8Encoding(false));
+        }
+        catch (Exception ex) { Log.Warn("创建 launcher_profiles.json 失败：" + ex.Message); }
     }
 
     private static string Trim(string s) => s.Length > 120 ? s[..120] : s;
