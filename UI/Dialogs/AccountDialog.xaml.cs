@@ -154,6 +154,7 @@ public partial class AccountDialog : Window
             var profile = await YggdrasilService.AuthenticateAsync(server, user, password);
             var account = new AccountSettings();
             YggdrasilService.Apply(account, profile);
+            await YggdrasilService.UpdateTexturesAsync(account);
             LauncherApp.I.RememberAccount(account);
             LauncherApp.I.Save();
             LauncherApp.I.RaiseSettingsChanged();

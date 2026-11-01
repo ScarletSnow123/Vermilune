@@ -131,6 +131,44 @@ public static class YggdrasilService
         account.Xuid = "";
     }
 
+    /// <summary>读取皮肤站 profile 里的 SKIN / CAPE 纹理。</summary>
+    public static async Task<bool> UpdateTexturesAsync(AccountSettings account, CancellationToken ct = default)
+    {
+        try
+        {
+            var server = NormalizeServer(account.YggdrasilServer);
+            var uuid = account.Uuid.Replace("-", "");
+            using var response = await HttpService.Client.GetAsync(
+                $"{server}/sessionserver/session/minecraft/profile/{uuid}", ct);
+            if (!response.IsSuccessStatusCode) return false;
+            var body = await response.Content.ReadAsStringAsync(ct);
+            var root = JsonNode.Parse(body) as JsonObject;
+            if (root?["properties"] is not JsonArray properties) return false;
+            foreach (var item in properties.OfType<JsonObject>())
+            {
+                if (!string.Equals(item["name"]?.GetValue<string>(), "textures", StringComparison.OrdinalIgnoreCase))
+                    continue;
+                var encoded = item["value"]?.GetValue<string>() ?? "";
+                if (string.IsNullOrEmpty(encoded)) continue;
+                var decoded = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(encoded));
+                var textures = (JsonNode.Parse(decoded) as JsonObject)?["textures"] as JsonObject;
+                if (textures is null) return false;
+                var skin = textures["SKIN"] as JsonObject;
+                var cape = textures["CAPE"] as JsonObject;
+                account.SkinUrl = skin?["url"]?.GetValue<string>() ?? "";
+                account.CapeUrl = cape?["url"]?.GetValue<string>() ?? "";
+                account.SkinModel = skin?["metadata"]?["model"]?.GetValue<string>() ?? "classic";
+                LauncherApp.I.Skins.InvalidateAccountTextureCache();
+                return true;
+            }
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            Log.Warn("读取外置账号皮肤失败：" + ex.Message);
+        }
+        return false;
+    }
+
     private static async Task<HttpResponseMessage> PostJsonAsync(string url, string json, CancellationToken ct)
     {
         using var content = new StringContent(json, Encoding.UTF8, "application/json");

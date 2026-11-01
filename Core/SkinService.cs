@@ -364,6 +364,21 @@ public sealed class SkinService
         throw last ?? new InvalidOperationException("无法下载皮肤纹理。");
     }
 
+    public void InvalidateAccountTextureCache()
+    {
+        try
+        {
+            var skin = AccountCachePath("skin");
+            var cape = AccountCachePath("cape");
+            if (File.Exists(skin)) File.Delete(skin);
+            if (File.Exists(cape)) File.Delete(cape);
+        }
+        catch (Exception ex)
+        {
+            Log.Warn("清理账号皮肤缓存失败：" + ex.Message);
+        }
+    }
+
     private static string AccountCachePath(string kind)
     {
         var key = LauncherApp.I.Settings.Account.Uuid;

@@ -78,6 +78,24 @@ public sealed class LauncherApp
     public async Task RefreshAccountAsync()
     {
         var account = Settings.Account;
+        if (account.IsYggdrasil)
+        {
+            if (string.IsNullOrEmpty(account.AccessTokenProtected)) return;
+            try
+            {
+                if (await YggdrasilService.UpdateTexturesAsync(account, CancellationToken.None))
+                {
+                    Save();
+                    Log.Info("外置账号皮肤已刷新：" + account.Name);
+                }
+            }
+            catch (Exception ex)
+            {
+                Log.Warn("外置账号皮肤刷新失败：" + ex.Message);
+            }
+            SettingsChanged?.Invoke();
+            return;
+        }
         if (!account.IsMicrosoft) return;
         if (string.IsNullOrEmpty(account.RefreshTokenProtected)) return;
         // 只有快过期或已过期才在后台刷新，避免每次启动都请求微软
@@ -183,6 +201,7 @@ public sealed class LauncherApp
         Settings.Account = saved.Clone();
         Save();
         SettingsChanged?.Invoke();
+        if (Settings.Account.IsYggdrasil) _ = RefreshAccountAsync();
         return true;
     }
 
