@@ -14,6 +14,7 @@ public sealed class YggdrasilProfile
     public string AccessToken { get; init; } = "";
     public string ClientToken { get; init; } = "";
     public string Server { get; init; } = "";
+    public string LoginName { get; init; } = "";
     public List<YggdrasilCharacter> Characters { get; init; } = new();
 }
 
@@ -105,6 +106,7 @@ public static class YggdrasilService
             AccessToken = token,
             ClientToken = root?["clientToken"]?.GetValue<string>() ?? clientToken,
             Server = server,
+            LoginName = username,
             Characters = characters
         };
     }
@@ -137,6 +139,7 @@ public static class YggdrasilService
             AccessToken = token,
             ClientToken = root?["clientToken"]?.GetValue<string>() ?? client,
             Server = server,
+            LoginName = account.YggdrasilLoginName,
             Characters = account.YggdrasilCharacters.ToList()
         };
     }
@@ -153,6 +156,7 @@ public static class YggdrasilService
         account.AccessTokenExpiresUtc = DateTime.UtcNow.AddHours(hours);
         account.LastLoginUtc = DateTime.UtcNow;
         account.Xuid = "";
+        if (!string.IsNullOrWhiteSpace(profile.LoginName)) account.YggdrasilLoginName = profile.LoginName;
         if (profile.Characters.Count > 0)
             account.YggdrasilCharacters = profile.Characters.ToList();
     }
@@ -205,6 +209,8 @@ public static class YggdrasilService
     {
         try
         {
+            if (body.Contains("Incorrect username or password", StringComparison.OrdinalIgnoreCase))
+                return "登录邮箱或密码错误。请填写 LittleSkin 的登录邮箱，而不是 Minecraft 角色名。";
             var root = JsonNode.Parse(body) as JsonObject;
             var msg = root?["errorMessage"]?.GetValue<string>() ??
                       root?["message"]?.GetValue<string>() ??

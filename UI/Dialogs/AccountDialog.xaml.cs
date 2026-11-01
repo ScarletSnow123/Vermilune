@@ -19,12 +19,12 @@ public partial class AccountDialog : Window
         if (account.IsYggdrasil)
         {
             YggServer.Text = account.YggdrasilServer;
-            YggUser.Text = account.Name;
+            YggUser.Text = account.YggdrasilLoginName;
         }
         if (account.IsNide)
         {
             NideServer.Text = account.NideServer;
-            NideUser.Text = account.Name;
+            NideUser.Text = account.NideLoginName;
         }
         var showRoles = account.YggdrasilCharacters.Count > 1;
         YggRoleButton.Visibility = account.IsYggdrasil && showRoles ? Visibility.Visible : Visibility.Collapsed;

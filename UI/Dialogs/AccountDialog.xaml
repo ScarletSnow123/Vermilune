@@ -139,7 +139,7 @@
                             <ColumnDefinition Width="*" />
                         </Grid.ColumnDefinitions>
                         <TextBox x:Name="YggUser" Style="{StaticResource InputBox}" Height="34"
-                                 Tag="邮箱或用户名" />
+                                 Tag="登录邮箱（推荐）或角色名" />
                         <PasswordBox x:Name="YggPassword" Grid.Column="2" Height="34" Padding="10,0"
                                      FontFamily="{DynamicResource UiFont}" FontSize="12.5"
                                      Background="{DynamicResource Surface2Brush}" Foreground="{DynamicResource TextBrush}"

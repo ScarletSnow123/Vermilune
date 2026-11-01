@@ -16,7 +16,9 @@ public sealed class AccountSettings
     public string SkinModel { get; set; } = "classic";
     public string Xuid { get; set; } = "";
     public string YggdrasilServer { get; set; } = "";
+    public string YggdrasilLoginName { get; set; } = "";
     public string NideServer { get; set; } = "";
+    public string NideLoginName { get; set; } = "";
     public List<YggdrasilCharacter> YggdrasilCharacters { get; set; } = new();
     public string RefreshTokenProtected { get; set; } = "";
     public string ClientTokenProtected { get; set; } = "";

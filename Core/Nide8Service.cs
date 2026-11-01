@@ -32,6 +32,7 @@ public static class Nide8Service
         YggdrasilService.Apply(account, profile);
         account.Type = "nide";
         account.NideServer = NormalizeServerId(serverId);
+        account.NideLoginName = profile.LoginName;
     }
 
     public static string JarPath => Path.Combine(AppPaths.DataDir, "libraries", "nide8auth.jar");
