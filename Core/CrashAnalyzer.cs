@@ -1,4 +1,4 @@
-﻿using System.IO;
+using System.IO;
 using System.Text;
 using System.Text.RegularExpressions;
 
@@ -109,6 +109,36 @@ public static class CrashAnalyzer
             "某个 Mod 调用了不存在的类或方法，通常是 Mod 版本与游戏/加载器/前置版本不匹配。",
             "根据下方堆栈定位 Mod，更新或移除它；同时确认所有前置 Mod 与游戏版本一致。",
             @"NoSuchMethodError|NoClassDefFoundError|ClassNotFoundException|IncompatibleClassChangeError");
+
+        var moduleConflict = Regex.Match(all,
+            @"java\.lang\.module\.ResolutionException:\s*Modules?\s+([^\s]+)\s+and\s+([^\s]+)\s+export package\s+([^\s]+)\s+to module\s+([^\s]+)");
+        if (moduleConflict.Success)
+        {
+            var a = moduleConflict.Groups[1].Value;
+            var b = moduleConflict.Groups[2].Value;
+            var package = moduleConflict.Groups[3].Value;
+            var target = moduleConflict.Groups[4].Value;
+            findings.Add(new CrashFinding
+            {
+                Code = "MODULE_CONFLICT",
+                Severity = ModIssueSeverity.Critical,
+                Title = "Mod 模块冲突（重复导出包）",
+                Detail = $"模块 {a} 和 {b} 都向 {target} 导出了包 {package}，Java 模块系统拒绝启动。\n" +
+                         "这通常出现在 Forge 上使用 Sinytra Connector 加载 Fabric 渲染 Mod 时。",
+                Suggestion = "先在 mods 文件夹里搜索并移除与 " + target + " 对应的 Mod（常见是 Sodium Extras / Embeddium Extras）。\n" +
+                             "只保留 Sodium 或 Embeddium 其中一个；如果仍然报错，更新或移除 Sinytra Connector 以及依赖它的 Fabric Mod。",
+                Evidence = $"模块 {a} / {b} 重复导出 {package}；目标模块：{target}"
+            });
+        }
+        else
+        {
+            AddPattern(findings, all, "MODULE_CONFLICT", ModIssueSeverity.Critical,
+                @"java\.lang\.module\.ResolutionException|export package .* to module",
+                "Mod 模块冲突",
+                "多个 Mod / 加载器模块同时导出了同一个 Java 包，模块系统拒绝启动。",
+                "优先移除最近安装的渲染类 Mod；Forge + Sinytra Connector 环境下先检查 Sodium Extras、Embeddium、Sodium 是否混装。",
+                @"java\.lang\.module\.ResolutionException|export package .* to module");
+        }
 
         AddPattern(findings, all, "GRAPHICS", ModIssueSeverity.Warning,
             @"GLFW error|Failed to create window|Pixel format not accelerated|The driver does not appear to support OpenGL|EXCEPTION_ACCESS_VIOLATION|nvoglv|atio6axx|ig\d+icd|OpenGL (?:error|failed|context)",

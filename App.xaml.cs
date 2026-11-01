@@ -1,3 +1,6 @@
+using System.Diagnostics;
+using System.Runtime.InteropServices;
+using System.Threading;
 using System.Windows;
 using System.Windows.Threading;
 using Vermilune.Core;
@@ -8,9 +11,23 @@ namespace Vermilune;
 public partial class App : Application
 {
     public static MainWindow? Window { get; private set; }
+    private static Mutex? _instanceMutex;
+
+    [DllImport("user32.dll")]
+    private static extern bool SetForegroundWindow(IntPtr hWnd);
+    [DllImport("user32.dll")]
+    private static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
 
     protected override async void OnStartup(StartupEventArgs e)
     {
+        _instanceMutex = new Mutex(true, @"Local\Vermilune.Launcher", out var createdNew);
+        if (!createdNew)
+        {
+            ActivateExistingLauncher();
+            Shutdown(0);
+            return;
+        }
+
         base.OnStartup(e);
         DispatcherUnhandledException += OnDispatcherUnhandledException;
         AppDomain.CurrentDomain.UnhandledException += (_, args) =>
@@ -62,9 +79,30 @@ public partial class App : Application
         e.Handled = true;
     }
 
+    private static void ActivateExistingLauncher()
+    {
+        try
+        {
+            for (var attempt = 0; attempt < 20; attempt++)
+            {
+                var process = Process.GetProcessesByName("Vermilune")
+                    .FirstOrDefault(p => p.Id != Environment.ProcessId && p.MainWindowHandle != IntPtr.Zero);
+                if (process is not null)
+                {
+                    ShowWindow(process.MainWindowHandle, 9);
+                    SetForegroundWindow(process.MainWindowHandle);
+                    return;
+                }
+                Thread.Sleep(100);
+            }
+        }
+        catch { }
+    }
+
     protected override void OnExit(ExitEventArgs e)
     {
-        try { LauncherApp.I.Save(); } catch { }
+        try { _instanceMutex?.ReleaseMutex(); _instanceMutex?.Dispose(); } catch { }
+        try { if (LauncherApp.I.Initialized) LauncherApp.I.Save(); } catch { }
         Log.Info("Vermilune 退出");
         Log.Shutdown();
         base.OnExit(e);

@@ -43,6 +43,12 @@ public partial class SkinPreview3D : UserControl
     private Point _lastMouse;
     private bool _dragging;
     private bool _built;
+    private bool _renderQueued;
+    private byte[]? _framePixels;
+    private float[]? _frameDepth;
+    private WriteableBitmap? _frameBitmap;
+    private int _frameWidth;
+    private int _frameHeight;
 
     public SkinPreview3D()
     {
@@ -53,6 +59,7 @@ public partial class SkinPreview3D : UserControl
         MouseLeave += (_, _) => { _dragging = false; Cursor = Cursors.Arrow; };
         Cursor = Cursors.SizeAll;
         SizeChanged += (_, _) => Render();
+        IsVisibleChanged += (_, _) => { if (IsVisible) Render(); };
         Loaded += (_, _) => { _built = true; Rebuild(); };
     }
 
@@ -85,7 +92,18 @@ public partial class SkinPreview3D : UserControl
         _angleY += (pos.X - _lastMouse.X) * 0.55;
         _angleX = Math.Clamp(_angleX + (pos.Y - _lastMouse.Y) * 0.45, -55, 55);
         _lastMouse = pos;
-        Render();
+        RequestRender();
+    }
+
+    private void RequestRender()
+    {
+        if (_renderQueued) return;
+        _renderQueued = true;
+        Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Render, new Action(() =>
+        {
+            _renderQueued = false;
+            Render();
+        }));
     }
 
     private void OnMouseUp(object sender, MouseButtonEventArgs e)
@@ -241,12 +259,25 @@ public partial class SkinPreview3D : UserControl
 
     private void Render()
     {
+        if (!IsVisible) return;
         var width = (int)Math.Round(ActualWidth);
         var height = (int)Math.Round(ActualHeight);
         if (width < 8 || height < 8) return;
 
-        var pixels = new byte[width * height * 4];
-        var depth = new float[width * height];
+        if (_framePixels is null || _frameWidth != width || _frameHeight != height)
+        {
+            _frameWidth = width;
+            _frameHeight = height;
+            _framePixels = new byte[width * height * 4];
+            _frameDepth = new float[width * height];
+            _frameBitmap = new WriteableBitmap(width, height, 96, 96, PixelFormats.Bgra32, null);
+        }
+        else
+        {
+            Array.Clear(_framePixels);
+        }
+        var pixels = _framePixels;
+        var depth = _frameDepth!;
         Array.Fill(depth, float.MaxValue);
         var radX = _angleX * Math.PI / 180;
         var radY = _angleY * Math.PI / 180;
@@ -355,7 +386,7 @@ public partial class SkinPreview3D : UserControl
             }
         }
 
-        var bitmap = new WriteableBitmap(width, height, 96, 96, PixelFormats.Bgra32, null);
+        var bitmap = _frameBitmap!;
         bitmap.WritePixels(new Int32Rect(0, 0, width, height), pixels, width * 4, 0);
         PreviewImage.Source = bitmap;
     }
