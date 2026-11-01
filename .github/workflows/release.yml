@@ -107,10 +107,15 @@ jobs:
             -Uri "https://api.github.com/repos/$env:GITHUB_REPOSITORY/releases" `
             -Headers $headers -Body $payload -ContentType "application/json"
 
-          $upload = $release.upload_url -replace '\{.*\}$',''
-          Invoke-RestMethod -Method Post `
-            -Uri "$upload?name=Vermilune.exe" `
-            -Headers $headers -InFile "dist/Vermilune.exe" `
-            -ContentType "application/octet-stream"
+          $upload = $release.upload_url.Split('{')[0]
+          $assetUrl = "$upload?name=Vermilune.exe"
+          Write-Host "上传附件：$assetUrl"
+          & curl.exe -sS -f -X POST `
+            -H "Authorization: Bearer $env:GITHUB_TOKEN" `
+            -H "Accept: application/vnd.github+json" `
+            -H "Content-Type: application/octet-stream" `
+            --data-binary "@dist/Vermilune.exe" `
+            $assetUrl
+          if ($LASTEXITCODE -ne 0) { throw "上传 exe 失败，curl 退出码 $LASTEXITCODE" }
 
           Write-Host "Release 已创建：$($release.html_url)"
