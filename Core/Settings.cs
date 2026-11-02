@@ -50,6 +50,8 @@ public sealed class AppSettings
     public double UiOpacity { get; set; } = 0.96;
     public string BackgroundImage { get; set; } = "";
     public double BackgroundImageOpacity { get; set; } = 0.34;
+    /// <summary>页面切换时使用 BitmapCache / 模糊等高级效果；默认关闭以降低显存和内存占用。</summary>
+    public bool EnableVisualEffects { get; set; }
     public string FeaturedImage { get; set; } = "";
     public string FeaturedTitle { get; set; } = "←----觉真可爱";
     public string FeaturedSubtitle { get; set; } = "古明地觉 · 地灵殿的主人，今天也在吃蛋糕";

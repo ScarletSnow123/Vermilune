@@ -6,6 +6,7 @@ using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
+using System.Windows.Media.Effects;
 using System.Windows.Media.Imaging;
 using System.Windows.Threading;
 using Vermilune.Core;
@@ -213,6 +214,47 @@ public partial class MainWindow : Window
         ((TranslateTransform)page.RenderTransform).BeginAnimation(TranslateTransform.YProperty, move);
         page.Opacity = 1;
         page.BeginAnimation(OpacityProperty, fade);
+
+        var effects = LauncherApp.I.Settings.EnableVisualEffects;
+        if (effects)
+        {
+            // 高级效果默认关闭：只在用户显式开启时使用 BitmapCache、模糊和阴影动画。
+            page.CacheMode = new BitmapCache(1.0);
+            var blur = new BlurEffect { Radius = 0 };
+            page.Effect = blur;
+            var blurIn = new DoubleAnimation(4, 0, TimeSpan.FromMilliseconds(200))
+            {
+                EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
+            };
+            blur.BeginAnimation(BlurEffect.RadiusProperty, blurIn);
+
+            var shadow = new DropShadowEffect
+            {
+                BlurRadius = 26,
+                ShadowDepth = 0,
+                Opacity = 0,
+                Color = Colors.Black
+            };
+            PageHost.Effect = shadow;
+            var shadowFade = new DoubleAnimation(0.35, 0, TimeSpan.FromMilliseconds(200))
+            {
+                EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
+            };
+            shadow.BeginAnimation(DropShadowEffect.OpacityProperty, shadowFade);
+        }
+        else
+        {
+            page.Effect = null;
+            page.CacheMode = null;
+            PageHost.Effect = null;
+        }
+
+        move.Completed += (_, _) =>
+        {
+            page.Effect = null;
+            page.CacheMode = null;
+            PageHost.Effect = null;
+        };
     }
 
     public void NavigateToVersions(string versionId)

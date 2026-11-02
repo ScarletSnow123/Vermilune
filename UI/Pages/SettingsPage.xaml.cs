@@ -61,6 +61,7 @@ public partial class SettingsPage : UserControl, IPage
                     ? "当前：" + s.BackgroundImage
                     : "把图片放进背景文件夹后点刷新");
             LightModeCheck.IsChecked = string.Equals(s.UiThemeMode, "light", StringComparison.OrdinalIgnoreCase);
+            VisualEffectsCheck.IsChecked = s.EnableVisualEffects;
             BgOpacitySlider.Value = s.BackgroundImageOpacity * 100;
             MemorySlider.Value = Math.Clamp(s.MemoryMb, (int)MemorySlider.Minimum, (int)MemorySlider.Maximum);
             MemoryValueText.Text = $"{s.MemoryMb} MB";
@@ -257,6 +258,14 @@ public partial class SettingsPage : UserControl, IPage
         if (_loading) return;
         LauncherApp.I.Settings.CloseAfterLaunch = CloseAfterCheck.IsChecked == true;
         LauncherApp.I.Save();
+    }
+
+    private void VisualEffectsCheck_Click(object sender, RoutedEventArgs e)
+    {
+        if (_loading) return;
+        LauncherApp.I.Settings.EnableVisualEffects = VisualEffectsCheck.IsChecked == true;
+        LauncherApp.I.Save();
+        LauncherApp.I.Notify("高级视觉效果", LauncherApp.I.Settings.EnableVisualEffects ? "已开启" : "已关闭");
     }
 
     private void OptimizeCheck_Click(object sender, RoutedEventArgs e)
