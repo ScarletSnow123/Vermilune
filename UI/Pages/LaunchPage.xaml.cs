@@ -270,7 +270,6 @@ public partial class LaunchPage : UserControl, IPage, INotifyPropertyChanged
             try
             {
                 await LauncherApp.I.Auth.UploadSkinAsync(path, LauncherApp.I.Skins.IsSlim, CancellationToken.None);
-                await LauncherApp.I.RefreshMicrosoftSkinAsync();
                 LauncherApp.I.Notify("皮肤已上传", "已应用到 Microsoft 账号。");
             }
             catch (Exception ex)

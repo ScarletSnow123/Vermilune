@@ -355,9 +355,15 @@ public sealed class AccountService
         }
         account.Name = name;
         account.Uuid = uuid;
-        account.SkinUrl = skin;
+        // Mojang profile 有短暂缓存：刚上传完立刻刷新可能又返回旧皮肤，
+        // 这会让预览先闪一下新皮肤再变回去。30 分钟内以上传结果为准。
+        var recentUpload = account.LastSkinUploadUtc > DateTime.UtcNow.AddMinutes(-30);
+        if (!recentUpload || string.IsNullOrWhiteSpace(account.SkinUrl))
+        {
+            account.SkinUrl = skin;
+            account.SkinModel = skinModel;
+        }
         account.CapeUrl = cape;
-        account.SkinModel = skinModel;
         return true;
     }
 
@@ -499,6 +505,7 @@ public sealed class AccountService
             var active = capes.OfType<JsonObject>().FirstOrDefault(c => string.Equals(c["state"]?.GetValue<string>(), "ACTIVE", StringComparison.OrdinalIgnoreCase));
             account.CapeUrl = active?["url"]?.GetValue<string>() ?? account.CapeUrl;
         }
+        account.LastSkinUploadUtc = DateTime.UtcNow;
         LauncherApp.I.Settings.SkinPath = "";
         LauncherApp.I.Settings.SkinModelOverride = null;
         LauncherApp.I.Save();

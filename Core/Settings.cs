@@ -15,6 +15,7 @@ public sealed class AccountSettings
     public string CapeUrl { get; set; } = "";
     public bool CapeEnabled { get; set; }
     public string SkinModel { get; set; } = "classic";
+    public DateTime LastSkinUploadUtc { get; set; }
     public string Xuid { get; set; } = "";
     public string YggdrasilServer { get; set; } = "";
     public string YggdrasilLoginName { get; set; } = "";
