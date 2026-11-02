@@ -186,7 +186,8 @@ public partial class LaunchPage : UserControl, IPage, INotifyPropertyChanged
         _featuredImagePath = s.FeaturedImage ?? "";
         try
         {
-            var source = !string.IsNullOrWhiteSpace(s.FeaturedImage) && File.Exists(s.FeaturedImage)
+            var source = !string.IsNullOrWhiteSpace(s.FeaturedImage) &&
+                         (s.FeaturedImage.StartsWith("pack://", StringComparison.OrdinalIgnoreCase) || File.Exists(s.FeaturedImage))
                 ? s.FeaturedImage
                 : DefaultFeaturedImage;
             var bitmap = new BitmapImage();

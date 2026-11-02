@@ -59,7 +59,8 @@ public partial class FeaturedCardDialog : Window
     {
         try
         {
-            var source = !string.IsNullOrWhiteSpace(_imagePath) && File.Exists(_imagePath)
+            var source = !string.IsNullOrWhiteSpace(_imagePath) &&
+                         (_imagePath.StartsWith("pack://", StringComparison.OrdinalIgnoreCase) || File.Exists(_imagePath))
                 ? _imagePath
                 : DefaultImage;
             var bitmap = new BitmapImage();
@@ -70,7 +71,11 @@ public partial class FeaturedCardDialog : Window
             bitmap.EndInit();
             bitmap.Freeze();
             PreviewImage.Source = bitmap;
-            ImagePathText.Text = string.IsNullOrWhiteSpace(_imagePath) ? "未选择，使用默认图片" : Path.GetFileName(_imagePath);
+            ImagePathText.Text = string.IsNullOrWhiteSpace(_imagePath)
+                ? "未选择，使用默认图片"
+                : (_imagePath.StartsWith("pack://", StringComparison.OrdinalIgnoreCase)
+                    ? "内置 Satori 图片"
+                    : Path.GetFileName(_imagePath));
         }
         catch
         {
