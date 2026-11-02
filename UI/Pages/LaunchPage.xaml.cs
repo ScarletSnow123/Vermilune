@@ -618,7 +618,7 @@ public partial class LaunchPage : UserControl, IPage, INotifyPropertyChanged
             ExtraJvmArgs = instance.JvmArgs,
             ExtraGameArgs = instance.GameArgs,
             LauncherName = "Vermilune",
-            LauncherVersion = "1.2.24-beta"
+            LauncherVersion = "1.2.23-beta"
         };
 
         _cts?.Dispose();
