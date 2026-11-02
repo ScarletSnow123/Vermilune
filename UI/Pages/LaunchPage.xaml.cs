@@ -151,6 +151,7 @@ public partial class LaunchPage : UserControl, IPage, INotifyPropertyChanged
         {
             RefreshAccountHeader();
             ApplyFeaturedCard();
+            _ = LoadAvatarAsync(LauncherApp.I.Settings.Account);
         }));
         _ = RefreshSkinAsync();
     }
@@ -310,10 +311,21 @@ public partial class LaunchPage : UserControl, IPage, INotifyPropertyChanged
             await RefreshSkinAsync();
     }
 
-    private void UseAccountSkin_Click(object sender, RoutedEventArgs e)
+    private async void UseAccountSkin_Click(object sender, RoutedEventArgs e)
     {
         LauncherApp.I.Skins.UseAccountSkin();
-        RefreshState();
+        if (LauncherApp.I.Settings.Account.IsMicrosoft)
+        {
+            try
+            {
+                if (await LauncherApp.I.Auth.RefreshProfileAsync(CancellationToken.None))
+                    LauncherApp.I.Save();
+            }
+            catch (Exception ex) { Log.Warn("刷新账号皮肤失败：" + ex.Message); }
+        }
+        await RefreshSkinAsync();
+        _ = LoadAvatarAsync(LauncherApp.I.Settings.Account);
+        RefreshAccountHeader();
         LauncherApp.I.Notify("已恢复账号皮肤", "启动器会重新读取账号皮肤与披风。");
     }
 
@@ -607,7 +619,7 @@ public partial class LaunchPage : UserControl, IPage, INotifyPropertyChanged
             ExtraJvmArgs = instance.JvmArgs,
             ExtraGameArgs = instance.GameArgs,
             LauncherName = "Vermilune",
-            LauncherVersion = "1.2.22-beta"
+            LauncherVersion = "1.2.23-beta"
         };
 
         _cts?.Dispose();

@@ -98,8 +98,24 @@ public sealed class LauncherApp
         }
         if (!account.IsMicrosoft) return;
         if (string.IsNullOrEmpty(account.RefreshTokenProtected)) return;
-        // 只有快过期或已过期才在后台刷新，避免每次启动都请求微软
-        if (account.AccessTokenExpiresUtc > DateTime.UtcNow.AddHours(2)) return;
+
+        // 每次启动刷新一次资料，外部网站换皮肤后这里才能拿到新 SkinUrl。
+        try
+        {
+            if (await Auth.RefreshProfileAsync(CancellationToken.None))
+            {
+                Save();
+                Log.Info("微软账号皮肤资料已刷新：" + account.Name);
+            }
+        }
+        catch (Exception ex) { Log.Warn("微软账号皮肤资料刷新失败：" + ex.Message); }
+
+        // 只有快过期或已过期才刷新令牌，避免每次启动都请求微软。
+        if (account.AccessTokenExpiresUtc > DateTime.UtcNow.AddHours(2))
+        {
+            SettingsChanged?.Invoke();
+            return;
+        }
         try
         {
             var refresh = Dpapi.Unprotect(account.RefreshTokenProtected);
@@ -230,7 +246,8 @@ public sealed class LauncherApp
         Settings.Account = saved.Clone();
         Save();
         SettingsChanged?.Invoke();
-        if (Settings.Account.IsYggdrasil || Settings.Account.IsNide) _ = RefreshAccountAsync();
+        if (Settings.Account.IsYggdrasil || Settings.Account.IsNide || Settings.Account.IsMicrosoft)
+            _ = RefreshAccountAsync();
         return true;
     }
 

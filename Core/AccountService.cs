@@ -326,6 +326,42 @@ public sealed class AccountService
         return token;
     }
 
+    public async Task<bool> RefreshProfileAsync(CancellationToken ct)
+    {
+        var account = LauncherApp.I.Settings.Account;
+        if (!account.IsMicrosoft) return false;
+        using var request = new HttpRequestMessage(HttpMethod.Get, "https://api.minecraftservices.com/minecraft/profile");
+        request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", GetAccessToken());
+        using var response = await HttpService.Client.SendAsync(request, ct);
+        var text = await response.Content.ReadAsStringAsync(ct);
+        if (!response.IsSuccessStatusCode) return false;
+        var profile = TryParse(text) as JsonObject;
+        if (profile is null) return false;
+        var name = profile["name"]?.GetValue<string>() ?? account.Name;
+        var uuid = profile["id"]?.GetValue<string>() ?? account.Uuid;
+        var skin = "";
+        var skinModel = "classic";
+        if (profile["skins"] is JsonArray skins && skins.Count > 0)
+        {
+            skin = skins[0]?["url"]?.GetValue<string>() ?? "";
+            skinModel = skins[0]?["metadata"]?["model"]?.GetValue<string>() ?? "classic";
+        }
+        var cape = "";
+        if (profile["capes"] is JsonArray capes)
+        {
+            var active = capes.OfType<JsonObject>().FirstOrDefault(c =>
+                string.Equals(c["state"]?.GetValue<string>(), "ACTIVE", StringComparison.OrdinalIgnoreCase));
+            cape = active?["url"]?.GetValue<string>() ?? "";
+        }
+        account.Name = name;
+        account.Uuid = uuid;
+        account.SkinUrl = skin;
+        account.CapeUrl = cape;
+        account.SkinModel = skinModel;
+        LauncherApp.I.Skins.InvalidateAccountTextureCache();
+        return true;
+    }
+
     public async Task<List<MinecraftCape>> GetCapesAsync(CancellationToken ct)
     {
         try
