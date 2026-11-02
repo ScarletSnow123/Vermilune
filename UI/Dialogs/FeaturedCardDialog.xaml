@@ -12,7 +12,7 @@
         <StackPanel>
             <TextBlock Text="自定义首页卡片" FontFamily="{DynamicResource DisplayFont}"
                        FontSize="17" FontWeight="SemiBold" />
-            <TextBlock Text="图片、标题、描述和「看原图」链接都可以改成自己的，默认样式会保留。"
+            <TextBlock Text="图片、标题、描述和文字颜色都可以改成自己的，默认样式会保留。"
                        FontSize="11" Foreground="{DynamicResource TextSubBrush}" TextWrapping="Wrap" Margin="0,7,0,0" />
 
             <Grid Margin="0,16,0,0">
@@ -44,8 +44,44 @@
             <TextBox x:Name="TitleBox" Style="{StaticResource InputBox}" Height="36" Tag="例如：←----觉真可爱" />
             <TextBlock Text="描述" FontSize="11" Foreground="{DynamicResource TextSubBrush}" Margin="0,12,0,6" />
             <TextBox x:Name="SubtitleBox" Style="{StaticResource InputBox}" Height="36" Tag="例如：古明地觉 · 地灵殿的主人" />
-            <TextBlock Text="看原图链接" FontSize="11" Foreground="{DynamicResource TextSubBrush}" Margin="0,12,0,6" />
-            <TextBox x:Name="LinkBox" Style="{StaticResource InputBox}" Height="36" Tag="网页链接，或本地图片路径" />
+
+            <Grid Margin="0,12,0,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="16" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <StackPanel>
+                    <TextBlock Text="大字颜色" FontSize="11" Foreground="{DynamicResource TextSubBrush}" Margin="0,0,0,6" />
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="38" />
+                        </Grid.ColumnDefinitions>
+                        <TextBox x:Name="TitleColorBox" Style="{StaticResource InputBox}" Height="36"
+                                 Tag="#FFF4A6C0" TextChanged="TitleColorBox_TextChanged" />
+                        <Border x:Name="TitleColorPreview" Grid.Column="1" Width="34" Height="34"
+                                CornerRadius="7" Margin="4,1,0,0" BorderBrush="{DynamicResource StrokeBrush}"
+                                BorderThickness="1" Background="#FFF4A6C0" />
+                    </Grid>
+                </StackPanel>
+                <StackPanel Grid.Column="2">
+                    <TextBlock Text="小字颜色" FontSize="11" Foreground="{DynamicResource TextSubBrush}" Margin="0,0,0,6" />
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="38" />
+                        </Grid.ColumnDefinitions>
+                        <TextBox x:Name="SubtitleColorBox" Style="{StaticResource InputBox}" Height="36"
+                                 Tag="留空使用主题次要文字色" TextChanged="SubtitleColorBox_TextChanged" />
+                        <Border x:Name="SubtitleColorPreview" Grid.Column="1" Width="34" Height="34"
+                                CornerRadius="7" Margin="4,1,0,0" BorderBrush="{DynamicResource StrokeBrush}"
+                                BorderThickness="1" Background="{DynamicResource TextMutedBrush}" />
+                    </Grid>
+                </StackPanel>
+            </Grid>
+            <TextBlock Text="颜色支持 #RRGGBB 或 #AARRGGBB；留空的小字颜色跟随主题。"
+                       FontSize="10.5" Foreground="{DynamicResource TextMutedBrush}" Margin="0,6,0,0" />
 
             <TextBlock x:Name="ErrorText" Foreground="{DynamicResource DangerBrush}" FontSize="10.5"
                        Margin="0,8,0,0" Visibility="Collapsed" TextWrapping="Wrap" />

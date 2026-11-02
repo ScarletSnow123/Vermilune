@@ -157,15 +157,30 @@ public partial class LaunchPage : UserControl, IPage, INotifyPropertyChanged
 
     private string _featuredImagePath = "";
     private const string DefaultFeaturedImage = "pack://application:,,,/Assets/Satori.jpg";
-    private const string DefaultFeaturedLink = "https://s1.imagehub.cc/images/2026/07/08/26dd444015c43ab6834afad1864c0aea.th.jpg";
 
     private void ApplyFeaturedCard()
     {
         if (FeaturedImage is null) return;
         var s = LauncherApp.I.Settings;
-        FeaturedTitleText.Text = string.IsNullOrWhiteSpace(s.FeaturedTitle)
-            ? "←----觉真可爱" : s.FeaturedTitle;
-        FeaturedSubtitleText.Text = s.FeaturedSubtitle ?? "";
+        var title = (s.FeaturedTitle ?? "").Trim();
+        var subtitle = (s.FeaturedSubtitle ?? "").Trim();
+        var hasTitle = title.Length > 0;
+        var hasSubtitle = subtitle.Length > 0;
+
+        FeaturedTitleText.Visibility = hasTitle ? Visibility.Visible : Visibility.Collapsed;
+        FeaturedTitleText.Text = title;
+        FeaturedTitleText.FontSize = 20;
+        FeaturedTitleText.Foreground = BrushFrom(s.FeaturedTitleColor, "#FFF4A6C0");
+
+        FeaturedSubtitleText.Visibility = hasSubtitle ? Visibility.Visible : Visibility.Collapsed;
+        FeaturedSubtitleText.Text = subtitle;
+        FeaturedSubtitleText.FontSize = hasTitle ? 10.5 : 12.5;
+        FeaturedSubtitleText.FontWeight = hasTitle ? FontWeights.Normal : FontWeights.Medium;
+        FeaturedSubtitleText.Margin = hasTitle ? new Thickness(0, 6, 0, 0) : new Thickness(0);
+        FeaturedSubtitleText.Foreground = string.IsNullOrWhiteSpace(s.FeaturedSubtitleColor)
+            ? (Brush)FindResource("TextMutedBrush")
+            : BrushFrom(s.FeaturedSubtitleColor, "#9A9A9A");
+
         if (string.Equals(_featuredImagePath, s.FeaturedImage, StringComparison.OrdinalIgnoreCase)) return;
         _featuredImagePath = s.FeaturedImage ?? "";
         try
@@ -188,10 +203,22 @@ public partial class LaunchPage : UserControl, IPage, INotifyPropertyChanged
         }
     }
 
+    private static Brush BrushFrom(string? value, string fallback)
+    {
+        try
+        {
+            var text = string.IsNullOrWhiteSpace(value) ? fallback : value.Trim();
+            if (!text.StartsWith('#')) text = "#" + text;
+            return new SolidColorBrush((Color)ColorConverter.ConvertFromString(text));
+        }
+        catch { return new SolidColorBrush((Color)ColorConverter.ConvertFromString(fallback)); }
+    }
+
     private void CustomizeFeatured_Click(object sender, RoutedEventArgs e)
     {
         var s = LauncherApp.I.Settings;
-        var dialog = new FeaturedCardDialog(s.FeaturedImage, s.FeaturedTitle, s.FeaturedSubtitle, s.FeaturedLink)
+        var dialog = new FeaturedCardDialog(s.FeaturedImage, s.FeaturedTitle, s.FeaturedSubtitle,
+            s.FeaturedTitleColor, s.FeaturedSubtitleColor)
         {
             Owner = Window.GetWindow(this)
         };
@@ -199,7 +226,8 @@ public partial class LaunchPage : UserControl, IPage, INotifyPropertyChanged
         s.FeaturedImage = dialog.ImagePath;
         s.FeaturedTitle = dialog.CardTitle;
         s.FeaturedSubtitle = dialog.CardSubtitle;
-        s.FeaturedLink = dialog.CardLink;
+        s.FeaturedTitleColor = dialog.CardTitleColor;
+        s.FeaturedSubtitleColor = dialog.CardSubtitleColor;
         LauncherApp.I.Save();
         ApplyFeaturedCard();
     }
@@ -785,14 +813,6 @@ public partial class LaunchPage : UserControl, IPage, INotifyPropertyChanged
         LauncherApp.I.ReloadVersions();
         RefreshState();
         LauncherApp.I.Notify("主页已刷新", "版本列表与最近游玩已更新。");
-    }
-
-    private void OpenSatori_Click(object sender, RoutedEventArgs e)
-    {
-        var link = LauncherApp.I.Settings.FeaturedLink;
-        if (string.IsNullOrWhiteSpace(link)) link = DefaultFeaturedLink;
-        if (File.Exists(link)) Shell.OpenFile(link);
-        else Shell.OpenUrl(link);
     }
 
     private void Site_Click(object sender, RoutedEventArgs e)

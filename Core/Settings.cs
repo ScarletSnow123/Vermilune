@@ -55,7 +55,8 @@ public sealed class AppSettings
     public string FeaturedImage { get; set; } = "";
     public string FeaturedTitle { get; set; } = "←----觉真可爱";
     public string FeaturedSubtitle { get; set; } = "古明地觉 · 地灵殿的主人，今天也在吃蛋糕";
-    public string FeaturedLink { get; set; } = "https://s1.imagehub.cc/images/2026/07/08/26dd444015c43ab6834afad1864c0aea.th.jpg";
+    public string FeaturedTitleColor { get; set; } = "#FFF4A6C0";
+    public string FeaturedSubtitleColor { get; set; } = "";
     public string JavaPath { get; set; } = "";
     public int MemoryMb { get; set; } = 4096;
     public bool VersionIsolation { get; set; } = true;
@@ -90,12 +91,11 @@ public sealed class AppSettings
         WindowWidth = Math.Clamp(WindowWidth, 920, 4096);
         WindowHeight = Math.Clamp(WindowHeight, 560, 2400);
         FeaturedTitle = (FeaturedTitle ?? "").Trim();
-        if (FeaturedTitle.Length == 0) FeaturedTitle = "←----觉真可爱";
         if (FeaturedTitle.Length > 48) FeaturedTitle = FeaturedTitle[..48];
         FeaturedSubtitle = (FeaturedSubtitle ?? "").Trim();
         if (FeaturedSubtitle.Length > 96) FeaturedSubtitle = FeaturedSubtitle[..96];
-        FeaturedLink = (FeaturedLink ?? "").Trim();
-        if (FeaturedLink.Length > 1000) FeaturedLink = FeaturedLink[..1000];
+        FeaturedTitleColor = NormalizeColor(FeaturedTitleColor, "#FFF4A6C0");
+        FeaturedSubtitleColor = NormalizeColor(FeaturedSubtitleColor, "");
         if (Recent is null) Recent = new();
         if (Recent.Count > 24) Recent = Recent.OrderByDescending(r => r.LastPlayedUtc).Take(24).ToList();
         Account ??= new AccountSettings();
@@ -108,9 +108,17 @@ public sealed class AppSettings
             Accounts.Add(Account.Clone());
     }
 
-    public void TouchRecent(string versionId)
+    private static string NormalizeColor(string? value, string fallback)
     {
-        Recent.RemoveAll(r => string.Equals(r.Id, versionId, StringComparison.OrdinalIgnoreCase));
+        if (string.IsNullOrWhiteSpace(value)) return fallback;
+        var text = value.Trim();
+        if (!text.StartsWith('#')) text = "#" + text;
+        if (text.Length is not (7 or 9)) return fallback;
+        return text.Skip(1).All(Uri.IsHexDigit) ? text.ToUpperInvariant() : fallback;
+    }
+
+    public void TouchRecent(string versionId)
+    {        Recent.RemoveAll(r => string.Equals(r.Id, versionId, StringComparison.OrdinalIgnoreCase));
         Recent.Insert(0, new RecentEntry { Id = versionId, LastPlayedUtc = DateTime.UtcNow });
         if (Recent.Count > 24) Recent.RemoveRange(24, Recent.Count - 24);
     }

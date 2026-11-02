@@ -1,5 +1,6 @@
 using System.IO;
 using System.Windows;
+using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using Microsoft.Win32;
 
@@ -9,7 +10,7 @@ public partial class FeaturedCardDialog : Window
 {
     private const string DefaultTitle = "←----觉真可爱";
     private const string DefaultSubtitle = "古明地觉 · 地灵殿的主人，今天也在吃蛋糕";
-    private const string DefaultLink = "https://s1.imagehub.cc/images/2026/07/08/26dd444015c43ab6834afad1864c0aea.th.jpg";
+    private const string DefaultTitleColor = "#FFF4A6C0";
     private const string DefaultImage = "pack://application:,,,/Assets/Satori.jpg";
 
     private string _imagePath;
@@ -17,16 +18,19 @@ public partial class FeaturedCardDialog : Window
     public string ImagePath => _imagePath;
     public string CardTitle => TitleBox.Text.Trim();
     public string CardSubtitle => SubtitleBox.Text.Trim();
-    public string CardLink => LinkBox.Text.Trim();
+    public string CardTitleColor { get; private set; } = DefaultTitleColor;
+    public string CardSubtitleColor { get; private set; } = "";
 
-    public FeaturedCardDialog(string imagePath, string title, string subtitle, string link)
+    public FeaturedCardDialog(string imagePath, string title, string subtitle, string titleColor, string subtitleColor)
     {
         InitializeComponent();
         _imagePath = imagePath ?? "";
-        TitleBox.Text = string.IsNullOrWhiteSpace(title) ? DefaultTitle : title;
-        SubtitleBox.Text = string.IsNullOrWhiteSpace(subtitle) ? DefaultSubtitle : subtitle;
-        LinkBox.Text = string.IsNullOrWhiteSpace(link) ? DefaultLink : link;
+        TitleBox.Text = title ?? "";
+        SubtitleBox.Text = subtitle ?? "";
+        TitleColorBox.Text = string.IsNullOrWhiteSpace(titleColor) ? DefaultTitleColor : titleColor;
+        SubtitleColorBox.Text = subtitleColor ?? "";
         UpdatePreview();
+        UpdateColorPreviews();
     }
 
     private void ChooseImage_Click(object sender, RoutedEventArgs e)
@@ -46,27 +50,28 @@ public partial class FeaturedCardDialog : Window
         _imagePath = "";
         TitleBox.Text = DefaultTitle;
         SubtitleBox.Text = DefaultSubtitle;
-        LinkBox.Text = DefaultLink;
+        TitleColorBox.Text = DefaultTitleColor;
+        SubtitleColorBox.Text = "";
         UpdatePreview();
+        UpdateColorPreviews();
     }
 
     private void UpdatePreview()
     {
         try
         {
-            var source = string.Empty;
-            if (!string.IsNullOrWhiteSpace(_imagePath) && File.Exists(_imagePath))
-                source = _imagePath;
+            var source = !string.IsNullOrWhiteSpace(_imagePath) && File.Exists(_imagePath)
+                ? _imagePath
+                : DefaultImage;
             var bitmap = new BitmapImage();
             bitmap.BeginInit();
             bitmap.CacheOption = BitmapCacheOption.OnLoad;
             bitmap.DecodePixelWidth = 224;
-            bitmap.UriSource = new Uri(string.IsNullOrEmpty(source) ? DefaultImage : source, UriKind.Absolute);
+            bitmap.UriSource = new Uri(source, UriKind.Absolute);
             bitmap.EndInit();
             bitmap.Freeze();
             PreviewImage.Source = bitmap;
-            ImagePathText.Text = string.IsNullOrEmpty(source) ? "未选择，使用默认图片" : Path.GetFileName(source);
-            ErrorText.Visibility = Visibility.Collapsed;
+            ImagePathText.Text = string.IsNullOrWhiteSpace(_imagePath) ? "未选择，使用默认图片" : Path.GetFileName(_imagePath);
         }
         catch
         {
@@ -75,15 +80,54 @@ public partial class FeaturedCardDialog : Window
         }
     }
 
+    private void TitleColorBox_TextChanged(object sender, System.Windows.Controls.TextChangedEventArgs e)
+        => UpdateColorPreviews();
+
+    private void SubtitleColorBox_TextChanged(object sender, System.Windows.Controls.TextChangedEventArgs e)
+        => UpdateColorPreviews();
+
+    private void UpdateColorPreviews()
+    {
+        if (TitleColorPreview is null || SubtitleColorPreview is null) return;
+        TitleColorPreview.Background = TryColor(TitleColorBox.Text, out var title)
+            ? new SolidColorBrush(title)
+            : Brushes.Transparent;
+        SubtitleColorPreview.Background = TryColor(SubtitleColorBox.Text, out var subtitle)
+            ? new SolidColorBrush(subtitle)
+            : (Brush)FindResource("TextMutedBrush");
+    }
+
     private void Save_Click(object sender, RoutedEventArgs e)
     {
-        if (string.IsNullOrWhiteSpace(TitleBox.Text))
+        if (!TryColor(TitleColorBox.Text, out var titleColor))
+            titleColor = (Color)ColorConverter.ConvertFromString(DefaultTitleColor);
+        if (!string.IsNullOrWhiteSpace(SubtitleColorBox.Text) && !TryColor(SubtitleColorBox.Text, out _))
         {
-            ErrorText.Text = "标题不能为空。";
+            ErrorText.Text = "小字颜色格式不正确，请使用 #RRGGBB 或 #AARRGGBB。";
             ErrorText.Visibility = Visibility.Visible;
             return;
         }
+
+        CardTitleColor = titleColor.ToString();
+        CardSubtitleColor = string.IsNullOrWhiteSpace(SubtitleColorBox.Text)
+            ? ""
+            : ((Color)ColorConverter.ConvertFromString(SubtitleColorBox.Text.Trim())).ToString();
         DialogResult = true;
+    }
+
+    private static bool TryColor(string? text, out Color color)
+    {
+        color = default;
+        if (string.IsNullOrWhiteSpace(text)) return false;
+        var value = text.Trim();
+        if (!value.StartsWith('#')) value = "#" + value;
+        try
+        {
+            if (ColorConverter.ConvertFromString(value) is not Color parsed) return false;
+            color = parsed;
+            return true;
+        }
+        catch { return false; }
     }
 
     private void Cancel_Click(object sender, RoutedEventArgs e) => DialogResult = false;
