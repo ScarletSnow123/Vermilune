@@ -257,6 +257,8 @@
                                         Margin="0,6,0,0" Click="SwitchCape_Click" />
                                 <Button Style="{StaticResource LinkButton}" Content="刷新皮肤" FontSize="9.5"
                                         HorizontalAlignment="Left" Margin="0,6,0,0" Click="UseAccountSkin_Click" />
+                                <Button Style="{StaticResource LinkButton}" Content="使用账号皮肤" FontSize="9.5"
+                                        HorizontalAlignment="Left" Margin="0,2,0,0" Click="UseAccountSkinOriginal_Click" />
                             </StackPanel>
                         </Grid>
                     </StackPanel>

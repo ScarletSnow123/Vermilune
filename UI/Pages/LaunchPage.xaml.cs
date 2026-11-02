@@ -332,6 +332,19 @@ public partial class LaunchPage : UserControl, IPage, INotifyPropertyChanged
         LauncherApp.I.Notify("已刷新皮肤", hasLocal ? "已重新读取本地皮肤。" : "已重新读取账号皮肤与披风。");
     }
 
+    private async void UseAccountSkinOriginal_Click(object sender, RoutedEventArgs e)
+    {
+        LauncherApp.I.Skins.UseAccountSkin();
+        if (LauncherApp.I.Settings.Account.IsMicrosoft)
+            await LauncherApp.I.RefreshMicrosoftSkinAsync();
+        else if (LauncherApp.I.Settings.Account.IsYggdrasil || LauncherApp.I.Settings.Account.IsNide)
+            await LauncherApp.I.RefreshAccountAsync();
+        await RefreshSkinAsync();
+        _ = LoadAvatarAsync(LauncherApp.I.Settings.Account);
+        RefreshAccountHeader();
+        LauncherApp.I.Notify("已使用账号皮肤", "已清除本地皮肤覆盖。");
+    }
+
     private void RefreshAccountHeader()
     {
         try

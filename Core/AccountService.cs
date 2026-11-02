@@ -506,8 +506,10 @@ public sealed class AccountService
             account.CapeUrl = active?["url"]?.GetValue<string>() ?? account.CapeUrl;
         }
         account.LastSkinUploadUtc = DateTime.UtcNow;
-        LauncherApp.I.Settings.SkinPath = "";
-        LauncherApp.I.Settings.SkinModelOverride = null;
+        // 上传接口可能短时间返回旧 SkinUrl。保留刚上传的本地文件作为预览，
+        // 避免预览先显示新皮肤、随后又被旧资料覆盖。
+        LauncherApp.I.Settings.SkinPath = path;
+        LauncherApp.I.Settings.SkinModelOverride = slim;
         LauncherApp.I.Save();
 
         try
