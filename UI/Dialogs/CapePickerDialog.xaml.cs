@@ -86,6 +86,8 @@ public partial class CapePickerDialog : Window
         try
         {
             await LauncherApp.I.Auth.SetCapeAsync(choice.IsNone ? null : choice.Id, _cts.Token);
+            LauncherApp.I.Settings.Account.CapeEnabled = !choice.IsNone;
+            LauncherApp.I.Save();
             DialogResult = true;
         }
         catch (Exception ex)

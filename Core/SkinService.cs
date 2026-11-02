@@ -25,7 +25,9 @@ public sealed class SkinService
     }
 
     public string ActiveCapeName =>
-        string.IsNullOrEmpty(LauncherApp.I.Settings.Account.CapeUrl) ? "无披风" : LauncherApp.I.Settings.Account.Name + " 的披风";
+        !LauncherApp.I.Settings.Account.CapeEnabled || string.IsNullOrEmpty(LauncherApp.I.Settings.Account.CapeUrl)
+            ? "无披风"
+            : LauncherApp.I.Settings.Account.Name + " 的披风";
 
     public async Task<BitmapSource?> LoadSkinAsync(CancellationToken ct = default)
     {
@@ -67,6 +69,7 @@ public sealed class SkinService
     {
         try
         {
+            if (!LauncherApp.I.Settings.Account.CapeEnabled) return null;
             var url = LauncherApp.I.Settings.Account.CapeUrl;
             if (string.IsNullOrWhiteSpace(url)) return null;
             var cache = AccountCachePath("cape");

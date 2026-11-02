@@ -201,11 +201,11 @@ public partial class MainWindow : Window
         SetNav(key);
         if (page is IPage p) p.OnShown();
 
-        var move = new DoubleAnimation(8, 0, TimeSpan.FromMilliseconds(200))
+        var move = new DoubleAnimation(8, 0, TimeSpan.FromMilliseconds(260))
         {
             EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
         };
-        var fade = new DoubleAnimation(0.82, 1, TimeSpan.FromMilliseconds(180))
+        var fade = new DoubleAnimation(0.78, 1, TimeSpan.FromMilliseconds(240))
         {
             EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseOut }
         };
@@ -218,11 +218,12 @@ public partial class MainWindow : Window
         var effects = LauncherApp.I.Settings.EnableVisualEffects;
         if (effects)
         {
-            // 高级效果默认关闭：只在用户显式开启时使用 BitmapCache、模糊和阴影动画。
+            // 高级效果默认关闭。缓存放在页面上，模糊放在 PageHost 上，
+            // 否则 CacheMode 会把模糊的首帧一起缓存，动画看起来像没有生效。
             page.CacheMode = new BitmapCache(1.0);
             var blur = new BlurEffect { Radius = 0 };
-            page.Effect = blur;
-            var blurIn = new DoubleAnimation(4, 0, TimeSpan.FromMilliseconds(200))
+            PageHost.Effect = blur;
+            var blurIn = new DoubleAnimation(10, 0, TimeSpan.FromMilliseconds(360))
             {
                 EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
             };
@@ -235,8 +236,8 @@ public partial class MainWindow : Window
                 Opacity = 0,
                 Color = Colors.Black
             };
-            PageHost.Effect = shadow;
-            var shadowFade = new DoubleAnimation(0.35, 0, TimeSpan.FromMilliseconds(200))
+            page.Effect = shadow;
+            var shadowFade = new DoubleAnimation(0.45, 0, TimeSpan.FromMilliseconds(360))
             {
                 EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
             };

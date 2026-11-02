@@ -13,6 +13,7 @@ public sealed class AccountSettings
     public string Uuid { get; set; } = "";
     public string SkinUrl { get; set; } = "";
     public string CapeUrl { get; set; } = "";
+    public bool CapeEnabled { get; set; }
     public string SkinModel { get; set; } = "classic";
     public string Xuid { get; set; } = "";
     public string YggdrasilServer { get; set; } = "";
