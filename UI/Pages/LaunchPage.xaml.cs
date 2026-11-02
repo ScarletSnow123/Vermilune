@@ -156,7 +156,7 @@ public partial class LaunchPage : UserControl, IPage, INotifyPropertyChanged
     }
 
     private string _featuredImagePath = "";
-    private const string DefaultFeaturedImage = "pack://application:,,,/Assets/Satori.jpg";
+    private const string DefaultFeaturedImage = "pack://application:,,,/Assets/VermiluneRing.png";
 
     private void ApplyFeaturedCard()
     {
@@ -166,20 +166,21 @@ public partial class LaunchPage : UserControl, IPage, INotifyPropertyChanged
         var subtitle = (s.FeaturedSubtitle ?? "").Trim();
         var hasTitle = title.Length > 0;
         var hasSubtitle = subtitle.Length > 0;
+        var light = string.Equals(s.UiThemeMode, "light", StringComparison.OrdinalIgnoreCase);
+        var defaultTitleColor = light ? "#FFB3261E" : "#FFFF8A7A";
+        var defaultSubtitleColor = light ? "#FF8A1F18" : "#FFFFB3A8";
 
         FeaturedTitleText.Visibility = hasTitle ? Visibility.Visible : Visibility.Collapsed;
         FeaturedTitleText.Text = title;
         FeaturedTitleText.FontSize = 20;
-        FeaturedTitleText.Foreground = BrushFrom(s.FeaturedTitleColor, "#FFF4A6C0");
+        FeaturedTitleText.Foreground = BrushFrom(s.FeaturedTitleColor, defaultTitleColor);
 
         FeaturedSubtitleText.Visibility = hasSubtitle ? Visibility.Visible : Visibility.Collapsed;
         FeaturedSubtitleText.Text = subtitle;
         FeaturedSubtitleText.FontSize = hasTitle ? 10.5 : 12.5;
         FeaturedSubtitleText.FontWeight = hasTitle ? FontWeights.Normal : FontWeights.Medium;
         FeaturedSubtitleText.Margin = hasTitle ? new Thickness(0, 6, 0, 0) : new Thickness(0);
-        FeaturedSubtitleText.Foreground = string.IsNullOrWhiteSpace(s.FeaturedSubtitleColor)
-            ? (Brush)FindResource("TextMutedBrush")
-            : BrushFrom(s.FeaturedSubtitleColor, "#9A9A9A");
+        FeaturedSubtitleText.Foreground = BrushFrom(s.FeaturedSubtitleColor, defaultSubtitleColor);
 
         if (string.Equals(_featuredImagePath, s.FeaturedImage, StringComparison.OrdinalIgnoreCase)) return;
         _featuredImagePath = s.FeaturedImage ?? "";

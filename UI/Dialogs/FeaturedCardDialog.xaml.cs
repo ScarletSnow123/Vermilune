@@ -8,17 +8,16 @@ namespace Vermilune.UI.Dialogs;
 
 public partial class FeaturedCardDialog : Window
 {
-    private const string DefaultTitle = "←----觉真可爱";
-    private const string DefaultSubtitle = "古明地觉 · 地灵殿的主人，今天也在吃蛋糕";
-    private const string DefaultTitleColor = "#FFF4A6C0";
-    private const string DefaultImage = "pack://application:,,,/Assets/Satori.jpg";
+    private const string DefaultTitle = "Vermilune 1.2分支";
+    private const string DefaultSubtitle = "这个卡片可以自定义哦！";
+    private const string DefaultImage = "pack://application:,,,/Assets/VermiluneRing.png";
 
     private string _imagePath;
 
     public string ImagePath => _imagePath;
     public string CardTitle => TitleBox.Text.Trim();
     public string CardSubtitle => SubtitleBox.Text.Trim();
-    public string CardTitleColor { get; private set; } = DefaultTitleColor;
+    public string CardTitleColor { get; private set; } = "";
     public string CardSubtitleColor { get; private set; } = "";
 
     public FeaturedCardDialog(string imagePath, string title, string subtitle, string titleColor, string subtitleColor)
@@ -27,7 +26,7 @@ public partial class FeaturedCardDialog : Window
         _imagePath = imagePath ?? "";
         TitleBox.Text = title ?? "";
         SubtitleBox.Text = subtitle ?? "";
-        TitleColorBox.Text = string.IsNullOrWhiteSpace(titleColor) ? DefaultTitleColor : titleColor;
+        TitleColorBox.Text = titleColor ?? "";
         SubtitleColorBox.Text = subtitleColor ?? "";
         UpdatePreview();
         UpdateColorPreviews();
@@ -50,7 +49,7 @@ public partial class FeaturedCardDialog : Window
         _imagePath = "";
         TitleBox.Text = DefaultTitle;
         SubtitleBox.Text = DefaultSubtitle;
-        TitleColorBox.Text = DefaultTitleColor;
+        TitleColorBox.Text = "";
         SubtitleColorBox.Text = "";
         UpdatePreview();
         UpdateColorPreviews();
@@ -89,18 +88,23 @@ public partial class FeaturedCardDialog : Window
     private void UpdateColorPreviews()
     {
         if (TitleColorPreview is null || SubtitleColorPreview is null) return;
-        TitleColorPreview.Background = TryColor(TitleColorBox.Text, out var title)
-            ? new SolidColorBrush(title)
-            : Brushes.Transparent;
-        SubtitleColorPreview.Background = TryColor(SubtitleColorBox.Text, out var subtitle)
-            ? new SolidColorBrush(subtitle)
-            : (Brush)FindResource("TextMutedBrush");
+        var themeText = (Brush)FindResource("TextBrush");
+        TitleColorPreview.Background = string.IsNullOrWhiteSpace(TitleColorBox.Text)
+            ? themeText
+            : (TryColor(TitleColorBox.Text, out var title) ? new SolidColorBrush(title) : Brushes.Transparent);
+        SubtitleColorPreview.Background = string.IsNullOrWhiteSpace(SubtitleColorBox.Text)
+            ? themeText
+            : (TryColor(SubtitleColorBox.Text, out var subtitle) ? new SolidColorBrush(subtitle) : Brushes.Transparent);
     }
 
     private void Save_Click(object sender, RoutedEventArgs e)
     {
-        if (!TryColor(TitleColorBox.Text, out var titleColor))
-            titleColor = (Color)ColorConverter.ConvertFromString(DefaultTitleColor);
+        if (!string.IsNullOrWhiteSpace(TitleColorBox.Text) && !TryColor(TitleColorBox.Text, out _))
+        {
+            ErrorText.Text = "大字颜色格式不正确，请使用 #RRGGBB 或 #AARRGGBB。";
+            ErrorText.Visibility = Visibility.Visible;
+            return;
+        }
         if (!string.IsNullOrWhiteSpace(SubtitleColorBox.Text) && !TryColor(SubtitleColorBox.Text, out _))
         {
             ErrorText.Text = "小字颜色格式不正确，请使用 #RRGGBB 或 #AARRGGBB。";
@@ -108,11 +112,17 @@ public partial class FeaturedCardDialog : Window
             return;
         }
 
-        CardTitleColor = titleColor.ToString();
-        CardSubtitleColor = string.IsNullOrWhiteSpace(SubtitleColorBox.Text)
-            ? ""
-            : ((Color)ColorConverter.ConvertFromString(SubtitleColorBox.Text.Trim())).ToString();
+        CardTitleColor = NormalizeColor(TitleColorBox.Text);
+        CardSubtitleColor = NormalizeColor(SubtitleColorBox.Text);
         DialogResult = true;
+    }
+
+    private static string NormalizeColor(string? text)
+    {
+        if (string.IsNullOrWhiteSpace(text)) return "";
+        var value = text.Trim();
+        if (!value.StartsWith('#')) value = "#" + value;
+        return TryColor(value, out var color) ? color.ToString() : "";
     }
 
     private static bool TryColor(string? text, out Color color)

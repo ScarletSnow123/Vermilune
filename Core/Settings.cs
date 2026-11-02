@@ -53,9 +53,9 @@ public sealed class AppSettings
     /// <summary>页面切换时使用 BitmapCache / 模糊等高级效果；默认关闭以降低显存和内存占用。</summary>
     public bool EnableVisualEffects { get; set; }
     public string FeaturedImage { get; set; } = "";
-    public string FeaturedTitle { get; set; } = "←----觉真可爱";
-    public string FeaturedSubtitle { get; set; } = "古明地觉 · 地灵殿的主人，今天也在吃蛋糕";
-    public string FeaturedTitleColor { get; set; } = "#FFF4A6C0";
+    public string FeaturedTitle { get; set; } = "Vermilune 1.2分支";
+    public string FeaturedSubtitle { get; set; } = "这个卡片可以自定义哦！";
+    public string FeaturedTitleColor { get; set; } = "";
     public string FeaturedSubtitleColor { get; set; } = "";
     public string JavaPath { get; set; } = "";
     public int MemoryMb { get; set; } = 4096;
@@ -94,7 +94,15 @@ public sealed class AppSettings
         if (FeaturedTitle.Length > 48) FeaturedTitle = FeaturedTitle[..48];
         FeaturedSubtitle = (FeaturedSubtitle ?? "").Trim();
         if (FeaturedSubtitle.Length > 96) FeaturedSubtitle = FeaturedSubtitle[..96];
-        FeaturedTitleColor = NormalizeColor(FeaturedTitleColor, "#FFF4A6C0");
+        // 兼容旧的默认卡片，换成新的 Vermilune 默认文案。
+        if (FeaturedTitle == "←----觉真可爱" && FeaturedImage == "")
+        {
+            FeaturedTitle = "Vermilune 1.2分支";
+            FeaturedSubtitle = "这个卡片可以自定义哦！";
+            FeaturedTitleColor = "";
+            FeaturedSubtitleColor = "";
+        }
+        FeaturedTitleColor = NormalizeColor(FeaturedTitleColor, "");
         FeaturedSubtitleColor = NormalizeColor(FeaturedSubtitleColor, "");
         if (Recent is null) Recent = new();
         if (Recent.Count > 24) Recent = Recent.OrderByDescending(r => r.LastPlayedUtc).Take(24).ToList();

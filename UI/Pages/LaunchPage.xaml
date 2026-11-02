@@ -360,15 +360,15 @@
                             <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
                         <Border Width="86" Height="86" CornerRadius="12" ClipToBounds="True">
-                            <Image x:Name="FeaturedImage" Source="pack://application:,,,/Assets/Satori.jpg"
+                            <Image x:Name="FeaturedImage" Source="pack://application:,,,/Assets/VermiluneRing.png"
                                    Stretch="UniformToFill" RenderOptions.BitmapScalingMode="HighQuality" />
                         </Border>
                         <StackPanel Grid.Column="1" Margin="16,0,0,0" VerticalAlignment="Center">
-                            <TextBlock x:Name="FeaturedTitleText" Text="←----觉真可爱" FontSize="20"
-                                       FontWeight="SemiBold" Foreground="#FFF4A6C0" TextTrimming="CharacterEllipsis" />
+                            <TextBlock x:Name="FeaturedTitleText" Text="Vermilune 1.2分支" FontSize="20"
+                                       FontWeight="SemiBold" Foreground="#FFFF8A7A" TextTrimming="CharacterEllipsis" />
                             <TextBlock x:Name="FeaturedSubtitleText"
-                                       Text="古明地觉 · 地灵殿的主人，今天也在吃蛋糕" FontSize="10.5"
-                                       Foreground="{DynamicResource TextMutedBrush}" Margin="0,6,0,0"
+                                       Text="这个卡片可以自定义哦！" FontSize="10.5"
+                                       Foreground="#FFFFB3A8" Margin="0,6,0,0"
                                        TextTrimming="CharacterEllipsis" />
                         </StackPanel>
                         <Button Grid.Column="2" Style="{StaticResource LinkButton}" Content="自定义" FontSize="10.5"
