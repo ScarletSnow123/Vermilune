@@ -270,6 +270,7 @@ public partial class LaunchPage : UserControl, IPage, INotifyPropertyChanged
             try
             {
                 await LauncherApp.I.Auth.UploadSkinAsync(path, LauncherApp.I.Skins.IsSlim, CancellationToken.None);
+                await LauncherApp.I.RefreshMicrosoftSkinAsync();
                 LauncherApp.I.Notify("皮肤已上传", "已应用到 Microsoft 账号。");
             }
             catch (Exception ex)
@@ -313,19 +314,23 @@ public partial class LaunchPage : UserControl, IPage, INotifyPropertyChanged
 
     private async void UseAccountSkin_Click(object sender, RoutedEventArgs e)
     {
-        LauncherApp.I.Skins.UseAccountSkin();
-        if (LauncherApp.I.Settings.Account.IsMicrosoft)
+        var local = LauncherApp.I.Settings.SkinPath;
+        var hasLocal = !string.IsNullOrWhiteSpace(local) && File.Exists(local);
+        if (!hasLocal)
         {
-            await LauncherApp.I.RefreshMicrosoftSkinAsync();
-        }
-        else if (LauncherApp.I.Settings.Account.IsYggdrasil || LauncherApp.I.Settings.Account.IsNide)
-        {
-            await LauncherApp.I.RefreshAccountAsync();
+            if (LauncherApp.I.Settings.Account.IsMicrosoft)
+            {
+                await LauncherApp.I.RefreshMicrosoftSkinAsync();
+            }
+            else if (LauncherApp.I.Settings.Account.IsYggdrasil || LauncherApp.I.Settings.Account.IsNide)
+            {
+                await LauncherApp.I.RefreshAccountAsync();
+            }
         }
         await RefreshSkinAsync();
         _ = LoadAvatarAsync(LauncherApp.I.Settings.Account);
         RefreshAccountHeader();
-        LauncherApp.I.Notify("已刷新账号皮肤", "已重新读取账号皮肤与披风。");
+        LauncherApp.I.Notify("已刷新皮肤", hasLocal ? "已重新读取本地皮肤。" : "已重新读取账号皮肤与披风。");
     }
 
     private void RefreshAccountHeader()
