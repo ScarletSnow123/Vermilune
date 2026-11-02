@@ -30,6 +30,7 @@
   <ItemGroup>
     <Resource Include="Assets\Vermilune.ico" />
     <Resource Include="Assets\Satori.jpg" />
+    <Resource Include="Assets\SatoriCard.png" />
     <Resource Include="Assets\VermiluneRing.png" />
     <Resource Include="Assets\VermiluneIcon.png" />
   </ItemGroup>

@@ -359,9 +359,11 @@
                             <ColumnDefinition Width="*" />
                             <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
-                        <Border Width="86" Height="86" CornerRadius="12" ClipToBounds="True">
+                        <Border Width="96" Height="96" CornerRadius="12" ClipToBounds="True"
+                                SnapsToDevicePixels="True">
                             <Image x:Name="FeaturedImage" Source="pack://application:,,,/Assets/VermiluneRing.png"
-                                   Stretch="UniformToFill" RenderOptions.BitmapScalingMode="HighQuality" />
+                                   Stretch="UniformToFill" RenderOptions.BitmapScalingMode="HighQuality"
+                                   SnapsToDevicePixels="True" />
                         </Border>
                         <StackPanel Grid.Column="1" Margin="16,0,0,0" VerticalAlignment="Center">
                             <TextBlock x:Name="FeaturedTitleText" Text="Vermilune 1.2分支" FontSize="20"
