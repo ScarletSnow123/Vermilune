@@ -316,17 +316,16 @@ public partial class LaunchPage : UserControl, IPage, INotifyPropertyChanged
         LauncherApp.I.Skins.UseAccountSkin();
         if (LauncherApp.I.Settings.Account.IsMicrosoft)
         {
-            try
-            {
-                if (await LauncherApp.I.Auth.RefreshProfileAsync(CancellationToken.None))
-                    LauncherApp.I.Save();
-            }
-            catch (Exception ex) { Log.Warn("刷新账号皮肤失败：" + ex.Message); }
+            await LauncherApp.I.RefreshMicrosoftSkinAsync();
+        }
+        else if (LauncherApp.I.Settings.Account.IsYggdrasil || LauncherApp.I.Settings.Account.IsNide)
+        {
+            await LauncherApp.I.RefreshAccountAsync();
         }
         await RefreshSkinAsync();
         _ = LoadAvatarAsync(LauncherApp.I.Settings.Account);
         RefreshAccountHeader();
-        LauncherApp.I.Notify("已恢复账号皮肤", "启动器会重新读取账号皮肤与披风。");
+        LauncherApp.I.Notify("已刷新账号皮肤", "已重新读取账号皮肤与披风。");
     }
 
     private void RefreshAccountHeader()
@@ -619,7 +618,7 @@ public partial class LaunchPage : UserControl, IPage, INotifyPropertyChanged
             ExtraJvmArgs = instance.JvmArgs,
             ExtraGameArgs = instance.GameArgs,
             LauncherName = "Vermilune",
-            LauncherVersion = "1.2.23-beta"
+            LauncherVersion = "1.2.24-beta"
         };
 
         _cts?.Dispose();

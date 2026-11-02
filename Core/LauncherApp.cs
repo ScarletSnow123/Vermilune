@@ -132,6 +132,37 @@ public sealed class LauncherApp
         SettingsChanged?.Invoke();
     }
 
+    public async Task<bool> RefreshMicrosoftSkinAsync()
+    {
+        var account = Settings.Account;
+        if (!account.IsMicrosoft) return false;
+        try
+        {
+            if (await Auth.RefreshProfileAsync(CancellationToken.None))
+            {
+                Save();
+                return true;
+            }
+        }
+        catch (Exception ex) { Log.Warn("刷新微软皮肤资料失败：" + ex.Message); }
+
+        // 资料接口可能因为访问令牌过期失败，这时强制刷新一次令牌再取资料。
+        try
+        {
+            var refresh = Dpapi.Unprotect(account.RefreshTokenProtected);
+            if (string.IsNullOrWhiteSpace(refresh)) return false;
+            var profile = await Auth.RefreshAsync(refresh, CancellationToken.None);
+            AccountService.ApplyProfile(account, profile);
+            Save();
+            return true;
+        }
+        catch (Exception ex)
+        {
+            Log.Warn("强制刷新微软皮肤失败：" + ex.Message);
+            return false;
+        }
+    }
+
     public async Task<bool> EnsureAccountReadyAsync()
     {
         if (Settings.Account.IsYggdrasil || Settings.Account.IsNide)

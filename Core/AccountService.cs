@@ -358,7 +358,6 @@ public sealed class AccountService
         account.SkinUrl = skin;
         account.CapeUrl = cape;
         account.SkinModel = skinModel;
-        LauncherApp.I.Skins.InvalidateAccountTextureCache();
         return true;
     }
 

@@ -46,11 +46,26 @@ public sealed class SkinService
             if (!string.IsNullOrWhiteSpace(url))
             {
                 var cache = AccountCachePath("skin");
-                if (!File.Exists(cache) || new FileInfo(cache).Length < 64)
+                var marker = cache + ".url";
+                var hasCache = File.Exists(cache) && new FileInfo(cache).Length >= 64;
+                var sameUrl = hasCache && File.Exists(marker) &&
+                              string.Equals(File.ReadAllText(marker).Trim(), url, StringComparison.OrdinalIgnoreCase);
+                if (!sameUrl)
                 {
-                    var bytes = await GetTextureBytesAsync(url, ct);
-                    Directory.CreateDirectory(Path.GetDirectoryName(cache)!);
-                    await File.WriteAllBytesAsync(cache, bytes, ct);
+                    try
+                    {
+                        var bytes = await GetTextureBytesAsync(url, ct);
+                        Directory.CreateDirectory(Path.GetDirectoryName(cache)!);
+                        var temp = cache + ".tmp";
+                        await File.WriteAllBytesAsync(temp, bytes, ct);
+                        File.Move(temp, cache, true);
+                        await File.WriteAllTextAsync(marker, url, ct);
+                    }
+                    catch (Exception ex) when (ex is not OperationCanceledException && hasCache)
+                    {
+                        // 纹理 CDN 502 / 断网时保留旧缓存，避免头像和预览突然消失。
+                        Log.Warn("新皮肤下载失败，继续使用旧缓存：" + ex.Message);
+                    }
                 }
                 var account = LoadBitmap(cache);
                 _detectedSlim = string.Equals(LauncherApp.I.Settings.Account.SkinModel, "slim", StringComparison.OrdinalIgnoreCase)
@@ -73,11 +88,25 @@ public sealed class SkinService
             var url = LauncherApp.I.Settings.Account.CapeUrl;
             if (string.IsNullOrWhiteSpace(url)) return null;
             var cache = AccountCachePath("cape");
-            if (!File.Exists(cache) || new FileInfo(cache).Length < 64)
+            var marker = cache + ".url";
+            var hasCache = File.Exists(cache) && new FileInfo(cache).Length >= 64;
+            var sameUrl = hasCache && File.Exists(marker) &&
+                          string.Equals(File.ReadAllText(marker).Trim(), url, StringComparison.OrdinalIgnoreCase);
+            if (!sameUrl)
             {
-                var bytes = await GetTextureBytesAsync(url, ct);
-                Directory.CreateDirectory(Path.GetDirectoryName(cache)!);
-                await File.WriteAllBytesAsync(cache, bytes, ct);
+                try
+                {
+                    var bytes = await GetTextureBytesAsync(url, ct);
+                    Directory.CreateDirectory(Path.GetDirectoryName(cache)!);
+                    var temp = cache + ".tmp";
+                    await File.WriteAllBytesAsync(temp, bytes, ct);
+                    File.Move(temp, cache, true);
+                    await File.WriteAllTextAsync(marker, url, ct);
+                }
+                catch (Exception ex) when (ex is not OperationCanceledException && hasCache)
+                {
+                    Log.Warn("新披风下载失败，继续使用旧缓存：" + ex.Message);
+                }
             }
             return LoadBitmap(cache);
         }
@@ -343,15 +372,13 @@ public sealed class SkinService
         var candidates = new List<string>();
         if (url.Contains("textures.minecraft.net", StringComparison.OrdinalIgnoreCase))
         {
-            if (url.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
-            {
+            // 官方接口偶尔仍返回 http，优先走 https，避免 CDN 对 http 返回 502。
+            var https = url.StartsWith("https://", StringComparison.OrdinalIgnoreCase)
+                ? url
+                : "https://" + url[(url.IndexOf("://", StringComparison.Ordinal) + 3)..];
+            candidates.Add(https);
+            if (!string.Equals(https, url, StringComparison.OrdinalIgnoreCase))
                 candidates.Add(url);
-                candidates.Add("http://" + url[8..]);
-            }
-            else
-            {
-                candidates.Add(url);
-            }
         }
         else
         {
@@ -375,6 +402,8 @@ public sealed class SkinService
             var cape = AccountCachePath("cape");
             if (File.Exists(skin)) File.Delete(skin);
             if (File.Exists(cape)) File.Delete(cape);
+            if (File.Exists(skin + ".url")) File.Delete(skin + ".url");
+            if (File.Exists(cape + ".url")) File.Delete(cape + ".url");
         }
         catch (Exception ex)
         {
