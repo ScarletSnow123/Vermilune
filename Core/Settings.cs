@@ -50,6 +50,10 @@ public sealed class AppSettings
     public double UiOpacity { get; set; } = 0.96;
     public string BackgroundImage { get; set; } = "";
     public double BackgroundImageOpacity { get; set; } = 0.34;
+    public string FeaturedImage { get; set; } = "";
+    public string FeaturedTitle { get; set; } = "←----觉真可爱";
+    public string FeaturedSubtitle { get; set; } = "古明地觉 · 地灵殿的主人，今天也在吃蛋糕";
+    public string FeaturedLink { get; set; } = "https://s1.imagehub.cc/images/2026/07/08/26dd444015c43ab6834afad1864c0aea.th.jpg";
     public string JavaPath { get; set; } = "";
     public int MemoryMb { get; set; } = 4096;
     public bool VersionIsolation { get; set; } = true;
@@ -81,8 +85,15 @@ public sealed class AppSettings
         UiOpacity = Math.Clamp(UiOpacity, 0.25, 1.0);
         BackgroundImageOpacity = Math.Clamp(BackgroundImageOpacity, 0.0, 1.0);
         MemoryMb = Math.Clamp(MemoryMb, 512, 65536);
-        WindowWidth = Math.Clamp(WindowWidth, 1080, 4096);
-        WindowHeight = Math.Clamp(WindowHeight, 680, 2400);
+        WindowWidth = Math.Clamp(WindowWidth, 920, 4096);
+        WindowHeight = Math.Clamp(WindowHeight, 560, 2400);
+        FeaturedTitle = (FeaturedTitle ?? "").Trim();
+        if (FeaturedTitle.Length == 0) FeaturedTitle = "←----觉真可爱";
+        if (FeaturedTitle.Length > 48) FeaturedTitle = FeaturedTitle[..48];
+        FeaturedSubtitle = (FeaturedSubtitle ?? "").Trim();
+        if (FeaturedSubtitle.Length > 96) FeaturedSubtitle = FeaturedSubtitle[..96];
+        FeaturedLink = (FeaturedLink ?? "").Trim();
+        if (FeaturedLink.Length > 1000) FeaturedLink = FeaturedLink[..1000];
         if (Recent is null) Recent = new();
         if (Recent.Count > 24) Recent = Recent.OrderByDescending(r => r.LastPlayedUtc).Take(24).ToList();
         Account ??= new AccountSettings();

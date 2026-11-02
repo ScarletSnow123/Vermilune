@@ -360,15 +360,23 @@
                             <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
                         <Border Width="86" Height="86" CornerRadius="12" ClipToBounds="True">
-                            <Image Source="pack://application:,,,/Assets/Satori.jpg" Stretch="UniformToFill" />
+                            <Image x:Name="FeaturedImage" Source="pack://application:,,,/Assets/Satori.jpg"
+                                   Stretch="UniformToFill" RenderOptions.BitmapScalingMode="HighQuality" />
                         </Border>
                         <StackPanel Grid.Column="1" Margin="16,0,0,0" VerticalAlignment="Center">
-                            <TextBlock Text="←----觉真可爱" FontSize="20" FontWeight="SemiBold" Foreground="#FFF4A6C0" />
-                            <TextBlock Text="古明地觉 · 地灵殿的主人，今天也在吃蛋糕" FontSize="10.5"
-                                       Foreground="{DynamicResource TextMutedBrush}" Margin="0,6,0,0" />
+                            <TextBlock x:Name="FeaturedTitleText" Text="←----觉真可爱" FontSize="20"
+                                       FontWeight="SemiBold" Foreground="#FFF4A6C0" TextTrimming="CharacterEllipsis" />
+                            <TextBlock x:Name="FeaturedSubtitleText"
+                                       Text="古明地觉 · 地灵殿的主人，今天也在吃蛋糕" FontSize="10.5"
+                                       Foreground="{DynamicResource TextMutedBrush}" Margin="0,6,0,0"
+                                       TextTrimming="CharacterEllipsis" />
                         </StackPanel>
-                        <Button Grid.Column="2" Style="{StaticResource LinkButton}" Content="看原图" FontSize="10.5"
-                                VerticalAlignment="Center" Click="OpenSatori_Click" />
+                        <StackPanel Grid.Column="2" VerticalAlignment="Center">
+                            <Button Style="{StaticResource LinkButton}" Content="看原图" FontSize="10.5"
+                                    HorizontalAlignment="Right" Click="OpenSatori_Click" />
+                            <Button Style="{StaticResource LinkButton}" Content="自定义" FontSize="10.5"
+                                    HorizontalAlignment="Right" Margin="0,5,0,0" Click="CustomizeFeatured_Click" />
+                        </StackPanel>
                     </Grid>
                 </Border>
 
@@ -525,7 +533,7 @@
                             <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
                         <StackPanel>
-                            <TextBlock Text="Vermilune   ·   v1.2.20-beta" FontSize="10"
+                            <TextBlock Text="Vermilune   ·   v1.2.21-beta" FontSize="10"
                                        Foreground="{DynamicResource TextMutedBrush}" />
                             <TextBlock Text="Minecraft 资源版权归 Mojang Studios 与各 Mod 作者所有" FontSize="10"
                                        Foreground="{DynamicResource TextMutedBrush}" Margin="0,4,0,0" />

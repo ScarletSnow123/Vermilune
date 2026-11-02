@@ -127,6 +127,7 @@ public partial class LaunchPage : UserControl, IPage, INotifyPropertyChanged
             BuildRecent();
             UpdateVersionLabels();
             UpdateLaunchUi();
+            ApplyFeaturedCard();
             _ = RefreshSkinAsync();
             StatusLabel.Text = _state switch
             {
@@ -146,8 +147,61 @@ public partial class LaunchPage : UserControl, IPage, INotifyPropertyChanged
 
     private void OnSettingsChanged()
     {
-        App.Current.Dispatcher.BeginInvoke(new Action(RefreshAccountHeader));
+        App.Current.Dispatcher.BeginInvoke(new Action(() =>
+        {
+            RefreshAccountHeader();
+            ApplyFeaturedCard();
+        }));
         _ = RefreshSkinAsync();
+    }
+
+    private string _featuredImagePath = "";
+    private const string DefaultFeaturedImage = "pack://application:,,,/Assets/Satori.jpg";
+    private const string DefaultFeaturedLink = "https://s1.imagehub.cc/images/2026/07/08/26dd444015c43ab6834afad1864c0aea.th.jpg";
+
+    private void ApplyFeaturedCard()
+    {
+        if (FeaturedImage is null) return;
+        var s = LauncherApp.I.Settings;
+        FeaturedTitleText.Text = string.IsNullOrWhiteSpace(s.FeaturedTitle)
+            ? "←----觉真可爱" : s.FeaturedTitle;
+        FeaturedSubtitleText.Text = s.FeaturedSubtitle ?? "";
+        if (string.Equals(_featuredImagePath, s.FeaturedImage, StringComparison.OrdinalIgnoreCase)) return;
+        _featuredImagePath = s.FeaturedImage ?? "";
+        try
+        {
+            var source = !string.IsNullOrWhiteSpace(s.FeaturedImage) && File.Exists(s.FeaturedImage)
+                ? s.FeaturedImage
+                : DefaultFeaturedImage;
+            var bitmap = new BitmapImage();
+            bitmap.BeginInit();
+            bitmap.CacheOption = BitmapCacheOption.OnLoad;
+            bitmap.DecodePixelWidth = 256;
+            bitmap.UriSource = new Uri(source, UriKind.Absolute);
+            bitmap.EndInit();
+            bitmap.Freeze();
+            FeaturedImage.Source = bitmap;
+        }
+        catch
+        {
+            FeaturedImage.Source = new BitmapImage(new Uri(DefaultFeaturedImage, UriKind.Absolute));
+        }
+    }
+
+    private void CustomizeFeatured_Click(object sender, RoutedEventArgs e)
+    {
+        var s = LauncherApp.I.Settings;
+        var dialog = new FeaturedCardDialog(s.FeaturedImage, s.FeaturedTitle, s.FeaturedSubtitle, s.FeaturedLink)
+        {
+            Owner = Window.GetWindow(this)
+        };
+        if (dialog.ShowDialog() != true) return;
+        s.FeaturedImage = dialog.ImagePath;
+        s.FeaturedTitle = dialog.CardTitle;
+        s.FeaturedSubtitle = dialog.CardSubtitle;
+        s.FeaturedLink = dialog.CardLink;
+        LauncherApp.I.Save();
+        ApplyFeaturedCard();
     }
 
     private int _skinLoadToken;
@@ -523,7 +577,7 @@ public partial class LaunchPage : UserControl, IPage, INotifyPropertyChanged
             ExtraJvmArgs = instance.JvmArgs,
             ExtraGameArgs = instance.GameArgs,
             LauncherName = "Vermilune",
-            LauncherVersion = "1.2.20-beta"
+            LauncherVersion = "1.2.21-beta"
         };
 
         _cts?.Dispose();
@@ -734,7 +788,12 @@ public partial class LaunchPage : UserControl, IPage, INotifyPropertyChanged
     }
 
     private void OpenSatori_Click(object sender, RoutedEventArgs e)
-        => Shell.OpenUrl("https://s1.imagehub.cc/images/2026/07/08/26dd444015c43ab6834afad1864c0aea.th.jpg");
+    {
+        var link = LauncherApp.I.Settings.FeaturedLink;
+        if (string.IsNullOrWhiteSpace(link)) link = DefaultFeaturedLink;
+        if (File.Exists(link)) Shell.OpenFile(link);
+        else Shell.OpenUrl(link);
+    }
 
     private void Site_Click(object sender, RoutedEventArgs e)
     {

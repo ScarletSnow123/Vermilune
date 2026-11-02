@@ -61,7 +61,7 @@ public partial class MainWindow : Window
         BgOpacitySlider.Value = s.BackgroundImageOpacity * 100;
         _updatingSliders = false;
         OpacityValue.Text = $"{s.UiOpacity * 100:0}%";
-        RailVersion.Text = "v1.2.20-beta";
+        RailVersion.Text = "v1.2.21-beta";
 
         LauncherApp.I.SettingsChanged += OnSettingsChanged;
         LauncherApp.I.VersionsChanged += OnVersionsChanged;
@@ -136,9 +136,13 @@ public partial class MainWindow : Window
                     var bmp = new BitmapImage();
                     bmp.BeginInit();
                     bmp.CacheOption = BitmapCacheOption.OnLoad;
+                    // 背景只按屏幕宽度解码，避免 4K 原图长期占用几十 MB 内存。
+                    var targetWidth = Math.Max(1280, Math.Min(1920, (int)SystemParameters.WorkArea.Width));
+                    bmp.DecodePixelWidth = targetWidth;
                     bmp.UriSource = new Uri(s.BackgroundImage, UriKind.Absolute);
                     bmp.EndInit();
                     bmp.Freeze();
+                    BgImageBrush.ImageSource = null;
                     _loadedBackground = bmp;
                     _loadedBackgroundPath = s.BackgroundImage;
                 }
@@ -196,11 +200,19 @@ public partial class MainWindow : Window
         SetNav(key);
         if (page is IPage p) p.OnShown();
 
-        var move = new DoubleAnimation(8, 0, TimeSpan.FromMilliseconds(180)) { EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut } };
-        page.Opacity = 1;
+        var move = new DoubleAnimation(8, 0, TimeSpan.FromMilliseconds(200))
+        {
+            EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
+        };
+        var fade = new DoubleAnimation(0.82, 1, TimeSpan.FromMilliseconds(180))
+        {
+            EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseOut }
+        };
         if (page.RenderTransform is not TranslateTransform)
             page.RenderTransform = new TranslateTransform(0, 0);
         ((TranslateTransform)page.RenderTransform).BeginAnimation(TranslateTransform.YProperty, move);
+        page.Opacity = 1;
+        page.BeginAnimation(OpacityProperty, fade);
     }
 
     public void NavigateToVersions(string versionId)

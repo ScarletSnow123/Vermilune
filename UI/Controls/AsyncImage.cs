@@ -13,6 +13,7 @@ namespace Vermilune.UI.Controls;
 /// <summary>异步加载远端图标，带内存/磁盘缓存，避免列表滚动时卡住 UI。</summary>
 public sealed class AsyncImage : Image
 {
+    private const int MaxMemoryItems = 256;
     private static readonly ConcurrentDictionary<string, BitmapSource> Memory = new();
     private static readonly ConcurrentDictionary<string, Task<BitmapSource?>> Pending = new();
 
@@ -63,6 +64,11 @@ public sealed class AsyncImage : Image
         Pending.TryRemove(key, out _);
         if (bitmap is null) return null;
         Memory[key] = bitmap;
+        if (Memory.Count > MaxMemoryItems)
+        {
+            foreach (var stale in Memory.Keys.Take(Memory.Count - MaxMemoryItems / 2).ToList())
+                Memory.TryRemove(stale, out _);
+        }
         return bitmap;
     }
 
