@@ -62,7 +62,7 @@ public partial class MainWindow : Window
         BgOpacitySlider.Value = s.BackgroundImageOpacity * 100;
         _updatingSliders = false;
         OpacityValue.Text = $"{s.UiOpacity * 100:0}%";
-        RailVersion.Text = "v1.2.24-beta";
+        RailVersion.Text = "v1.2.25-beta";
 
         LauncherApp.I.SettingsChanged += OnSettingsChanged;
         LauncherApp.I.VersionsChanged += OnVersionsChanged;
@@ -216,19 +216,20 @@ public partial class MainWindow : Window
         page.BeginAnimation(OpacityProperty, fade);
 
         var effects = LauncherApp.I.Settings.EnableVisualEffects;
+        var blurMs = Math.Clamp(LauncherApp.I.Settings.BlurDelayMs, 0, 1000);
+        void CleanupEffects()
+        {
+            if (!ReferenceEquals(PageHost.Content, page)) return;
+            page.Effect = null;
+            page.CacheMode = null;
+            PageHost.Effect = null;
+        }
+
         if (effects)
         {
             // 高级效果默认关闭。缓存放在页面上，模糊放在 PageHost 上，
             // 否则 CacheMode 会把模糊的首帧一起缓存，动画看起来像没有生效。
             page.CacheMode = new BitmapCache(1.0);
-            var blur = new BlurEffect { Radius = 0 };
-            PageHost.Effect = blur;
-            var blurIn = new DoubleAnimation(10, 0, TimeSpan.FromMilliseconds(360))
-            {
-                EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
-            };
-            blur.BeginAnimation(BlurEffect.RadiusProperty, blurIn);
-
             var shadow = new DropShadowEffect
             {
                 BlurRadius = 26,
@@ -242,20 +243,30 @@ public partial class MainWindow : Window
                 EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
             };
             shadow.BeginAnimation(DropShadowEffect.OpacityProperty, shadowFade);
+
+            if (blurMs > 0)
+            {
+                var blur = new BlurEffect { Radius = 0 };
+                PageHost.Effect = blur;
+                var blurIn = new DoubleAnimation(10, 0, TimeSpan.FromMilliseconds(blurMs))
+                {
+                    EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
+                };
+                blurIn.Completed += (_, _) => CleanupEffects();
+                blur.BeginAnimation(BlurEffect.RadiusProperty, blurIn);
+            }
+            else
+            {
+                shadowFade.Completed += (_, _) => CleanupEffects();
+            }
         }
         else
         {
             page.Effect = null;
             page.CacheMode = null;
             PageHost.Effect = null;
+            move.Completed += (_, _) => CleanupEffects();
         }
-
-        move.Completed += (_, _) =>
-        {
-            page.Effect = null;
-            page.CacheMode = null;
-            PageHost.Effect = null;
-        };
     }
 
     public void NavigateToVersions(string versionId)

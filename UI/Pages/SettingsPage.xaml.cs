@@ -1,7 +1,8 @@
-using System.IO;
+﻿using System.IO;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
+using System.Windows.Media.Animation;
 using Microsoft.Win32;
 using Vermilune.Core;
 using Vermilune.UI.Dialogs;
@@ -62,6 +63,11 @@ public partial class SettingsPage : UserControl, IPage
                     : "把图片放进背景文件夹后点刷新");
             LightModeCheck.IsChecked = string.Equals(s.UiThemeMode, "light", StringComparison.OrdinalIgnoreCase);
             VisualEffectsCheck.IsChecked = s.EnableVisualEffects;
+            BlurDelaySlider.Value = Math.Clamp(s.BlurDelayMs, 0, 1000);
+            BlurDelayValueText.Text = $"{(int)BlurDelaySlider.Value} ms";
+            BlurDelayPanel.Visibility = s.EnableVisualEffects ? Visibility.Visible : Visibility.Collapsed;
+            BlurDelayPanel.Height = s.EnableVisualEffects ? 96 : 0;
+            BlurDelayPanel.Opacity = s.EnableVisualEffects ? 1 : 0;
             BgOpacitySlider.Value = s.BackgroundImageOpacity * 100;
             MemorySlider.Value = Math.Clamp(s.MemoryMb, (int)MemorySlider.Minimum, (int)MemorySlider.Maximum);
             MemoryValueText.Text = $"{s.MemoryMb} MB";
@@ -263,9 +269,55 @@ public partial class SettingsPage : UserControl, IPage
     private void VisualEffectsCheck_Click(object sender, RoutedEventArgs e)
     {
         if (_loading) return;
-        LauncherApp.I.Settings.EnableVisualEffects = VisualEffectsCheck.IsChecked == true;
+        var s = LauncherApp.I.Settings;
+        s.EnableVisualEffects = VisualEffectsCheck.IsChecked == true;
+        s.BlurDelayMs = Math.Clamp((int)BlurDelaySlider.Value, 0, 1000);
         LauncherApp.I.Save();
-        LauncherApp.I.Notify("高级视觉效果", LauncherApp.I.Settings.EnableVisualEffects ? "已开启" : "已关闭");
+        AnimateBlurDelayPanel(s.EnableVisualEffects);
+        LauncherApp.I.Notify("高级视觉效果", s.EnableVisualEffects ? "已开启" : "已关闭");
+    }
+
+    private void BlurDelaySlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+    {
+        if (BlurDelayValueText is null) return;
+        var value = Math.Clamp((int)e.NewValue, 0, 1000);
+        BlurDelayValueText.Text = $"{value} ms";
+        if (_loading) return;
+        LauncherApp.I.Settings.BlurDelayMs = value;
+        LauncherApp.I.SaveDebounced();
+    }
+
+    private void AnimateBlurDelayPanel(bool show)
+    {
+        if (BlurDelayPanel is null) return;
+        var ease = new CubicEase { EasingMode = EasingMode.EaseOut };
+        if (show)
+        {
+            BlurDelayPanel.Visibility = Visibility.Visible;
+            BlurDelayPanel.BeginAnimation(HeightProperty,
+                new DoubleAnimation(BlurDelayPanel.ActualHeight, 96, TimeSpan.FromMilliseconds(180)) { EasingFunction = ease });
+            BlurDelayPanel.BeginAnimation(OpacityProperty,
+                new DoubleAnimation(BlurDelayPanel.Opacity, 1, TimeSpan.FromMilliseconds(160)) { EasingFunction = ease });
+        }
+        else
+        {
+            var fade = new DoubleAnimation(BlurDelayPanel.Opacity, 0, TimeSpan.FromMilliseconds(120))
+            {
+                EasingFunction = ease
+            };
+            fade.Completed += (_, _) =>
+            {
+                if (VisualEffectsCheck.IsChecked == true) return;
+                BlurDelayPanel.Visibility = Visibility.Collapsed;
+                BlurDelayPanel.BeginAnimation(HeightProperty, null);
+                BlurDelayPanel.BeginAnimation(OpacityProperty, null);
+                BlurDelayPanel.Height = 0;
+                BlurDelayPanel.Opacity = 0;
+            };
+            BlurDelayPanel.BeginAnimation(OpacityProperty, fade);
+            BlurDelayPanel.BeginAnimation(HeightProperty,
+                new DoubleAnimation(BlurDelayPanel.ActualHeight, 0, TimeSpan.FromMilliseconds(160)) { EasingFunction = ease });
+        }
     }
 
     private void OptimizeCheck_Click(object sender, RoutedEventArgs e)

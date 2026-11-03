@@ -54,6 +54,8 @@ public sealed class AppSettings
     public double BackgroundImageOpacity { get; set; } = 0.34;
     /// <summary>页面切换时使用 BitmapCache / 模糊等高级效果；默认关闭以降低显存和内存占用。</summary>
     public bool EnableVisualEffects { get; set; }
+    /// <summary>高级模糊过渡时长，0 - 1000ms，默认 420ms。</summary>
+    public int BlurDelayMs { get; set; } = 420;
     public string FeaturedImage { get; set; } = "";
     public string FeaturedTitle { get; set; } = "Vermilune 1.2分支";
     public string FeaturedSubtitle { get; set; } = "这个卡片可以自定义哦！";
@@ -106,6 +108,7 @@ public sealed class AppSettings
         }
         FeaturedTitleColor = NormalizeColor(FeaturedTitleColor, "");
         FeaturedSubtitleColor = NormalizeColor(FeaturedSubtitleColor, "");
+        BlurDelayMs = Math.Clamp(BlurDelayMs, 0, 1000);
         if (Recent is null) Recent = new();
         if (Recent.Count > 24) Recent = Recent.OrderByDescending(r => r.LastPlayedUtc).Take(24).ToList();
         Account ??= new AccountSettings();
