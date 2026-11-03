@@ -192,12 +192,16 @@ public partial class VersionsPage : UserControl, IPage
     private void LoadModify(VersionInfo v)
     {
         var s = LauncherApp.I.Settings;
+        var autoMemory = _instance.MemoryMb is null;
+        MemAutoCheck.IsChecked = autoMemory;
         var memory = LauncherApp.I.DefaultMemoryFor(v, _instance);
         MemSlider.Value = Math.Clamp(memory, (int)MemSlider.Minimum, (int)MemSlider.Maximum);
-        MemValue.Text = $"{memory} MB";
+        MemSlider.IsEnabled = !autoMemory;
+        MemValue.Text = autoMemory ? $"自动 · {memory} MB" : $"{memory} MB";
         var total = LauncherApp.I.TotalMemoryMb;
-        var recommend = JavaService.RecommendMemoryMb(total);
-        MemHint.Text = $"物理内存 {total / 1024.0:0} GB · 推荐 {recommend} MB";
+        MemHint.Text = autoMemory
+            ? $"按 Mod 数量自动计算 · 物理内存 {total / 1024.0:0} GB"
+            : $"物理内存 {total / 1024.0:0} GB · 推荐 {JavaService.RecommendMemoryMb(total)} MB";
 
         JavaAutoCheck.IsChecked = _instance.AutoJava;
         JavaCombo.IsEnabled = !_instance.AutoJava;
@@ -237,12 +241,34 @@ public partial class VersionsPage : UserControl, IPage
     private void MemSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
     {
         if (MemValue is null) return;
+        if (MemAutoCheck?.IsChecked == true) return;
         MemValue.Text = $"{(int)e.NewValue} MB";
+    }
+
+    private void MemAuto_Changed(object sender, RoutedEventArgs e)
+    {
+        if (MemSlider is null || _selected is null) return;
+        var auto = MemAutoCheck.IsChecked == true;
+        MemSlider.IsEnabled = !auto;
+        if (auto)
+        {
+            var memory = LauncherApp.I.DefaultMemoryFor(_selected, new InstanceSettings());
+            MemSlider.Value = Math.Clamp(memory, (int)MemSlider.Minimum, (int)MemSlider.Maximum);
+            MemValue.Text = $"自动 · {memory} MB";
+            MemHint.Text = $"按 Mod 数量自动计算 · 物理内存 {LauncherApp.I.TotalMemoryMb / 1024.0:0} GB";
+        }
+        else
+        {
+            MemValue.Text = $"{(int)MemSlider.Value} MB";
+            MemHint.Text = $"物理内存 {LauncherApp.I.TotalMemoryMb / 1024.0:0} GB · 推荐 {JavaService.RecommendMemoryMb(LauncherApp.I.TotalMemoryMb)} MB";
+        }
     }
 
     private void UseRecommendedMemory_Click(object sender, RoutedEventArgs e)
     {
         var recommend = JavaService.RecommendMemoryMb(LauncherApp.I.TotalMemoryMb);
+        MemAutoCheck.IsChecked = false;
+        MemSlider.IsEnabled = true;
         MemSlider.Value = Math.Clamp(recommend, (int)MemSlider.Minimum, (int)MemSlider.Maximum);
     }
 
@@ -269,7 +295,7 @@ public partial class VersionsPage : UserControl, IPage
         {
             var width = ParseDimension(WidthBox.Text, 0, 7680, "宽度");
             var height = ParseDimension(HeightBox.Text, 0, 4320, "高度");
-            _instance.MemoryMb = (int)MemSlider.Value;
+            _instance.MemoryMb = MemAutoCheck.IsChecked == true ? null : (int)MemSlider.Value;
             _instance.AutoJava = JavaAutoCheck.IsChecked == true;
             _instance.JavaPath = _instance.AutoJava || JavaCombo.SelectedIndex <= 0
                 ? ""

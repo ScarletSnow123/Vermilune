@@ -403,7 +403,10 @@ public partial class LaunchPage : UserControl, IPage, INotifyPropertyChanged
             return;
         }
         var mods = v.ModCount > 0 ? $"{v.ModCount} 个 Mod" : "无 Mod";
-        VersionMeta = $"{v.MinecraftVersion} · {v.LoaderBadge} · {mods} · 建议 Java {v.JavaMajor}";
+        var instance = InstanceStore.Load(v.Id);
+        var memory = LauncherApp.I.DefaultMemoryFor(v, instance);
+        var memoryText = instance.MemoryMb is null ? $"自动 {memory} MB 内存" : $"{memory} MB 内存";
+        VersionMeta = $"{v.MinecraftVersion} · {v.LoaderBadge} · {mods} · {memoryText} · 建议 Java {v.JavaMajor}";
         LaunchSub = v.DisplayName;
         if (LauncherApp.I.Launch.IsRunning && LauncherApp.I.Launch.CurrentVersionId == v.Id)
             LaunchTitle = "游戏运行中";
@@ -635,7 +638,7 @@ public partial class LaunchPage : UserControl, IPage, INotifyPropertyChanged
             ExtraJvmArgs = instance.JvmArgs,
             ExtraGameArgs = instance.GameArgs,
             LauncherName = "Vermilune",
-            LauncherVersion = "1.2.26-beta"
+            LauncherVersion = "1.2.27-beta"
         };
 
         _cts?.Dispose();

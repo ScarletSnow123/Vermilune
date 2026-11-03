@@ -69,10 +69,6 @@ public partial class SettingsPage : UserControl, IPage
             BlurDelayPanel.Height = s.EnableVisualEffects ? 96 : 0;
             BlurDelayPanel.Opacity = s.EnableVisualEffects ? 1 : 0;
             BgOpacitySlider.Value = s.BackgroundImageOpacity * 100;
-            MemorySlider.Value = Math.Clamp(s.MemoryMb, (int)MemorySlider.Minimum, (int)MemorySlider.Maximum);
-            MemoryValueText.Text = $"{s.MemoryMb} MB";
-            var total = LauncherApp.I.TotalMemoryMb;
-            MemHintText.Text = $"物理内存 {total / 1024.0:0} GB · 推荐 {JavaService.RecommendMemoryMb(total)} MB";
             IsolationCheck.IsChecked = s.VersionIsolation;
             CloseAfterCheck.IsChecked = s.CloseAfterLaunch;
             OptimizeCheck.IsChecked = s.OptimizeJvm;
@@ -233,22 +229,6 @@ public partial class SettingsPage : UserControl, IPage
         LauncherApp.I.Save();
         LauncherApp.I.RaiseSettingsChanged();
         LoadSettings();
-    }
-
-    private void MemorySlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
-    {
-        if (_loading) return;
-        var s = LauncherApp.I.Settings;
-        s.MemoryMb = (int)e.NewValue;
-        MemoryValueText.Text = $"{s.MemoryMb} MB";
-        LauncherApp.I.SaveDebounced();
-        LauncherApp.I.RaiseSettingsChanged();
-    }
-
-    private void UseRecommendedMemory_Click(object sender, RoutedEventArgs e)
-    {
-        var value = JavaService.RecommendMemoryMb(LauncherApp.I.TotalMemoryMb);
-        MemorySlider.Value = Math.Clamp(value, (int)MemorySlider.Minimum, (int)MemorySlider.Maximum);
     }
 
     private void IsolationCheck_Click(object sender, RoutedEventArgs e)

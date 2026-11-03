@@ -1,4 +1,4 @@
-﻿<UserControl x:Class="Vermilune.UI.Pages.VersionsPage"
+<UserControl x:Class="Vermilune.UI.Pages.VersionsPage"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:local="clr-namespace:Vermilune.UI.Pages"
@@ -298,7 +298,12 @@
                                         <ColumnDefinition Width="*" />
                                         <ColumnDefinition Width="Auto" />
                                     </Grid.ColumnDefinitions>
-                                    <TextBlock Text="内存" Style="{StaticResource SectionTitle}" />
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="内存" Style="{StaticResource SectionTitle}" />
+                                        <CheckBox x:Name="MemAutoCheck" Content="自动分配" FontSize="10.5"
+                                                  Margin="12,0,0,0" VerticalAlignment="Center"
+                                                  Click="MemAuto_Changed" />
+                                    </StackPanel>
                                     <TextBlock x:Name="MemValue" Grid.Column="1" Text="4096 MB"
                                                Foreground="{DynamicResource AccentBrush}" FontWeight="SemiBold"
                                                VerticalAlignment="Center" />

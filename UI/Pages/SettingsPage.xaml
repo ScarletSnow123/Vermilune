@@ -192,25 +192,14 @@
                 <Border Style="{StaticResource Card}" Margin="0,12,0,0">
                     <StackPanel>
                         <TextBlock Text="启动" Style="{StaticResource SectionHeader}" />
-                        <TextBlock Text="默认内存、Java 与实例隔离。单个版本的覆盖在「版本 → 修改」中设置。" Style="{StaticResource Hint}" />
+                        <TextBlock Text="内存会按所选版本自动分配，单个版本可在「版本 → 修改」中覆盖。" Style="{StaticResource Hint}" />
 
                         <Border Style="{StaticResource SettingRow}" Margin="0,12,0,0">
                             <Grid>
                                 <StackPanel>
-                                    <TextBlock Text="默认内存" FontSize="12.5" FontWeight="SemiBold" />
-                                    <TextBlock x:Name="MemHintText" Text="物理内存 32 GB · 推荐 8192 MB" Style="{StaticResource Hint}" Margin="0,4,0,0" />
-                                </StackPanel>
-                                <StackPanel HorizontalAlignment="Right" VerticalAlignment="Center" Width="300">
-                                    <Grid>
-                                        <Slider x:Name="MemorySlider" Minimum="512" Maximum="32768" TickFrequency="512"
-                                                IsSnapToTickEnabled="True" ValueChanged="MemorySlider_ValueChanged" />
-                                        <TextBlock x:Name="MemoryValueText" Text="4096 MB" HorizontalAlignment="Right"
-                                                   VerticalAlignment="Center" FontSize="10.5"
-                                                   Foreground="{DynamicResource AccentBrush}" FontWeight="SemiBold"
-                                                   IsHitTestVisible="False" />
-                                    </Grid>
-                                    <Button Style="{StaticResource LinkButton}" Content="使用推荐值" HorizontalAlignment="Right"
-                                            Margin="0,4,0,0" Click="UseRecommendedMemory_Click" />
+                                    <TextBlock Text="内存自动分配" FontSize="12.5" FontWeight="SemiBold" />
+                                    <TextBlock Text="原版基础 2 GB；整合包按 Mod 数量增加，并限制在物理内存的 60% 以内。"
+                                               Style="{StaticResource Hint}" Margin="0,4,0,0" TextWrapping="Wrap" />
                                 </StackPanel>
                             </Grid>
                         </Border>
@@ -339,7 +328,7 @@
                 <Border Style="{StaticResource Card}" Margin="0,12,0,0">
                     <StackPanel>
                         <TextBlock Text="关于 Vermilune" Style="{StaticResource SectionHeader}" />
-                        <TextBlock Text="版本 1.2.26-beta  ·  Minecraft 启动器  ·  .NET 10 / WPF"
+                        <TextBlock Text="版本 1.2.27-beta  ·  Minecraft 启动器  ·  .NET 10 / WPF"
                                    Style="{StaticResource Hint}" Margin="0,7,0,0" />
                         <TextBlock Text="启动、下载、Mod 管理与诊断功能都在本地完成。"
                                    Style="{StaticResource Hint}" Margin="0,7,0,0" />

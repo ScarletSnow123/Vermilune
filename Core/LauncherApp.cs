@@ -355,14 +355,19 @@ public sealed class LauncherApp
     public int DefaultMemoryFor(VersionInfo version, InstanceSettings instance)
     {
         if (instance.MemoryMb is int explicitValue) return explicitValue;
-        var baseline = Settings.MemoryMb;
-        // 大型整合包直接用全局 4G 很容易 OOM；在用户没有单独设置时给出安全的下限。
-        if (version.ModCount >= 80)
-        {
-            var recommended = JavaService.RecommendMemoryMb(TotalMemoryMb);
-            return Math.Max(baseline, Math.Min(16384, recommended));
-        }
-        return baseline;
+
+        // 按版本自动分配：原版给基础值，整合包按 Mod 数量每 16 个加 512 MB，
+        // 再受物理内存 60% 上限约束，避免默认 4G 直接 OOM。
+        var mods = Math.Max(0, version.ModCount);
+        var auto = version.Loader == LoaderKind.Vanilla ? 2048 : 4096;
+        if (mods > 0) auto += (int)Math.Ceiling(mods / 16.0) * 512;
+        if (mods >= 150) auto = Math.Max(auto, 8192);
+        if (mods >= 300) auto = Math.Max(auto, 12288);
+
+        if (TotalMemoryMb > 0)
+            auto = Math.Min(auto, (int)(TotalMemoryMb * 0.6));
+        auto = Math.Clamp(auto, 2048, 65536);
+        return auto / 512 * 512;
     }
 
     public void SetMinecraftDir(string dir)
