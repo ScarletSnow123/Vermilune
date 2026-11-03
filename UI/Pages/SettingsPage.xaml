@@ -236,7 +236,8 @@
                                     <TextBlock Text="留空使用游戏默认标题。" Style="{StaticResource Hint}" Margin="0,4,0,0" />
                                 </StackPanel>
                                 <TextBox x:Name="WindowTitleBox" Width="300" Height="34" Style="{StaticResource InputBox}"
-                                         HorizontalAlignment="Right" LostFocus="WindowTitleBox_LostFocus">
+                                         HorizontalAlignment="Right" LostFocus="WindowTitleBox_LostFocus"
+                                         ToolTipService.InitialShowDelay="0">
                                     <TextBox.ToolTip>
                                         <ToolTip MaxWidth="430" Padding="12" Background="{DynamicResource SurfaceBrush}"
                                                  BorderBrush="{DynamicResource StrokeStrongBrush}" BorderThickness="1">
