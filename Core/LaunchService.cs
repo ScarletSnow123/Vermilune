@@ -684,6 +684,19 @@ public sealed class LaunchService
         foreach (var arg in CommandLineSplitter.Split(opt.ExtraGameArgs))
             game.Add(Replace(arg));
 
+        if (!string.IsNullOrWhiteSpace(opt.CustomInfo))
+        {
+            // 原版会把 --version 显示在主菜单左下角和 F3 左上角。
+            for (var i = 0; i + 1 < game.Count; i++)
+            {
+                if (string.Equals(game[i], "--version", StringComparison.Ordinal))
+                {
+                    game[i + 1] = opt.CustomInfo;
+                    break;
+                }
+            }
+        }
+
         var result = new List<string>(jvm.Count + game.Count + 2);
         result.AddRange(jvm);
         result.Add(resolved.MainClass);
