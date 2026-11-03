@@ -108,7 +108,7 @@ public sealed class AppSettings
         }
         FeaturedTitleColor = NormalizeColor(FeaturedTitleColor, "");
         FeaturedSubtitleColor = NormalizeColor(FeaturedSubtitleColor, "");
-        BlurDelayMs = Math.Clamp(BlurDelayMs, 0, 1000);
+        BlurDelayMs = Math.Clamp(BlurDelayMs, 360, 1000);
         if (Recent is null) Recent = new();
         if (Recent.Count > 24) Recent = Recent.OrderByDescending(r => r.LastPlayedUtc).Take(24).ToList();
         Account ??= new AccountSettings();

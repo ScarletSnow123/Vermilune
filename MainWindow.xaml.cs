@@ -216,7 +216,7 @@ public partial class MainWindow : Window
         page.BeginAnimation(OpacityProperty, fade);
 
         var effects = LauncherApp.I.Settings.EnableVisualEffects;
-        var blurMs = Math.Clamp(LauncherApp.I.Settings.BlurDelayMs, 0, 1000);
+        var blurMs = Math.Clamp(LauncherApp.I.Settings.BlurDelayMs, 360, 1000);
         void CleanupEffects()
         {
             if (!ReferenceEquals(PageHost.Content, page)) return;

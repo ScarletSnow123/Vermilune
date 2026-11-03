@@ -1,4 +1,4 @@
-﻿using System.IO;
+using System.IO;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
@@ -63,7 +63,7 @@ public partial class SettingsPage : UserControl, IPage
                     : "把图片放进背景文件夹后点刷新");
             LightModeCheck.IsChecked = string.Equals(s.UiThemeMode, "light", StringComparison.OrdinalIgnoreCase);
             VisualEffectsCheck.IsChecked = s.EnableVisualEffects;
-            BlurDelaySlider.Value = Math.Clamp(s.BlurDelayMs, 0, 1000);
+            BlurDelaySlider.Value = Math.Clamp(s.BlurDelayMs, 360, 1000);
             BlurDelayValueText.Text = $"{(int)BlurDelaySlider.Value} ms";
             BlurDelayPanel.Visibility = s.EnableVisualEffects ? Visibility.Visible : Visibility.Collapsed;
             BlurDelayPanel.Height = s.EnableVisualEffects ? 96 : 0;
@@ -284,6 +284,15 @@ public partial class SettingsPage : UserControl, IPage
         BlurDelayValueText.Text = $"{value} ms";
         if (_loading) return;
         LauncherApp.I.Settings.BlurDelayMs = value;
+        LauncherApp.I.SaveDebounced();
+    }
+
+    private void ResetBlurDelay_Click(object sender, RoutedEventArgs e)
+    {
+        BlurDelaySlider.Value = 420;
+        BlurDelayValueText.Text = "420 ms";
+        if (_loading) return;
+        LauncherApp.I.Settings.BlurDelayMs = 420;
         LauncherApp.I.SaveDebounced();
     }
 
