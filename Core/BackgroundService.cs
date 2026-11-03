@@ -40,6 +40,22 @@ public static class BackgroundService
         catch { return null; }
     }
 
+    public static string? PickRandom(string? exclude = null)
+    {
+        try
+        {
+            EnsureFolder();
+            var files = Directory.EnumerateFiles(Folder)
+                .Where(f => Extensions.Contains(Path.GetExtension(f), StringComparer.OrdinalIgnoreCase))
+                .ToList();
+            if (files.Count == 0) return null;
+            if (files.Count > 1 && !string.IsNullOrWhiteSpace(exclude))
+                files = files.Where(f => !string.Equals(f, exclude, StringComparison.OrdinalIgnoreCase)).ToList();
+            return files[Random.Shared.Next(files.Count)];
+        }
+        catch { return null; }
+    }
+
     public static bool IsImage(string path) =>
         File.Exists(path) && Extensions.Contains(Path.GetExtension(path), StringComparer.OrdinalIgnoreCase);
 }

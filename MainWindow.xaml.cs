@@ -28,6 +28,7 @@ public partial class MainWindow : Window
     private Rect _restoreBounds;
     private string _loadedBackgroundPath = "";
     private BitmapImage? _loadedBackground;
+    private bool _backgroundRolled;
 
     public MainWindow()
     {
@@ -62,7 +63,7 @@ public partial class MainWindow : Window
         BgOpacitySlider.Value = s.BackgroundImageOpacity * 100;
         _updatingSliders = false;
         OpacityValue.Text = $"{s.UiOpacity * 100:0}%";
-        RailVersion.Text = "v1.2.25-beta";
+        RailVersion.Text = "v1.2.26-beta";
 
         LauncherApp.I.SettingsChanged += OnSettingsChanged;
         LauncherApp.I.VersionsChanged += OnVersionsChanged;
@@ -115,9 +116,11 @@ public partial class MainWindow : Window
     {
         if (!_ready) return;
         var s = LauncherApp.I.Settings;
-        if (string.IsNullOrWhiteSpace(s.BackgroundImage))
+        if (!_backgroundRolled && !string.Equals(s.BackgroundImage, "none", StringComparison.OrdinalIgnoreCase))
         {
-            var picked = BackgroundService.PickLatest();
+            // 每个启动器会话只随机一次；设置页刷新背景时不再重抽。
+            _backgroundRolled = true;
+            var picked = BackgroundService.PickRandom(s.BackgroundImage);
             if (!string.IsNullOrWhiteSpace(picked))
             {
                 s.BackgroundImage = picked;
