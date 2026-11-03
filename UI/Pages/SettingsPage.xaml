@@ -236,7 +236,33 @@
                                     <TextBlock Text="留空使用游戏默认标题。" Style="{StaticResource Hint}" Margin="0,4,0,0" />
                                 </StackPanel>
                                 <TextBox x:Name="WindowTitleBox" Width="300" Height="34" Style="{StaticResource InputBox}"
-                                         HorizontalAlignment="Right" LostFocus="WindowTitleBox_LostFocus" />
+                                         HorizontalAlignment="Right" LostFocus="WindowTitleBox_LostFocus">
+                                    <TextBox.ToolTip>
+                                        <ToolTip MaxWidth="430" Padding="12" Background="{DynamicResource SurfaceBrush}"
+                                                 BorderBrush="{DynamicResource StrokeStrongBrush}" BorderThickness="1">
+                                            <StackPanel>
+                                                <TextBlock Text="自定义游戏窗口的标题，若留空则不进行更改。"
+                                                           Foreground="{DynamicResource TextBrush}" FontSize="11.5"
+                                                           TextWrapping="Wrap" />
+                                                <TextBlock Text="支持以下替换标记：" Margin="0,7,0,2"
+                                                           Foreground="{DynamicResource TextBrush}" FontSize="11" />
+                                                <TextBlock Text="- {user}：玩家名字" FontSize="10.5"
+                                                           Foreground="{DynamicResource TextSubBrush}" />
+                                                <TextBlock Text="- {login}：玩家的登录方式" FontSize="10.5"
+                                                           Foreground="{DynamicResource TextSubBrush}" />
+                                                <TextBlock Text="- {name}：游戏实例名" FontSize="10.5"
+                                                           Foreground="{DynamicResource TextSubBrush}" />
+                                                <TextBlock Text="- {date}、{time}：当前的系统时间" FontSize="10.5"
+                                                           Foreground="{DynamicResource TextSubBrush}" />
+                                                <TextBlock Text="- {version}：游戏对应的原版版本号" FontSize="10.5"
+                                                           Foreground="{DynamicResource TextSubBrush}" />
+                                                <TextBlock Text="注意：如果实例安装了 Modern UI 模组，这里的设置会失效。"
+                                                           Margin="0,7,0,0" FontSize="10.5" TextWrapping="Wrap"
+                                                           Foreground="{DynamicResource TextMutedBrush}" />
+                                            </StackPanel>
+                                        </ToolTip>
+                                    </TextBox.ToolTip>
+                                </TextBox>
                             </Grid>
                         </Border>
 

@@ -475,6 +475,23 @@ public partial class LaunchPage : UserControl, IPage, INotifyPropertyChanged
         AvatarInitialText.Visibility = Visibility.Visible;
     }
 
+    private static string ResolveWindowTitle(string template, VersionInfo version, AccountSettings account)
+    {
+        if (string.IsNullOrWhiteSpace(template)) return "";
+        var login = account.IsMicrosoft ? "微软正版"
+            : account.IsYggdrasil || account.IsNide ? "外置登录"
+            : "离线登录";
+        var name = string.IsNullOrWhiteSpace(version.DisplayName) ? version.Id : version.DisplayName;
+        var now = DateTime.Now;
+        return template
+            .Replace("{user}", account.Name, StringComparison.OrdinalIgnoreCase)
+            .Replace("{login}", login, StringComparison.OrdinalIgnoreCase)
+            .Replace("{name}", name, StringComparison.OrdinalIgnoreCase)
+            .Replace("{date}", now.ToString("yyyy-MM-dd"), StringComparison.OrdinalIgnoreCase)
+            .Replace("{time}", now.ToString("HH:mm:ss"), StringComparison.OrdinalIgnoreCase)
+            .Replace("{version}", string.IsNullOrWhiteSpace(version.MinecraftVersion) ? version.Id : version.MinecraftVersion, StringComparison.OrdinalIgnoreCase);
+    }
+
     private static (int Width, int Height) ParseWindowSize(string mode) => mode switch
     {
         "1280x720" => (1280, 720),
@@ -646,7 +663,7 @@ public partial class LaunchPage : UserControl, IPage, INotifyPropertyChanged
             OptimizeJvm = instance.OptimizeJvm ?? app.Settings.OptimizeJvm,
             ExtraJvmArgs = instance.JvmArgs,
             ExtraGameArgs = instance.GameArgs,
-            GameWindowTitle = app.Settings.GameWindowTitle,
+            GameWindowTitle = ResolveWindowTitle(app.Settings.GameWindowTitle, version, account),
             CustomInfo = app.Settings.CustomInfo,
             ProcessPriority = app.Settings.ProcessPriority,
             IpProtocol = app.Settings.IpProtocol,
