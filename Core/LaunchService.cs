@@ -749,23 +749,43 @@ public sealed class LaunchService
         var title = opt.GameWindowTitle;
         _ = Task.Run(async () =>
         {
-            for (var i = 0; i < 60; i++)
+            // 游戏初始化、切换全屏或重新聚焦时会把标题改回默认值，
+            // 所以持续校正；同时枚举该进程的所有可见窗口，避免 MainWindowHandle 指向错误窗口。
+            while (true)
             {
                 try
                 {
                     if (process.HasExited) return;
-                    process.Refresh();
-                    if (process.MainWindowHandle != IntPtr.Zero)
+                    var pid = (uint)process.Id;
+                    EnumWindows((hWnd, _) =>
                     {
-                        SetWindowTextW(process.MainWindowHandle, title);
-                        return;
-                    }
+                        GetWindowThreadProcessId(hWnd, out var owner);
+                        if (owner == pid && IsWindowVisible(hWnd) && GetWindowTextLengthW(hWnd) > 0)
+                            SetWindowTextW(hWnd, title);
+                        return true;
+                    }, IntPtr.Zero);
                 }
+                catch (ObjectDisposedException) { return; }
+                catch (InvalidOperationException) { return; }
                 catch { }
-                await Task.Delay(250);
+                await Task.Delay(600);
             }
         });
     }
+
+    private delegate bool EnumWindowsProc(IntPtr hWnd, IntPtr lParam);
+
+    [DllImport("user32.dll")]
+    private static extern bool EnumWindows(EnumWindowsProc lpEnumFunc, IntPtr lParam);
+
+    [DllImport("user32.dll")]
+    private static extern uint GetWindowThreadProcessId(IntPtr hWnd, out uint processId);
+
+    [DllImport("user32.dll")]
+    private static extern bool IsWindowVisible(IntPtr hWnd);
+
+    [DllImport("user32.dll", CharSet = CharSet.Unicode)]
+    private static extern int GetWindowTextLengthW(IntPtr hWnd);
 
     [DllImport("user32.dll", CharSet = CharSet.Unicode)]
     private static extern bool SetWindowTextW(IntPtr hWnd, string text);
