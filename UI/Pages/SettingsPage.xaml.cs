@@ -69,8 +69,20 @@ public partial class SettingsPage : UserControl, IPage
             BlurDelayPanel.Height = s.EnableVisualEffects ? 96 : 0;
             BlurDelayPanel.Opacity = s.EnableVisualEffects ? 1 : 0;
             BgOpacitySlider.Value = s.BackgroundImageOpacity * 100;
-            IsolationCheck.IsChecked = s.VersionIsolation;
-            CloseAfterCheck.IsChecked = s.CloseAfterLaunch;
+            IsolationCombo.ItemsSource = new[] { "隔离所有实例", "不隔离" };
+            IsolationCombo.SelectedIndex = s.VersionIsolation ? 0 : 1;
+            WindowTitleBox.Text = s.GameWindowTitle;
+            CustomInfoBox.Text = s.CustomInfo;
+            VisibilityCombo.ItemsSource = new[] { "游戏启动后仍保持不变", "游戏启动后隐藏启动器", "游戏启动后退出启动器" };
+            VisibilityCombo.SelectedIndex = s.LauncherVisibility switch { "hide" => 1, "close" => 2, _ => 0 };
+            PriorityCombo.ItemsSource = new[] { "普通", "高（优先保证游戏运行）", "低（让其他程序优先）" };
+            PriorityCombo.SelectedIndex = s.ProcessPriority switch { "high" => 1, "below" => 2, _ => 0 };
+            WindowSizeCombo.ItemsSource = new[] { "默认", "1280 × 720", "1600 × 900", "1920 × 1080" };
+            WindowSizeCombo.SelectedIndex = s.WindowSize switch { "1280x720" => 1, "1600x900" => 2, "1920x1080" => 3, _ => 0 };
+            AuthModeCombo.ItemsSource = new[] { "设备代码流" };
+            AuthModeCombo.SelectedIndex = 0;
+            IpProtocolCombo.ItemsSource = new[] { "Java 默认", "优先 IPv4", "优先 IPv6" };
+            IpProtocolCombo.SelectedIndex = s.IpProtocol switch { "ipv4" => 1, "ipv6" => 2, _ => 0 };
             OptimizeCheck.IsChecked = s.OptimizeJvm;
             FillJava();
             SourceCombo.ItemsSource = new[] { "自动（官方优先）", "Mojang 官方", "BMCLAPI 镜像" };
@@ -231,18 +243,62 @@ public partial class SettingsPage : UserControl, IPage
         LoadSettings();
     }
 
-    private void IsolationCheck_Click(object sender, RoutedEventArgs e)
+    private void IsolationCombo_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
         if (_loading) return;
-        LauncherApp.I.Settings.VersionIsolation = IsolationCheck.IsChecked == true;
+        var s = LauncherApp.I.Settings;
+        s.VersionIsolation = IsolationCombo.SelectedIndex == 0;
         LauncherApp.I.Save();
-        LauncherApp.I.Notify("版本隔离", IsolationCheck.IsChecked == true ? "已开启" : "已关闭");
+        LauncherApp.I.Notify("版本隔离", s.VersionIsolation ? "已开启" : "已关闭");
     }
 
-    private void CloseAfterCheck_Click(object sender, RoutedEventArgs e)
+    private void WindowTitleBox_LostFocus(object sender, RoutedEventArgs e)
     {
         if (_loading) return;
-        LauncherApp.I.Settings.CloseAfterLaunch = CloseAfterCheck.IsChecked == true;
+        LauncherApp.I.Settings.GameWindowTitle = WindowTitleBox.Text.Trim();
+        LauncherApp.I.SaveDebounced();
+    }
+
+    private void CustomInfoBox_LostFocus(object sender, RoutedEventArgs e)
+    {
+        if (_loading) return;
+        LauncherApp.I.Settings.CustomInfo = CustomInfoBox.Text.Trim();
+        LauncherApp.I.SaveDebounced();
+    }
+
+    private void VisibilityCombo_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (_loading) return;
+        var s = LauncherApp.I.Settings;
+        s.LauncherVisibility = VisibilityCombo.SelectedIndex switch { 1 => "hide", 2 => "close", _ => "keep" };
+        s.CloseAfterLaunch = s.LauncherVisibility == "close";
+        LauncherApp.I.Save();
+    }
+
+    private void PriorityCombo_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (_loading) return;
+        LauncherApp.I.Settings.ProcessPriority = PriorityCombo.SelectedIndex switch { 1 => "high", 2 => "below", _ => "normal" };
+        LauncherApp.I.Save();
+    }
+
+    private void WindowSizeCombo_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (_loading) return;
+        LauncherApp.I.Settings.WindowSize = WindowSizeCombo.SelectedIndex switch
+        {
+            1 => "1280x720",
+            2 => "1600x900",
+            3 => "1920x1080",
+            _ => "default"
+        };
+        LauncherApp.I.Save();
+    }
+
+    private void IpProtocolCombo_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (_loading) return;
+        LauncherApp.I.Settings.IpProtocol = IpProtocolCombo.SelectedIndex switch { 1 => "ipv4", 2 => "ipv6", _ => "default" };
         LauncherApp.I.Save();
     }
 

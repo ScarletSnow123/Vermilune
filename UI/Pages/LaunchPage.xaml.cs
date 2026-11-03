@@ -475,6 +475,14 @@ public partial class LaunchPage : UserControl, IPage, INotifyPropertyChanged
         AvatarInitialText.Visibility = Visibility.Visible;
     }
 
+    private static (int Width, int Height) ParseWindowSize(string mode) => mode switch
+    {
+        "1280x720" => (1280, 720),
+        "1600x900" => (1600, 900),
+        "1920x1080" => (1920, 1080),
+        _ => (0, 0)
+    };
+
     private static BitmapSource CreateHead(BitmapSource skin)
     {
         var visual = new DrawingVisual();
@@ -620,6 +628,7 @@ public partial class LaunchPage : UserControl, IPage, INotifyPropertyChanged
 
         var gameDir = app.Versions.GetGameDir(version.Id, instance, app.Settings.VersionIsolation);
         Directory.CreateDirectory(gameDir);
+        var (globalWidth, globalHeight) = ParseWindowSize(app.Settings.WindowSize);
         var options = new LaunchOptions
         {
             Version = version,
@@ -631,12 +640,16 @@ public partial class LaunchPage : UserControl, IPage, INotifyPropertyChanged
             NativesDir = app.Versions.GetNativesDir(version.Id),
             JavaPath = java.Path,
             MemoryMb = memory,
-            Width = instance.Width,
-            Height = instance.Height,
+            Width = instance.Width > 0 ? instance.Width : globalWidth,
+            Height = instance.Height > 0 ? instance.Height : globalHeight,
             Fullscreen = instance.Fullscreen,
             OptimizeJvm = instance.OptimizeJvm ?? app.Settings.OptimizeJvm,
             ExtraJvmArgs = instance.JvmArgs,
             ExtraGameArgs = instance.GameArgs,
+            GameWindowTitle = app.Settings.GameWindowTitle,
+            CustomInfo = app.Settings.CustomInfo,
+            ProcessPriority = app.Settings.ProcessPriority,
+            IpProtocol = app.Settings.IpProtocol,
             LauncherName = "Vermilune",
             LauncherVersion = "1.2.27-beta"
         };
@@ -658,10 +671,26 @@ public partial class LaunchPage : UserControl, IPage, INotifyPropertyChanged
                 app.Save();
                 BuildRecent();
             }
-            if (app.Settings.CloseAfterLaunch)
+            if (app.Settings.LauncherVisibility == "close")
             {
                 await Task.Delay(1200);
                 App.Window?.CloseForGame();
+            }
+            else if (app.Settings.LauncherVisibility == "hide")
+            {
+                await Task.Delay(1200);
+                if (_state == LaunchState.Running && App.Window is not null)
+                {
+                    Action<int, string?>? onExit = null;
+                    onExit = (_, _) => Dispatcher.BeginInvoke(new Action(() =>
+                    {
+                        app.Launch.Exited -= onExit;
+                        App.Window?.Show();
+                        App.Window?.Activate();
+                    }));
+                    app.Launch.Exited += onExit;
+                    App.Window.Hide();
+                }
             }
         }
         catch (OperationCanceledException)
@@ -671,6 +700,7 @@ public partial class LaunchPage : UserControl, IPage, INotifyPropertyChanged
         catch (Exception ex)
         {
             Log.Error(ex, "启动失败");
+            App.Window?.Show();
             SetStatus("启动失败：" + ex.Message, LaunchState.Failed);
             MessageDialog.Show(Window.GetWindow(this), "启动失败", ex.Message + "\n\n详细日志：" + app.Launch.LastLogPath,
                 "查看日志", "关闭", danger: true);

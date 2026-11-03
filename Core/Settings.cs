@@ -65,6 +65,12 @@ public sealed class AppSettings
     public int MemoryMb { get; set; } = 4096;
     public bool VersionIsolation { get; set; } = true;
     public bool CloseAfterLaunch { get; set; }
+    public string GameWindowTitle { get; set; } = "";
+    public string CustomInfo { get; set; } = "";
+    public string LauncherVisibility { get; set; } = "keep";
+    public string ProcessPriority { get; set; } = "normal";
+    public string WindowSize { get; set; } = "default";
+    public string IpProtocol { get; set; } = "default";
     public bool ShowLogPanel { get; set; } = true;
     public bool OptimizeJvm { get; set; } = true;
     public string DownloadSource { get; set; } = "auto"; // auto | official | bmclapi
@@ -109,6 +115,34 @@ public sealed class AppSettings
         FeaturedTitleColor = NormalizeColor(FeaturedTitleColor, "");
         FeaturedSubtitleColor = NormalizeColor(FeaturedSubtitleColor, "");
         BlurDelayMs = Math.Clamp(BlurDelayMs, 360, 1000);
+        GameWindowTitle = (GameWindowTitle ?? "").Trim();
+        if (GameWindowTitle.Length > 64) GameWindowTitle = GameWindowTitle[..64];
+        CustomInfo = (CustomInfo ?? "").Trim();
+        if (CustomInfo.Length > 64) CustomInfo = CustomInfo[..64];
+        LauncherVisibility = LauncherVisibility switch
+        {
+            "hide" => "hide",
+            "close" => "close",
+            _ => "keep"
+        };
+        ProcessPriority = ProcessPriority switch
+        {
+            "high" => "high",
+            "below" => "below",
+            _ => "normal"
+        };
+        WindowSize = WindowSize switch
+        {
+            "1280x720" or "1600x900" or "1920x1080" => WindowSize,
+            _ => "default"
+        };
+        IpProtocol = IpProtocol switch
+        {
+            "ipv4" => "ipv4",
+            "ipv6" => "ipv6",
+            _ => "default"
+        };
+        if (CloseAfterLaunch && LauncherVisibility == "keep") LauncherVisibility = "close";
         if (Recent is null) Recent = new();
         if (Recent.Count > 24) Recent = Recent.OrderByDescending(r => r.LastPlayedUtc).Take(24).ToList();
         Account ??= new AccountSettings();

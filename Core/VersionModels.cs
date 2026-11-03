@@ -168,6 +168,10 @@ public sealed class LaunchOptions
     public bool OptimizeJvm { get; init; } = true;
     public string ExtraJvmArgs { get; init; } = "";
     public string ExtraGameArgs { get; init; } = "";
+    public string GameWindowTitle { get; init; } = "";
+    public string CustomInfo { get; init; } = "";
+    public string ProcessPriority { get; init; } = "normal";
+    public string IpProtocol { get; init; } = "default";
     public string LauncherName { get; init; } = "Vermilune";
     public string LauncherVersion { get; init; } = "1.2.27-beta";
 }

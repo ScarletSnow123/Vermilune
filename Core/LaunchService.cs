@@ -2,6 +2,7 @@ using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.Json.Nodes;
 using System.Text.RegularExpressions;
@@ -362,6 +363,7 @@ public sealed class LaunchService
             State = LaunchState.Running;
             Report(LaunchState.Running, "游戏已启动", 1.0);
             Log.Info($"游戏进程已启动：{opt.JavaPath}，版本 {opt.Version.Id}，PID {process.Id}");
+            ApplyProcessOptions(process, opt);
         }
         catch (OperationCanceledException)
         {
@@ -626,9 +628,15 @@ public sealed class LaunchService
         jvm.Add("-Djna.tmpdir=" + natives);
         jvm.Add("-Dorg.lwjgl.system.SharedLibraryExtractPath=" + natives);
         jvm.Add("-Dio.netty.native.workdir=" + natives);
-        jvm.Add("-Dminecraft.launcher.brand=" + opt.LauncherName);
+        jvm.Add("-Dminecraft.launcher.brand=" + (string.IsNullOrWhiteSpace(opt.CustomInfo) ? opt.LauncherName : opt.CustomInfo));
         jvm.Add("-Dminecraft.launcher.version=" + opt.LauncherVersion);
         jvm.Add("-Dlog4j2.formatMsgNoLookups=true");
+        if (opt.IpProtocol == "ipv4") jvm.Add("-Djava.net.preferIPv4Stack=true");
+        else if (opt.IpProtocol == "ipv6")
+        {
+            jvm.Add("-Djava.net.preferIPv6Addresses=true");
+            jvm.Add("-Djava.net.preferIPv4Stack=false");
+        }
         if (opt.Version.Loader is LoaderKind.Forge or LoaderKind.NeoForge)
         {
             jvm.Add("-Dfml.ignoreInvalidMinecraftCertificates=true");
@@ -723,6 +731,44 @@ public sealed class LaunchService
         try { ProgressChanged?.Invoke(new LaunchProgress { State = state, Stage = stage, Fraction = fraction, ExitCode = exitCode }); }
         catch { }
     }
+
+    private static void ApplyProcessOptions(Process process, LaunchOptions opt)
+    {
+        try
+        {
+            process.PriorityClass = opt.ProcessPriority switch
+            {
+                "high" => ProcessPriorityClass.High,
+                "below" => ProcessPriorityClass.BelowNormal,
+                _ => ProcessPriorityClass.Normal
+            };
+        }
+        catch (Exception ex) { Log.Warn("设置进程优先级失败：" + ex.Message); }
+
+        if (string.IsNullOrWhiteSpace(opt.GameWindowTitle)) return;
+        var title = opt.GameWindowTitle;
+        _ = Task.Run(async () =>
+        {
+            for (var i = 0; i < 60; i++)
+            {
+                try
+                {
+                    if (process.HasExited) return;
+                    process.Refresh();
+                    if (process.MainWindowHandle != IntPtr.Zero)
+                    {
+                        SetWindowTextW(process.MainWindowHandle, title);
+                        return;
+                    }
+                }
+                catch { }
+                await Task.Delay(250);
+            }
+        });
+    }
+
+    [DllImport("user32.dll", CharSet = CharSet.Unicode)]
+    private static extern bool SetWindowTextW(IntPtr hWnd, string text);
 }
 
 /// <summary>按 Windows 命令行规则拆分参数，支持双引号与反斜杠转义。</summary>

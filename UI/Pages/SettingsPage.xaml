@@ -221,40 +221,99 @@
                         <Border Style="{StaticResource SettingRow}">
                             <Grid>
                                 <StackPanel>
-                                    <TextBlock Text="版本隔离" FontSize="12.5" FontWeight="SemiBold" />
-                                    <TextBlock Text="默认把每个版本放在自己的文件夹里，避免 Mods 与存档互相污染。" Style="{StaticResource Hint}" Margin="0,4,0,0" />
+                                    <TextBlock Text="默认版本隔离" FontSize="12.5" FontWeight="SemiBold" />
+                                    <TextBlock Text="把每个版本放在自己的文件夹里，避免 Mods 与存档互相污染。" Style="{StaticResource Hint}" Margin="0,4,0,0" />
                                 </StackPanel>
-                                <CheckBox x:Name="IsolationCheck" Style="{StaticResource Switch}" HorizontalAlignment="Right"
-                                          VerticalAlignment="Center" Click="IsolationCheck_Click" />
+                                <ComboBox x:Name="IsolationCombo" Width="230" Height="34" HorizontalAlignment="Right"
+                                          SelectionChanged="IsolationCombo_SelectionChanged" />
+                            </Grid>
+                        </Border>
+
+                        <Border Style="{StaticResource SettingRow}">
+                            <Grid>
+                                <StackPanel>
+                                    <TextBlock Text="游戏窗口标题" FontSize="12.5" FontWeight="SemiBold" />
+                                    <TextBlock Text="留空使用游戏默认标题。" Style="{StaticResource Hint}" Margin="0,4,0,0" />
+                                </StackPanel>
+                                <TextBox x:Name="WindowTitleBox" Width="300" Height="34" Style="{StaticResource InputBox}"
+                                         HorizontalAlignment="Right" LostFocus="WindowTitleBox_LostFocus" />
+                            </Grid>
+                        </Border>
+
+                        <Border Style="{StaticResource SettingRow}">
+                            <Grid>
+                                <StackPanel>
+                                    <TextBlock Text="自定义信息" FontSize="12.5" FontWeight="SemiBold" />
+                                    <TextBlock Text="写入启动器标识，留空使用 Vermilune。" Style="{StaticResource Hint}" Margin="0,4,0,0" />
+                                </StackPanel>
+                                <TextBox x:Name="CustomInfoBox" Width="300" Height="34" Style="{StaticResource InputBox}"
+                                         HorizontalAlignment="Right" LostFocus="CustomInfoBox_LostFocus" />
+                            </Grid>
+                        </Border>
+
+                        <Border Style="{StaticResource SettingRow}">
+                            <Grid>
+                                <StackPanel>
+                                    <TextBlock Text="启动器可见性" FontSize="12.5" FontWeight="SemiBold" />
+                                    <TextBlock Text="游戏启动后保持、隐藏或退出启动器。" Style="{StaticResource Hint}" Margin="0,4,0,0" />
+                                </StackPanel>
+                                <ComboBox x:Name="VisibilityCombo" Width="230" Height="34" HorizontalAlignment="Right"
+                                          SelectionChanged="VisibilityCombo_SelectionChanged" />
+                            </Grid>
+                        </Border>
+
+                        <Border Style="{StaticResource SettingRow}">
+                            <Grid>
+                                <StackPanel>
+                                    <TextBlock Text="进程优先级" FontSize="12.5" FontWeight="SemiBold" />
+                                    <TextBlock Text="高优先级可减少卡顿，但可能影响其他程序。" Style="{StaticResource Hint}" Margin="0,4,0,0" />
+                                </StackPanel>
+                                <ComboBox x:Name="PriorityCombo" Width="230" Height="34" HorizontalAlignment="Right"
+                                          SelectionChanged="PriorityCombo_SelectionChanged" />
+                            </Grid>
+                        </Border>
+
+                        <Border Style="{StaticResource SettingRow}">
+                            <Grid>
+                                <StackPanel>
+                                    <TextBlock Text="窗口大小" FontSize="12.5" FontWeight="SemiBold" />
+                                    <TextBlock Text="未在版本修改里指定时使用。" Style="{StaticResource Hint}" Margin="0,4,0,0" />
+                                </StackPanel>
+                                <ComboBox x:Name="WindowSizeCombo" Width="230" Height="34" HorizontalAlignment="Right"
+                                          SelectionChanged="WindowSizeCombo_SelectionChanged" />
+                            </Grid>
+                        </Border>
+
+                        <Border Style="{StaticResource SettingRow}">
+                            <Grid>
+                                <StackPanel>
+                                    <TextBlock Text="正版验证方式" FontSize="12.5" FontWeight="SemiBold" />
+                                    <TextBlock Text="微软账号使用设备代码流登录。" Style="{StaticResource Hint}" Margin="0,4,0,0" />
+                                </StackPanel>
+                                <ComboBox x:Name="AuthModeCombo" Width="230" Height="34" HorizontalAlignment="Right"
+                                          IsEnabled="False" />
+                            </Grid>
+                        </Border>
+
+                        <Border Style="{StaticResource SettingRow}">
+                            <Grid>
+                                <StackPanel>
+                                    <TextBlock Text="IP 协议偏好" FontSize="12.5" FontWeight="SemiBold" />
+                                    <TextBlock Text="默认由 Java 选择；可强制优先 IPv4 或 IPv6。" Style="{StaticResource Hint}" Margin="0,4,0,0" />
+                                </StackPanel>
+                                <ComboBox x:Name="IpProtocolCombo" Width="230" Height="34" HorizontalAlignment="Right"
+                                          SelectionChanged="IpProtocolCombo_SelectionChanged" />
                             </Grid>
                         </Border>
 
                         <Border Style="{StaticResource SettingRow}" BorderThickness="0">
                             <Grid>
-                                <Grid.RowDefinitions>
-                                    <RowDefinition Height="Auto" />
-                                    <RowDefinition Height="Auto" />
-                                </Grid.RowDefinitions>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="Auto" />
-                                </Grid.ColumnDefinitions>
                                 <StackPanel>
-                                    <TextBlock Text="启动后关关启动器" FontSize="12.5" FontWeight="SemiBold" />
-                                    <TextBlock Text="游戏启动后自动退出启动器，游戏进程会继续运行。" Style="{StaticResource Hint}" Margin="0,4,0,0" />
+                                    <TextBlock Text="JVM 优化参数" FontSize="12.5" FontWeight="SemiBold" />
+                                    <TextBlock Text="G1GC 与 Aikar 风格参数，适合大多数整合包；排查问题时可以关关。" Style="{StaticResource Hint}" Margin="0,4,0,0" />
                                 </StackPanel>
-                                <CheckBox x:Name="CloseAfterCheck" Style="{StaticResource Switch}" HorizontalAlignment="Right"
-                                          VerticalAlignment="Center" Click="CloseAfterCheck_Click" />
-                                <StackPanel Grid.Row="1" Grid.ColumnSpan="2" Margin="0,12,0,0">
-                                    <Grid>
-                                        <StackPanel>
-                                            <TextBlock Text="JVM 优化参数" FontSize="12.5" FontWeight="SemiBold" />
-                                            <TextBlock Text="G1GC 与 Aikar 风格参数，适合大多数整合包；排查问题时可以关关。" Style="{StaticResource Hint}" Margin="0,4,0,0" />
-                                        </StackPanel>
-                                        <CheckBox x:Name="OptimizeCheck" Style="{StaticResource Switch}" HorizontalAlignment="Right"
-                                                  VerticalAlignment="Center" Click="OptimizeCheck_Click" />
-                                    </Grid>
-                                </StackPanel>
+                                <CheckBox x:Name="OptimizeCheck" Style="{StaticResource Switch}" HorizontalAlignment="Right"
+                                          VerticalAlignment="Center" Click="OptimizeCheck_Click" />
                             </Grid>
                         </Border>
                     </StackPanel>
