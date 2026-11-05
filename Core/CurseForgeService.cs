@@ -7,15 +7,44 @@ namespace Vermilune.Core;
 
 public sealed class CurseForgeService
 {
-    private const string Base = "https://api.curseforge.com/v1";
     private const int GameId = 432;
 
-    public bool HasKey => !string.IsNullOrWhiteSpace(LauncherApp.I.Settings.CurseForgeApiKey);
+    private static string Proxy
+    {
+        get
+        {
+            var value = LauncherApp.I.Settings.CurseForgeProxyUrl.Trim().TrimEnd('/');
+            return value.EndsWith("/v1", StringComparison.OrdinalIgnoreCase) ? value[..^3] : value;
+        }
+    }
+
+    private static bool UseProxy => !string.IsNullOrWhiteSpace(Proxy);
+
+    private static string Base => UseProxy ? Proxy + "/v1" : "https://api.curseforge.com/v1";
+
+    private static string Key
+    {
+        get
+        {
+            var configured = LauncherApp.I.Settings.CurseForgeApiKey;
+            return string.IsNullOrWhiteSpace(configured) ? EmbeddedSecrets.CurseForgeKey : configured.Trim();
+        }
+    }
+
+    public bool HasKey => UseProxy || !string.IsNullOrWhiteSpace(Key);
 
     private static HttpRequestMessage Request(string url)
     {
         var request = new HttpRequestMessage(HttpMethod.Get, url);
-        request.Headers.Add("x-api-key", LauncherApp.I.Settings.CurseForgeApiKey.Trim());
+        if (UseProxy)
+        {
+            var token = LauncherApp.I.Settings.CurseForgeProxyToken.Trim();
+            if (token.Length > 0) request.Headers.Add("x-vermilune-token", token);
+        }
+        else
+        {
+            request.Headers.Add("x-api-key", Key);
+        }
         request.Headers.Accept.ParseAdd("application/json");
         return request;
     }
@@ -289,7 +318,7 @@ public sealed class CurseForgeService
     public async Task<ResourceInstallResult> InstallLocalModpackAsync(string archive, string? fallbackName,
         IProgress<DownloadProgress>? progress, CancellationToken ct)
     {
-        if (string.IsNullOrWhiteSpace(LauncherApp.I.Settings.CurseForgeApiKey))
+        if (!HasKey)
             throw new InvalidOperationException("安装 CurseForge 整合包需要在设置中填写 CurseForge API Key。\n" +
                                                 "也可以在资源页改用 Modrinth 整合包，或先解压手动放入实例。");
         await using var stream = File.OpenRead(archive);

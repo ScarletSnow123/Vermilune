@@ -88,6 +88,8 @@ public partial class SettingsPage : UserControl, IPage
             SourceCombo.ItemsSource = new[] { "自动（官方优先）", "Mojang 官方", "BMCLAPI 镜像" };
             SourceCombo.SelectedIndex = s.DownloadSource switch { "official" => 1, "bmclapi" => 2, _ => 0 };
             CurseForgeKeyBox.Text = s.CurseForgeApiKey;
+            CurseForgeProxyBox.Text = s.CurseForgeProxyUrl;
+            CurseForgeProxyTokenBox.Text = s.CurseForgeProxyToken;
             McPathText.Text = LauncherApp.I.MinecraftDir;
             CacheHint.Text = "头像、接口与下载缓存 · " + AppPaths.CacheDir;
         }
@@ -410,6 +412,20 @@ public partial class SettingsPage : UserControl, IPage
         LauncherApp.I.Settings.CurseForgeApiKey = CurseForgeKeyBox.Text.Trim();
         LauncherApp.I.Save();
         LauncherApp.I.Notify("CurseForge Key", string.IsNullOrEmpty(LauncherApp.I.Settings.CurseForgeApiKey) ? "已清空" : "已保存");
+    }
+
+    private void SaveCurseForgeProxy_Click(object sender, RoutedEventArgs e)
+    {
+        LauncherApp.I.Settings.CurseForgeProxyUrl = CurseForgeProxyBox.Text.Trim().TrimEnd('/');
+        LauncherApp.I.Save();
+        LauncherApp.I.Notify("CurseForge 中转", string.IsNullOrEmpty(LauncherApp.I.Settings.CurseForgeProxyUrl) ? "已清空，恢复直连" : "已保存");
+    }
+
+    private void SaveCurseForgeProxyToken_Click(object sender, RoutedEventArgs e)
+    {
+        LauncherApp.I.Settings.CurseForgeProxyToken = CurseForgeProxyTokenBox.Text.Trim();
+        LauncherApp.I.Save();
+        LauncherApp.I.Notify("中转令牌", string.IsNullOrEmpty(LauncherApp.I.Settings.CurseForgeProxyToken) ? "已清空" : "已保存");
     }
 
     private void OpenCurseForgeKey_Click(object sender, RoutedEventArgs e)

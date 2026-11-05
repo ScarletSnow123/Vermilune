@@ -75,6 +75,8 @@ public sealed class AppSettings
     public bool OptimizeJvm { get; set; } = true;
     public string DownloadSource { get; set; } = "auto"; // auto | official | bmclapi
     public string CurseForgeApiKey { get; set; } = Environment.GetEnvironmentVariable("VERMILUNE_CURSEFORGE_API_KEY") ?? "";
+    public string CurseForgeProxyUrl { get; set; } = "";
+    public string CurseForgeProxyToken { get; set; } = "";
     public const string DefaultMicrosoftClientId = "c36a9fb6-4f2a-41ff-90bd-ae7cc92031eb";
     public string MicrosoftClientId { get; set; } = Environment.GetEnvironmentVariable("VERMILUNE_MS_CLIENT_ID") ?? DefaultMicrosoftClientId;
     public string SkinPath { get; set; } = "";
@@ -97,6 +99,9 @@ public sealed class AppSettings
         if (string.IsNullOrWhiteSpace(Accent) || !Accent.StartsWith('#')) Accent = "#E5B567";
         UiOpacity = Math.Clamp(UiOpacity, 0.25, 1.0);
         BackgroundImageOpacity = Math.Clamp(BackgroundImageOpacity, 0.0, 1.0);
+        CurseForgeApiKey = (CurseForgeApiKey ?? "").Trim();
+        CurseForgeProxyUrl = (CurseForgeProxyUrl ?? "").Trim().TrimEnd('/');
+        CurseForgeProxyToken = (CurseForgeProxyToken ?? "").Trim();
         MemoryMb = Math.Clamp(MemoryMb, 512, 65536);
         WindowWidth = Math.Clamp(WindowWidth, 920, 4096);
         WindowHeight = Math.Clamp(WindowHeight, 560, 2400);
