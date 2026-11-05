@@ -132,6 +132,7 @@ public partial class ResourceBrowser : UserControl
 
         using var timeout = CancellationTokenSource.CreateLinkedTokenSource(_searchCts.Token);
         timeout.CancelAfter(TimeSpan.FromSeconds(15));
+        SearchBusyBar.Visibility = Visibility.Visible;
         try
         {
             if (reset)
@@ -177,6 +178,10 @@ public partial class ResourceBrowser : UserControl
             SearchStatus.Text = "搜索失败";
             EmptyText.Text = ex.Message;
             EmptyText.Visibility = Visibility.Visible;
+        }
+        finally
+        {
+            SearchBusyBar.Visibility = Visibility.Collapsed;
         }
     }
 
