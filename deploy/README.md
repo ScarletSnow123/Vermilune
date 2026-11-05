@@ -9,9 +9,9 @@
 ```powershell
 npm install -g wrangler
 wrangler login
+wrangler deploy
 wrangler secret put CURSEFORGE_API_KEY
 wrangler secret put PROXY_TOKEN
-wrangler deploy
 ```
 
 - `CURSEFORGE_API_KEY`：你的 CurseForge Key
