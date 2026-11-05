@@ -34,7 +34,8 @@ public sealed class FabricLoaderInfo
 {
     public string Version { get; init; } = "";
     public bool Stable { get; init; }
-    public string Display => Version + (Stable ? " · 稳定版" : " · 测试版");
+    public bool Latest { get; init; }
+    public string Display => Version + (Latest ? " · 最新" : "") + (Stable ? " · 稳定版" : " · 测试版");
 }
 
 public sealed class DownloadService
@@ -196,7 +197,8 @@ public sealed class DownloadService
             list.Add(new FabricLoaderInfo
             {
                 Version = version,
-                Stable = loader?["stable"]?.GetValue<bool>() ?? false
+                Stable = loader?["stable"]?.GetValue<bool>() ?? false,
+                Latest = list.Count == 0
             });
         }
         return list;

@@ -20,6 +20,7 @@ public partial class DownloadPage : UserControl, IPage
     private bool _loadingForge;
     private List<ForgeVersionInfo> _forgeVersions = new();
     private string _detailFabricMc = "";
+    private string _detailForgeMc = "";
 
     public DownloadPage()
     {
@@ -292,9 +293,12 @@ public partial class DownloadPage : UserControl, IPage
             }
             else if (loader == "forge")
             {
-                reporter.Report(new DownloadProgress { Stage = "部署 Forge", Detail = "正在获取推荐版本" });
+                var chosen = (ForgeDetailCombo.SelectedItem as ForgeVersionInfo)?.ForgeVersion ?? "";
+                reporter.Report(new DownloadProgress { Stage = "部署 Forge", Detail = string.IsNullOrEmpty(chosen) ? "正在获取推荐版本" : "Forge " + chosen });
                 var versions = await LauncherApp.I.Forge.GetVersionsAsync(version.Id, _cts.Token);
-                var forge = versions.FirstOrDefault() ?? throw new InvalidOperationException("没有找到该 Minecraft 版本的 Forge。");
+                var forge = versions.FirstOrDefault(x => x.ForgeVersion == chosen)
+                            ?? versions.FirstOrDefault()
+                            ?? throw new InvalidOperationException("没有找到该 Minecraft 版本的 Forge。");
                 await LauncherApp.I.EnsureJavaAsync();
                 var java = LauncherApp.I.Java.Pick(VersionResolver.InferJavaMajor(version.Id, ""), LauncherApp.I.Settings.JavaPath)
                            ?? throw new InvalidOperationException("部署 Forge 需要对应版本的 Java，请先在设置里指定。");
@@ -334,9 +338,40 @@ public partial class DownloadPage : UserControl, IPage
     private void UpdateFabricOptions()
     {
         if (FabricOptions is null) return;
-        var isFabric = (VanillaLoaderCombo?.SelectedItem as ComboBoxItem)?.Tag as string == "fabric";
-        FabricOptions.Visibility = isFabric ? Visibility.Visible : Visibility.Collapsed;
-        if (isFabric && _selected is not null) _ = LoadDetailFabricAsync(_selected.Id);
+        var loader = (VanillaLoaderCombo?.SelectedItem as ComboBoxItem)?.Tag as string ?? "";
+        FabricOptions.Visibility = loader == "fabric" ? Visibility.Visible : Visibility.Collapsed;
+        ForgeOptions.Visibility = loader == "forge" ? Visibility.Visible : Visibility.Collapsed;
+        if (loader == "fabric" && _selected is not null) _ = LoadDetailFabricAsync(_selected.Id);
+        else if (loader == "forge" && _selected is not null) _ = LoadDetailForgeAsync(_selected.Id);
+    }
+
+    private async Task LoadDetailForgeAsync(string mc)
+    {
+        if (_detailForgeMc == mc && ForgeDetailCombo.Items.Count > 0) return;
+        _detailForgeMc = mc;
+        ForgeDetailCombo.ItemsSource = null;
+        ForgeDetailStatus.Text = "正在加载 Forge 版本列表…";
+        using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(20));
+        try
+        {
+            var list = await LauncherApp.I.Forge.GetVersionsAsync(mc, timeout.Token);
+            ForgeDetailCombo.ItemsSource = list;
+            ForgeDetailCombo.SelectedItem = list.FirstOrDefault(x => x.Recommended) ?? list.FirstOrDefault();
+            ForgeDetailStatus.Text = list.Count == 0
+                ? "没有找到该 Minecraft 版本的 Forge。"
+                : $"{list.Count} 个版本；推荐 / 最新已标注，可自行选择。";
+        }
+        catch (OperationCanceledException)
+        {
+            _detailForgeMc = "";
+            ForgeDetailStatus.Text = "Forge 版本列表加载超时。";
+        }
+        catch (Exception ex)
+        {
+            _detailForgeMc = "";
+            ForgeDetailStatus.Text = "Forge 版本加载失败：" + ex.Message;
+            Log.Warn("Forge 版本列表加载失败：" + ex.Message);
+        }
     }
 
     private async Task LoadDetailFabricAsync(string mc)

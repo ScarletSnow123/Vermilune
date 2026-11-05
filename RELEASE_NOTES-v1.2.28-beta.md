@@ -1,2 +1,0 @@
-﻿- 新增 CurseForge 中转地址与访问令牌设置，API Key 可以只放在服务端
-- 提供 Cloudflare Worker 模板（deploy 目录），启动器只请求中转，不再内置 Key

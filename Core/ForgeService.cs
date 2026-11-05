@@ -12,7 +12,10 @@ public sealed class ForgeVersionInfo
     public string ForgeVersion { get; init; } = "";
     public bool Recommended { get; init; }
     public bool Latest { get; init; }
-    public string Display => ForgeVersion + (Recommended ? "  ·  推荐" : Latest ? "  ·  最新" : "");
+    public string Display => ForgeVersion +
+        (Recommended && Latest ? "  ·  推荐 / 最新" :
+         Recommended ? "  ·  推荐" :
+         Latest ? "  ·  最新" : "");
 }
 
 public sealed class ForgeService
@@ -37,8 +40,10 @@ public sealed class ForgeService
             {
                 var latest = promos[mcVersion + "-latest"]?.GetValue<string>();
                 var recommended = promos[mcVersion + "-recommended"]?.GetValue<string>();
-                if (!string.IsNullOrEmpty(recommended)) result.Add(new ForgeVersionInfo { ForgeVersion = recommended, Recommended = true });
-                if (!string.IsNullOrEmpty(latest) && latest != recommended) result.Add(new ForgeVersionInfo { ForgeVersion = latest, Latest = true });
+                if (!string.IsNullOrEmpty(recommended))
+                    result.Add(new ForgeVersionInfo { ForgeVersion = recommended, Recommended = true, Latest = latest == recommended });
+                if (!string.IsNullOrEmpty(latest) && latest != recommended)
+                    result.Add(new ForgeVersionInfo { ForgeVersion = latest, Latest = true });
             }
         }
         catch (Exception ex) { Log.Warn("Forge promotions 获取失败：" + ex.Message); }

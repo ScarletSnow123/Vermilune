@@ -14,6 +14,7 @@
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
@@ -55,8 +56,15 @@
                     x:Name="KeyButton" Visibility="Collapsed" Click="SetKey_Click" />
         </Grid>
 
+        <!-- 换源提示 -->
+        <Border Grid.Row="1" Background="#22E5B567" BorderBrush="#66E5B567" BorderThickness="1"
+                CornerRadius="8" Padding="12,7" Margin="0,10,0,2">
+            <TextBlock Text="提示：如果搜不到某些 Mod，换换下载源试试"
+                       Foreground="{DynamicResource AccentBrush}" FontSize="10.5" FontWeight="SemiBold" />
+        </Border>
+
         <!-- 筛选 -->
-        <Grid Grid.Row="1" Margin="0,9,0,8">
+        <Grid Grid.Row="2" Margin="0,9,0,8">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="200" />
                 <ColumnDefinition Width="10" />
@@ -76,7 +84,7 @@
         </Grid>
 
         <!-- 结果 + 详情 -->
-        <Grid Grid.Row="2">
+        <Grid Grid.Row="3">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="16" />

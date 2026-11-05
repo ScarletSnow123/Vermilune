@@ -11,10 +11,10 @@
     <RootNamespace>Vermilune</RootNamespace>
     <ApplicationIcon>Assets\Vermilune.ico</ApplicationIcon>
     <ApplicationManifest>app.manifest</ApplicationManifest>
-    <Version>1.2.28-beta</Version>
+    <Version>1.2.28</Version>
     <FileVersion>1.2.28.0</FileVersion>
     <AssemblyVersion>1.2.28.0</AssemblyVersion>
-    <InformationalVersion>1.2.28-beta</InformationalVersion>
+    <InformationalVersion>1.2.28</InformationalVersion>
     <Product>Vermilune</Product>
     <Company>Vermilune Project</Company>
     <Description>Vermilune Minecraft 启动器</Description>
@@ -34,5 +34,20 @@
     <Resource Include="Assets\VermiluneRing.png" />
     <Resource Include="Assets\VermiluneIcon.png" />
   </ItemGroup>
+
+  <!-- 私有 CurseForge Key：从环境变量注入到 exe 资源，不写进源码。 -->
+  <Target Name="EmbedPrivateSecrets" BeforeTargets="PrepareResources"
+          Condition="'$(VERMILUNE_CURSEFORGE_API_KEY)' != ''">
+    <PropertyGroup>
+      <_CurseForgeSecretFile>$(IntermediateOutputPath)curseforge.key</_CurseForgeSecretFile>
+    </PropertyGroup>
+    <WriteLinesToFile File="$(_CurseForgeSecretFile)"
+                      Lines="$(VERMILUNE_CURSEFORGE_API_KEY)"
+                      Overwrite="true" WriteOnlyWhenDifferent="true" />
+    <ItemGroup>
+      <EmbeddedResource Include="$(_CurseForgeSecretFile)"
+                        LogicalName="Vermilune.Secrets.CurseForgeKey" />
+    </ItemGroup>
+  </Target>
 
 </Project>

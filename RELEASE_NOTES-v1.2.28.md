@@ -1,0 +1,7 @@
+﻿- 新增 CurseForge 中转地址与访问令牌，支持把 API Key 只放在 Cloudflare Worker 服务端
+- 提供 Cloudflare Worker 模板，启动器不再需要内置 Key
+- 安装页的 Forge / Fabric 可选择具体 Loader 版本，推荐与最新版本会标注
+- 资源页增加“搜不到 Mod 就换下载源”的提示
+- 游戏窗口标题支持 {user}、{login}、{name}、{date}、{time}、{version} 替换标记，悬停立即显示说明
+- 自定义信息会显示在游戏 F3 左上角与主菜单版本区域
+- 窗口标题会持续校正，避免游戏初始化后恢复默认标题
