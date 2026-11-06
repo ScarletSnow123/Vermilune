@@ -94,7 +94,9 @@ public sealed class LaunchService
     private async Task EnsureBaseVanillaAsync(LaunchOptions opt, CancellationToken ct)
     {
         var baseId = opt.Resolved.BaseId;
-        var versionJson = Path.Combine(opt.MinecraftDir, "versions", opt.Version.Id, opt.Version.Id + ".json");
+        var versionJson = !string.IsNullOrWhiteSpace(opt.Version.JsonPath) && File.Exists(opt.Version.JsonPath)
+            ? opt.Version.JsonPath
+            : Path.Combine(opt.MinecraftDir, "versions", opt.Version.Id, opt.Version.Id + ".json");
         try
         {
             if (File.Exists(versionJson))
@@ -106,12 +108,25 @@ public sealed class LaunchService
         }
         catch { }
 
-        if (string.IsNullOrWhiteSpace(baseId) ||
-            string.Equals(baseId, opt.Resolved.Id, StringComparison.OrdinalIgnoreCase))
-            return;
-
         var mcDir = opt.MinecraftDir;
         if (string.IsNullOrWhiteSpace(mcDir)) return;
+        baseId = ResolveParentChain(baseId, mcDir);
+
+        if (string.IsNullOrWhiteSpace(baseId) ||
+            string.Equals(baseId, opt.Version.Id, StringComparison.OrdinalIgnoreCase))
+        {
+            // 某些加载器版本会把 BaseId 解析成自身；改用版本 JSON 对应的原版号。
+            if (!string.IsNullOrWhiteSpace(opt.Version.MinecraftVersion) &&
+                !string.Equals(opt.Version.MinecraftVersion, opt.Version.Id, StringComparison.OrdinalIgnoreCase))
+                baseId = opt.Version.MinecraftVersion;
+            else
+                return;
+        }
+
+        // 有些 Fabric/Forge 版本会先继承到一个加载器版本，再继承到原版；
+        // 沿 inheritsFrom 往下找到真正的原版，避免去补全加载器自己的 jar。
+        baseId = ResolveParentChain(baseId, mcDir);
+        if (string.Equals(baseId, opt.Version.Id, StringComparison.OrdinalIgnoreCase)) return;
         var baseJson = Path.Combine(mcDir, "versions", baseId, baseId + ".json");
         var baseJar = Path.Combine(mcDir, "versions", baseId, baseId + ".jar");
         if (File.Exists(baseJson) && File.Exists(baseJar)) return;
@@ -136,6 +151,27 @@ public sealed class LaunchService
         if (!File.Exists(baseJar))
             throw new FileNotFoundException(
                 $"原版 {baseId} 仍然缺少客户端 jar。请重新安装原版 {baseId}。", baseJar);
+    }
+
+    private static string ResolveParentChain(string baseId, string mcDir)
+    {
+        for (var depth = 0; depth < 4; depth++)
+        {
+            if (string.IsNullOrWhiteSpace(baseId)) return baseId;
+            var json = Path.Combine(mcDir, "versions", baseId, baseId + ".json");
+            if (!File.Exists(json)) return baseId;
+            try
+            {
+                var root = JsonNode.Parse(File.ReadAllText(json)) as JsonObject;
+                var parent = root?["inheritsFrom"]?.GetValue<string>();
+                if (string.IsNullOrWhiteSpace(parent) ||
+                    string.Equals(parent, baseId, StringComparison.OrdinalIgnoreCase))
+                    return baseId;
+                baseId = parent;
+            }
+            catch { return baseId; }
+        }
+        return baseId;
     }
 
     public async Task LaunchAsync(LaunchOptions opt, CancellationToken ct)
