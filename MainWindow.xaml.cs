@@ -286,6 +286,18 @@ public partial class MainWindow : Window
         NavigateTo("versions");
         if (_pages.TryGetValue("versions", out var page) && page is VersionsPage vp)
             vp.SelectVersion(versionId);
+        BringToFront();
+    }
+
+    public void BringToFront()
+    {
+        if (WindowState == WindowState.Minimized) WindowState = WindowState.Normal;
+        Show();
+        Activate();
+        // 从模态对话框返回时，Windows 有时不会自动把 Owner 提到前台。
+        Topmost = true;
+        Topmost = false;
+        Focus();
     }
 
     public void LaunchVersion(string versionId)
