@@ -173,7 +173,7 @@ public sealed class LaunchOptions
     public string ProcessPriority { get; init; } = "normal";
     public string IpProtocol { get; init; } = "default";
     public string LauncherName { get; init; } = "Vermilune";
-    public string LauncherVersion { get; init; } = "1.2.29";
+    public string LauncherVersion { get; init; } = "1.2.30";
 }
 
 public static class RuleEvaluator

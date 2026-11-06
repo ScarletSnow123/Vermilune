@@ -1,6 +1,7 @@
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using System.Windows.Threading;
 using Vermilune.Core;
 using Vermilune.UI.Dialogs;
 
@@ -134,7 +135,9 @@ public partial class ResourceBrowser : UserControl
 
         using var timeout = CancellationTokenSource.CreateLinkedTokenSource(_searchCts.Token);
         timeout.CancelAfter(TimeSpan.FromSeconds(15));
+        var startedAt = Environment.TickCount64;
         SearchBusyBar.Visibility = Visibility.Visible;
+        await Dispatcher.Yield(DispatcherPriority.Render);
         try
         {
             if (reset)
@@ -149,17 +152,21 @@ public partial class ResourceBrowser : UserControl
                 InstallButton.IsEnabled = false;
             }
             SearchStatus.Text = "搜索中…";
+            var query = QueryBox.Text?.Trim() ?? "";
+            var searchQuery = await ChineseSearch.ResolveAsync(query, timeout.Token);
             var mc = McCombo.SelectedItem as string;
             if (mc == "全部版本") mc = null;
             var loader = SelectedLoader();
             var list = _source == ResourceSource.Modrinth
-                ? await LauncherApp.I.Modrinth.SearchAsync(_type, QueryBox.Text?.Trim() ?? "", mc, loader, _offset, timeout.Token)
-                : await LauncherApp.I.CurseForge.SearchAsync(_type, QueryBox.Text?.Trim() ?? "", mc, loader, _offset, timeout.Token);
+                ? await LauncherApp.I.Modrinth.SearchAsync(_type, searchQuery, mc, loader, _offset, timeout.Token)
+                : await LauncherApp.I.CurseForge.SearchAsync(_type, searchQuery, mc, loader, _offset, timeout.Token);
             if (version != _searchVersion) return;
             _projects.AddRange(list);
             ProjectList.ItemsSource = null;
             ProjectList.ItemsSource = _projects;
-            SearchStatus.Text = $"{_projects.Count} 个结果";
+            SearchStatus.Text = query.Length > 0 && !string.Equals(query, searchQuery, StringComparison.OrdinalIgnoreCase)
+                ? $"中文别名：{searchQuery} · {_projects.Count} 个结果"
+                : $"{_projects.Count} 个结果";
             EmptyText.Visibility = _projects.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
             EmptyText.Text = "没有找到匹配的项目。";
             LoadMoreButton.Visibility = list.Count >= 20 ? Visibility.Visible : Visibility.Collapsed;
@@ -183,7 +190,13 @@ public partial class ResourceBrowser : UserControl
         }
         finally
         {
-            SearchBusyBar.Visibility = Visibility.Collapsed;
+            // 新搜索已接管时不要被旧搜索的 finally 提前隐藏；过快的请求也至少显示一小段时间。
+            if (version == _searchVersion)
+            {
+                var elapsed = Environment.TickCount64 - startedAt;
+                if (elapsed < 320) await Task.Delay((int)(320 - elapsed));
+                SearchBusyBar.Visibility = Visibility.Collapsed;
+            }
         }
     }
 
