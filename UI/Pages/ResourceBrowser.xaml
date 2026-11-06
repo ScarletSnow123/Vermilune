@@ -56,12 +56,20 @@
                     x:Name="KeyButton" Visibility="Collapsed" Click="SetKey_Click" />
         </Grid>
 
-        <!-- 换源提示 -->
-        <Border Grid.Row="1" Background="#22E5B567" BorderBrush="#66E5B567" BorderThickness="1"
-                CornerRadius="8" Padding="12,7" Margin="0,10,0,2">
-            <TextBlock Text="提示：如果搜不到某些 Mod，换换下载源试试"
-                       Foreground="{DynamicResource AccentBrush}" FontSize="10.5" FontWeight="SemiBold" />
-        </Border>
+        <!-- 内部版提醒 + 换源提示 -->
+        <StackPanel Grid.Row="1" Margin="0,10,0,2">
+            <Border x:Name="InternalBanner" Visibility="Collapsed"
+                    Background="#33FF5A5A" BorderBrush="#77FF5A5A" BorderThickness="1"
+                    CornerRadius="8" Padding="12,7" Margin="0,0,0,6">
+                <TextBlock Text="此为内部版本，所以 CurseForge 搜索可用，但请勿分发！"
+                           Foreground="#FFFF7070" FontSize="10.5" FontWeight="SemiBold" />
+            </Border>
+            <Border Background="#22E5B567" BorderBrush="#66E5B567" BorderThickness="1"
+                    CornerRadius="8" Padding="12,7">
+                <TextBlock Text="提示：如果搜不到某些 Mod，换换下载源试试"
+                           Foreground="{DynamicResource AccentBrush}" FontSize="10.5" FontWeight="SemiBold" />
+            </Border>
+        </StackPanel>
 
         <!-- 筛选 -->
         <Grid Grid.Row="2" Margin="0,9,0,8">
@@ -116,7 +124,7 @@
                          ItemContainerStyle="{StaticResource ResourceProjectItem}" SelectionChanged="ProjectList_SelectionChanged">
                     <ListBox.ItemTemplate>
                         <DataTemplate>
-                            <Grid Height="58">
+                            <Grid Height="84">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="40" />
                                     <ColumnDefinition Width="*" />
@@ -138,9 +146,12 @@
                                 </Border>
                                 <StackPanel Grid.Column="1" Margin="10,0,0,0" VerticalAlignment="Center">
                                     <TextBlock Text="{Binding Title}" FontSize="12.5" FontWeight="SemiBold"
-                                               Foreground="{DynamicResource TextBrush}" TextTrimming="CharacterEllipsis" />
+                                               Foreground="{DynamicResource TextBrush}" TextTrimming="CharacterEllipsis"
+                                               ToolTip="{Binding Title}" />
                                     <TextBlock Text="{Binding Summary}" FontSize="9.5" Foreground="{DynamicResource TextMutedBrush}"
-                                               TextTrimming="CharacterEllipsis" Margin="0,3,0,0" />
+                                               TextWrapping="Wrap" MaxHeight="30" TextTrimming="CharacterEllipsis"
+                                               LineHeight="14" LineStackingStrategy="BlockLineHeight"
+                                               Margin="0,3,0,0" ToolTip="{Binding Summary}" />
                                     <TextBlock FontSize="9" Foreground="{DynamicResource TextMutedBrush}" Margin="0,2,0,0">
                                         <Run Text="{Binding Author, Mode=OneWay}" /><Run Text="  ·  " /><Run Text="{Binding DownloadsText, Mode=OneWay}" /><Run Text=" 次下载" />
                                     </TextBlock>

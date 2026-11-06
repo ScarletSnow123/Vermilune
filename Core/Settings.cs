@@ -89,6 +89,8 @@ public sealed class AppSettings
     public double WindowHeight { get; set; } = 800;
     public bool Maximized { get; set; }
     public bool FirstRun { get; set; } = true;
+    /// <summary>仅个人内部构建显示提醒，不影响公开分发包。</summary>
+    public bool ShowInternalBanner { get; set; }
     public List<RecentEntry> Recent { get; set; } = new();
     public List<AccountSettings> Accounts { get; set; } = new();
     public AccountSettings Account { get; set; } = new();
