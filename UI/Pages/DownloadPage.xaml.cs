@@ -128,10 +128,43 @@ public partial class DownloadPage : UserControl, IPage
             ? "该版本已经存在。重新安装会补齐缺失文件，并用官方 JSON 替换现有版本 JSON（不会删除存档与 Mods）。"
             : "安装会下载版本 JSON、客户端 jar、运行库与资源文件。已存在的文件会跳过。";
         InstallButton.IsEnabled = !_installing;
-        InstallButton.Content = v.Installed ? "补齐 / 重新安装" : "安装此版本";
+        if (NewInstanceButton is not null) NewInstanceButton.IsEnabled = !_installing && _selected is not null;
+        UpdateInstallButtonLabel();
+        UpdateFabricOptions();
+    }
+
+    private void UpdateInstallButtonLabel()
+    {
+        if (InstallButton is null || _selected is null) return;
+        if (!string.IsNullOrWhiteSpace(InstallNameBox?.Text))
+        {
+            InstallButton.Content = "安装为新实例";
+            return;
+        }
+        InstallButton.Content = _selected.Installed ? "补齐 / 重新安装" : "安装此版本";
         if (VanillaLoaderCombo?.SelectedItem is ComboBoxItem item && (item.Tag as string) is { Length: > 0 } loader)
             InstallButton.Content = loader == "fabric" ? "下载本体并部署 Fabric" : "下载本体并部署 Forge";
-        UpdateFabricOptions();
+    }
+
+    private void InstallName_Changed(object sender, TextChangedEventArgs e) => UpdateInstallButtonLabel();
+
+    private void NewInstance_Click(object sender, RoutedEventArgs e)
+    {
+        if (_selected is null || _installing) return;
+        InstallNameBox.Text = UniqueInstanceName(_selected.Id);
+        InstallVanilla_Click(sender, e);
+    }
+
+    private static string UniqueInstanceName(string baseId)
+    {
+        var candidate = baseId + " 副本";
+        if (!LauncherApp.I.Versions.VersionExists(candidate)) return candidate;
+        for (var i = 2; i < 1000; i++)
+        {
+            candidate = $"{baseId} 副本 {i}";
+            if (!LauncherApp.I.Versions.VersionExists(candidate)) return candidate;
+        }
+        return baseId + " " + DateTime.Now.ToString("HHmmss");
     }
 
     private void Tabs_Checked(object sender, RoutedEventArgs e)
@@ -358,11 +391,8 @@ public partial class DownloadPage : UserControl, IPage
 
     private void VanillaLoader_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
-        if (InstallButton is null || VanillaLoaderCombo?.SelectedItem is not ComboBoxItem item) return;
-        var loader = item.Tag as string ?? "";
-        InstallButton.Content = loader == "fabric" ? "下载本体并部署 Fabric"
-            : loader == "forge" ? "下载本体并部署 Forge"
-            : "安装此版本";
+        if (InstallButton is null || VanillaLoaderCombo?.SelectedItem is not ComboBoxItem) return;
+        UpdateInstallButtonLabel();
         UpdateFabricOptions();
     }
 
@@ -458,6 +488,7 @@ public partial class DownloadPage : UserControl, IPage
             ? Visibility.Visible : Visibility.Collapsed;
         ProgressTitle.Text = title;
         InstallButton.IsEnabled = !installing && _selected is not null;
+        if (NewInstanceButton is not null) NewInstanceButton.IsEnabled = !installing && _selected is not null;
         InstallFabricButton.IsEnabled = !installing && FabricLoaderCombo.SelectedItem is not null && FabricMcCombo.SelectedItem is not null;
         InstallForgeButton.IsEnabled = !installing && _forgeVersions.Count > 0 && ForgeVersionCombo.SelectedIndex >= 0;
         if (!installing)

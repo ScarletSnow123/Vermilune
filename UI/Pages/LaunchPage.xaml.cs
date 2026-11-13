@@ -668,7 +668,7 @@ public partial class LaunchPage : UserControl, IPage, INotifyPropertyChanged
             ProcessPriority = app.Settings.ProcessPriority,
             IpProtocol = app.Settings.IpProtocol,
             LauncherName = "Vermilune",
-            LauncherVersion = "1.2.32"
+            LauncherVersion = "1.2.31"
         };
 
         _cts?.Dispose();
