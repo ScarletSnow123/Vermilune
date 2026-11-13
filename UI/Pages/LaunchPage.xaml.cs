@@ -1447,11 +1447,22 @@ public partial class LaunchPage : UserControl, IPage, INotifyPropertyChanged
                         bitmap.UriSource = new Uri(config.Data);
                         bitmap.EndInit();
                         bitmap.Freeze();
+                        var maxWidth = 496.0;
+                        var maxHeight = 360.0;
+                        var displayWidth = Math.Max(100, Math.Min(maxWidth, config.Width - 24));
+                        var displayHeight = displayWidth * bitmap.PixelHeight / bitmap.PixelWidth;
+                        if (displayHeight > maxHeight)
+                        {
+                            displayHeight = maxHeight;
+                            displayWidth = displayHeight * bitmap.PixelWidth / bitmap.PixelHeight;
+                        }
                         stack.Children.Add(new Image
                         {
                             Source = bitmap,
-                            Height = 104,
-                            Stretch = Stretch.UniformToFill,
+                            Width = displayWidth,
+                            Height = displayHeight,
+                            Stretch = Stretch.Fill,
+                            HorizontalAlignment = HorizontalAlignment.Left,
                             Margin = new Thickness(0, 4, 0, 0)
                         });
                     }
@@ -1478,6 +1489,21 @@ public partial class LaunchPage : UserControl, IPage, INotifyPropertyChanged
                     var dialog = new OpenFileDialog { Filter = "图片|*.png;*.jpg;*.jpeg;*.webp;*.bmp" };
                     if (dialog.ShowDialog() != true) return;
                     config.Data = dialog.FileName;
+                    try
+                    {
+                        var probe = new BitmapImage();
+                        probe.BeginInit();
+                        probe.CacheOption = BitmapCacheOption.OnLoad;
+                        probe.UriSource = new Uri(dialog.FileName);
+                        probe.EndInit();
+                        var maxWidth = 496.0;
+                        var maxHeight = 360.0;
+                        var width = (double)probe.PixelWidth;
+                        var height = (double)probe.PixelHeight;
+                        var scale = Math.Min(1, Math.Min(maxWidth / width, maxHeight / height));
+                        config.Width = Math.Round(width * scale) + 24;
+                    }
+                    catch { }
                     LauncherApp.I.Save();
                     BuildHomeWidgets();
                 };
