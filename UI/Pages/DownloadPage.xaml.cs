@@ -249,86 +249,28 @@ public partial class DownloadPage : UserControl, IPage
 
     private void OpenDownloadSettings_Click(object sender, RoutedEventArgs e) => App.Window?.NavigateTo("settings");
 
-    private void BatchMode_Changed(object sender, RoutedEventArgs e)
-    {
-        if (BatchInstallButton is null || VersionList is null) return;
-        var on = BatchModeCheck.IsChecked == true;
-        VersionList.SelectionMode = on ? SelectionMode.Extended : SelectionMode.Single;
-        InstallButton.Visibility = on ? Visibility.Collapsed : Visibility.Visible;
-        BatchInstallButton.Visibility = on ? Visibility.Visible : Visibility.Collapsed;
-        BatchInstallButton.IsEnabled = !_installing && on;
-        VanillaLoaderCombo.IsEnabled = !on;
-        if (on)
-        {
-            VanillaLoaderCombo.SelectedIndex = 0;
-            FabricOptions.Visibility = Visibility.Collapsed;
-            ForgeOptions.Visibility = Visibility.Collapsed;
-            if (VersionList.SelectedItem is RemoteVersion v) ShowDetail(v);
-        }
-        else if (VersionList.SelectedItem is RemoteVersion v)
-        {
-            ShowDetail(v);
-        }
-    }
-
-    private async void InstallBatch_Click(object sender, RoutedEventArgs e)
-    {
-        if (_installing) return;
-        var versions = VersionList.SelectedItems.OfType<RemoteVersion>()
-            .Where(v => !v.Installed)
-            .DistinctBy(v => v.Id)
-            .ToList();
-        if (versions.Count == 0)
-        {
-            MessageDialog.Show(Window.GetWindow(this), "批量安装", "没有选中未安装的原版版本。", "知道了");
-            return;
-        }
-        if (!MessageDialog.Show(Window.GetWindow(this), "批量安装",
-                $"将依次安装 {versions.Count} 个原版版本，不会自动安装 Fabric / Forge。\n" +
-                string.Join("、", versions.Select(v => v.Id).Take(8)) +
-                (versions.Count > 8 ? "…" : "") + "\n\n继续吗？",
-                "开始安装", "取消"))
-            return;
-
-        _cts?.Dispose();
-        _cts = new CancellationTokenSource();
-        SetInstalling(true, $"准备批量安装 {versions.Count} 个原版版本");
-        try
-        {
-            var done = 0;
-            foreach (var version in versions)
-            {
-                _cts.Token.ThrowIfCancellationRequested();
-                ProgressTitle.Text = $"批量安装 {done + 1}/{versions.Count}：{version.Id}";
-                var progress = new Progress<DownloadProgress>(p => UpdateProgress(p, version.Id));
-                await LauncherApp.I.Downloads.InstallVanillaAsync(version, LauncherApp.I.MinecraftDir, progress, _cts.Token);
-                version.Installed = true;
-                done++;
-                VersionList.Items.Refresh();
-            }
-            LauncherApp.I.ReloadVersions();
-            SetInstalling(false, $"批量安装完成：{done} 个原版版本");
-            LauncherApp.I.Notify("批量安装完成", $"已安装 {done} 个原版版本");
-        }
-        catch (OperationCanceledException)
-        {
-            SetInstalling(false, "批量安装已取消。");
-        }
-        catch (Exception ex)
-        {
-            Log.Error(ex, "批量安装失败");
-            SetInstalling(false, "批量安装失败：" + ex.Message);
-            MessageDialog.Show(Window.GetWindow(this), "批量安装失败", ex.Message, "关闭", danger: true);
-        }
-    }
-
     private async void InstallVanilla_Click(object sender, RoutedEventArgs e)
     {
         if (_selected is null || _installing) return;
         var version = _selected;
         var loader = (VanillaLoaderCombo.SelectedItem as ComboBoxItem)?.Tag as string ?? "";
         var loaderName = loader == "fabric" ? "Fabric" : loader == "forge" ? "Forge" : "";
-        var tail = string.IsNullOrEmpty(loaderName) ? "" : $"\n同时会继续安装 {loaderName}。";
+        var customName = InstallNameBox?.Text.Trim() ?? "";
+        if (customName.Length > 0)
+        {
+            if (!VersionService.IsValidName(customName))
+            {
+                MessageDialog.Show(Window.GetWindow(this), "实例名称无效", "名称包含非法字符，或为空。", "知道了", danger: true);
+                return;
+            }
+            if (LauncherApp.I.Versions.VersionExists(customName))
+            {
+                MessageDialog.Show(Window.GetWindow(this), "实例已存在", $"已经存在名为「{customName}」的版本，请换一个名称。", "知道了", danger: true);
+                return;
+            }
+        }
+        var nameTail = customName.Length > 0 ? $"\n实例名称：{customName}" : "";
+        var tail = string.IsNullOrEmpty(loaderName) ? nameTail : $"\n同时会继续安装 {loaderName}。{nameTail}";
         if (!MessageDialog.Show(Window.GetWindow(this), version.Installed ? "重新安装" : "安装版本",
                 (version.Installed
                     ? $"{version.Id} 已存在。重新安装会补齐缺失文件并替换 JSON，确定继续吗？"
@@ -378,13 +320,29 @@ public partial class DownloadPage : UserControl, IPage
                 installedLoader = await LauncherApp.I.Forge.InstallAsync(version.Id, forge.ForgeVersion, LauncherApp.I.MinecraftDir, java.Path, progress, _cts.Token);
             }
 
+            var finalId = string.IsNullOrEmpty(installedLoader) ? version.Id : installedLoader;
+            if (customName.Length > 0)
+            {
+                if (string.IsNullOrEmpty(installedLoader))
+                {
+                    var (copied, copyError) = LauncherApp.I.Versions.Copy(version.Id, customName);
+                    if (!copied) throw new InvalidOperationException("复制实例失败：" + copyError);
+                }
+                else
+                {
+                    var (renamed, renameError) = LauncherApp.I.Versions.Rename(installedLoader, customName);
+                    if (!renamed) throw new InvalidOperationException("重命名实例失败：" + renameError);
+                }
+                finalId = customName;
+                if (InstallNameBox is not null) InstallNameBox.Text = "";
+            }
+
+            LauncherApp.I.SetCurrentVersion(finalId);
             LauncherApp.I.ReloadVersions();
             ShowDetail(version);
-            SetInstalling(false, string.IsNullOrEmpty(installedLoader) ? "安装完成：" + version.Id : "安装完成：" + installedLoader);
-            LauncherApp.I.Notify("安装完成", string.IsNullOrEmpty(installedLoader) ? "Minecraft " + version.Id : installedLoader);
-            DetailNote.Text = string.IsNullOrEmpty(installedLoader)
-                ? "安装完成。可以到「启动」页选择并启动。"
-                : "安装完成：" + installedLoader + "。可以到「启动」页选择并启动。";
+            SetInstalling(false, "安装完成：" + finalId);
+            LauncherApp.I.Notify("安装完成", finalId);
+            DetailNote.Text = "安装完成：" + finalId + "。可以到「启动」页选择并启动。";
         }
         catch (OperationCanceledException)
         {
@@ -500,8 +458,6 @@ public partial class DownloadPage : UserControl, IPage
             ? Visibility.Visible : Visibility.Collapsed;
         ProgressTitle.Text = title;
         InstallButton.IsEnabled = !installing && _selected is not null;
-        if (BatchInstallButton is not null)
-            BatchInstallButton.IsEnabled = !installing && BatchModeCheck.IsChecked == true;
         InstallFabricButton.IsEnabled = !installing && FabricLoaderCombo.SelectedItem is not null && FabricMcCombo.SelectedItem is not null;
         InstallForgeButton.IsEnabled = !installing && _forgeVersions.Count > 0 && ForgeVersionCombo.SelectedIndex >= 0;
         if (!installing)
