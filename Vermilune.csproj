@@ -11,10 +11,10 @@
     <RootNamespace>Vermilune</RootNamespace>
     <ApplicationIcon>Assets\Vermilune.ico</ApplicationIcon>
     <ApplicationManifest>app.manifest</ApplicationManifest>
-    <Version>1.2.30</Version>
-    <FileVersion>1.2.30.0</FileVersion>
-    <AssemblyVersion>1.2.30.0</AssemblyVersion>
-    <InformationalVersion>1.2.30</InformationalVersion>
+    <Version>1.2.31</Version>
+    <FileVersion>1.2.31.0</FileVersion>
+    <AssemblyVersion>1.2.31.0</AssemblyVersion>
+    <InformationalVersion>1.2.31</InformationalVersion>
     <Product>Vermilune</Product>
     <Company>Vermilune Project</Company>
     <Description>Vermilune Minecraft 启动器</Description>

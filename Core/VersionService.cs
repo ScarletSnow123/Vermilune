@@ -173,6 +173,62 @@ public sealed class VersionService
         Directory.Exists(Path.Combine(VersionsDir, name)) ||
         File.Exists(Path.Combine(VersionsDir, name + ".json"));
 
+    /// <summary>复制一个版本目录，生成同一游戏版本的独立实例。</summary>
+    public (bool Ok, string Error) Copy(string sourceId, string newId)
+    {
+        if (!IsValidName(newId)) return (false, "名称包含非法字符，或为空。");
+        if (string.Equals(sourceId, newId, StringComparison.Ordinal)) return (false, "副本名称不能与原版本相同。");
+        if (VersionExists(newId)) return (false, "已存在同名版本。");
+        var sourceDir = Path.Combine(VersionsDir, sourceId);
+        var targetDir = Path.Combine(VersionsDir, newId);
+        if (!Directory.Exists(sourceDir)) return (false, "原版本目录不存在。");
+
+        try
+        {
+            CopyDirectory(sourceDir, targetDir);
+            var sourceJson = FindJson(targetDir, sourceId);
+            if (!string.IsNullOrEmpty(sourceJson))
+            {
+                var targetJson = Path.Combine(targetDir, newId + ".json");
+                if (!string.Equals(sourceJson, targetJson, StringComparison.OrdinalIgnoreCase))
+                    File.Move(sourceJson, targetJson, true);
+                var root = JsonNode.Parse(File.ReadAllText(targetJson)) as JsonObject;
+                if (root is not null)
+                {
+                    root["id"] = newId;
+                    File.WriteAllText(targetJson, root.ToJsonString(new JsonSerializerOptions { WriteIndented = true }));
+                }
+            }
+
+            try
+            {
+                var oldJar = Path.Combine(targetDir, sourceId + ".jar");
+                var newJar = Path.Combine(targetDir, newId + ".jar");
+                if (File.Exists(oldJar) && !File.Exists(newJar)) File.Move(oldJar, newJar);
+                var oldNatives = Path.Combine(targetDir, sourceId + "-natives");
+                var newNatives = Path.Combine(targetDir, newId + "-natives");
+                if (Directory.Exists(oldNatives) && !Directory.Exists(newNatives)) Directory.Move(oldNatives, newNatives);
+            }
+            catch (Exception ex) { Log.Warn("复制版本附属文件失败：" + ex.Message); }
+
+            return (true, "");
+        }
+        catch (Exception ex)
+        {
+            try { if (Directory.Exists(targetDir)) Directory.Delete(targetDir, true); } catch { }
+            return (false, ex.Message);
+        }
+    }
+
+    private static void CopyDirectory(string source, string target)
+    {
+        Directory.CreateDirectory(target);
+        foreach (var file in Directory.GetFiles(source))
+            File.Copy(file, Path.Combine(target, Path.GetFileName(file)), true);
+        foreach (var dir in Directory.GetDirectories(source))
+            CopyDirectory(dir, Path.Combine(target, Path.GetFileName(dir)));
+    }
+
     /// <summary>重命名版本目录与 JSON，并修复指向它的 inheritsFrom。</summary>
     public (bool Ok, string Error) Rename(string oldId, string newId)
     {

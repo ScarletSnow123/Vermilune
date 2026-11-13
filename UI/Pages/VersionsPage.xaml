@@ -160,6 +160,8 @@
                                 Click="Launch_Click" Margin="0,0,7,0" />
                         <Button Style="{StaticResource ButtonBase}" Height="34" Padding="12,0" Content="打开目录"
                                 Click="OpenFolder_Click" Margin="0,0,7,0" />
+                        <Button Style="{StaticResource ButtonBase}" Height="34" Padding="12,0" Content="复制"
+                                Click="CopyVersion_Click" Margin="0,0,7,0" ToolTip="复制成同版本的另一个实例" />
                         <Button Style="{StaticResource IconButton}" Width="34" Height="34" Margin="0,0,7,0"
                                 Click="Rename_Click" ToolTip="重命名">
                             <Path Data="{DynamicResource IconEdit}" Width="15" Height="15" Stretch="Uniform"

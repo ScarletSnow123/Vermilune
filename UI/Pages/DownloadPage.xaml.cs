@@ -249,6 +249,79 @@ public partial class DownloadPage : UserControl, IPage
 
     private void OpenDownloadSettings_Click(object sender, RoutedEventArgs e) => App.Window?.NavigateTo("settings");
 
+    private void BatchMode_Changed(object sender, RoutedEventArgs e)
+    {
+        if (BatchInstallButton is null || VersionList is null) return;
+        var on = BatchModeCheck.IsChecked == true;
+        VersionList.SelectionMode = on ? SelectionMode.Extended : SelectionMode.Single;
+        InstallButton.Visibility = on ? Visibility.Collapsed : Visibility.Visible;
+        BatchInstallButton.Visibility = on ? Visibility.Visible : Visibility.Collapsed;
+        BatchInstallButton.IsEnabled = !_installing && on;
+        VanillaLoaderCombo.IsEnabled = !on;
+        if (on)
+        {
+            VanillaLoaderCombo.SelectedIndex = 0;
+            FabricOptions.Visibility = Visibility.Collapsed;
+            ForgeOptions.Visibility = Visibility.Collapsed;
+            if (VersionList.SelectedItem is RemoteVersion v) ShowDetail(v);
+        }
+        else if (VersionList.SelectedItem is RemoteVersion v)
+        {
+            ShowDetail(v);
+        }
+    }
+
+    private async void InstallBatch_Click(object sender, RoutedEventArgs e)
+    {
+        if (_installing) return;
+        var versions = VersionList.SelectedItems.OfType<RemoteVersion>()
+            .Where(v => !v.Installed)
+            .DistinctBy(v => v.Id)
+            .ToList();
+        if (versions.Count == 0)
+        {
+            MessageDialog.Show(Window.GetWindow(this), "批量安装", "没有选中未安装的原版版本。", "知道了");
+            return;
+        }
+        if (!MessageDialog.Show(Window.GetWindow(this), "批量安装",
+                $"将依次安装 {versions.Count} 个原版版本，不会自动安装 Fabric / Forge。\n" +
+                string.Join("、", versions.Select(v => v.Id).Take(8)) +
+                (versions.Count > 8 ? "…" : "") + "\n\n继续吗？",
+                "开始安装", "取消"))
+            return;
+
+        _cts?.Dispose();
+        _cts = new CancellationTokenSource();
+        SetInstalling(true, $"准备批量安装 {versions.Count} 个原版版本");
+        try
+        {
+            var done = 0;
+            foreach (var version in versions)
+            {
+                _cts.Token.ThrowIfCancellationRequested();
+                ProgressTitle.Text = $"批量安装 {done + 1}/{versions.Count}：{version.Id}";
+                var progress = new Progress<DownloadProgress>(p => UpdateProgress(p, version.Id));
+                await LauncherApp.I.Downloads.InstallVanillaAsync(version, LauncherApp.I.MinecraftDir, progress, _cts.Token);
+                version.Installed = true;
+                done++;
+                VersionList.Items.Refresh();
+            }
+            LauncherApp.I.ReloadVersions();
+            SetInstalling(false, $"批量安装完成：{done} 个原版版本");
+            LauncherApp.I.Notify("批量安装完成", $"已安装 {done} 个原版版本");
+        }
+        catch (OperationCanceledException)
+        {
+            SetInstalling(false, "批量安装已取消。");
+        }
+        catch (Exception ex)
+        {
+            Log.Error(ex, "批量安装失败");
+            SetInstalling(false, "批量安装失败：" + ex.Message);
+            MessageDialog.Show(Window.GetWindow(this), "批量安装失败", ex.Message, "关闭", danger: true);
+        }
+    }
+
     private async void InstallVanilla_Click(object sender, RoutedEventArgs e)
     {
         if (_selected is null || _installing) return;
@@ -427,6 +500,8 @@ public partial class DownloadPage : UserControl, IPage
             ? Visibility.Visible : Visibility.Collapsed;
         ProgressTitle.Text = title;
         InstallButton.IsEnabled = !installing && _selected is not null;
+        if (BatchInstallButton is not null)
+            BatchInstallButton.IsEnabled = !installing && BatchModeCheck.IsChecked == true;
         InstallFabricButton.IsEnabled = !installing && FabricLoaderCombo.SelectedItem is not null && FabricMcCombo.SelectedItem is not null;
         InstallForgeButton.IsEnabled = !installing && _forgeVersions.Count > 0 && ForgeVersionCombo.SelectedIndex >= 0;
         if (!installing)

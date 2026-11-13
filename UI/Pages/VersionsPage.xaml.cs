@@ -496,6 +496,42 @@ public partial class VersionsPage : UserControl, IPage
         Shell.OpenFolder(Path.Combine(LauncherApp.I.MinecraftDir, "versions", _selected.Id));
     }
 
+    private void CopyVersion_Click(object sender, RoutedEventArgs e)
+    {
+        if (_selected is null) return;
+        var old = _selected.Id;
+        var suggested = old + " 副本";
+        var newName = PromptDialog.Show(Window.GetWindow(this), "复制版本",
+            "这会复制整个版本目录，生成一个同版本、独立的实例。\n输入新实例名称：", suggested,
+            "例如：My Pack 副本", name =>
+            {
+                if (!VersionService.IsValidName(name)) return "名称包含非法字符，或为空。";
+                if (LauncherApp.I.Versions.VersionExists(name)) return "已存在同名版本。";
+                return null;
+            });
+        if (newName is null) return;
+
+        var (ok, error) = LauncherApp.I.Versions.Copy(old, newName);
+        if (!ok)
+        {
+            MessageDialog.Show(Window.GetWindow(this), "复制失败", error, "知道了", danger: true);
+            return;
+        }
+
+        try
+        {
+            var instance = InstanceStore.Load(old);
+            instance.DisplayName = newName;
+            InstanceStore.Save(newName, instance);
+        }
+        catch (Exception ex) { Log.Warn("复制实例设置失败：" + ex.Message); }
+
+        LauncherApp.I.ReloadVersions();
+        _pendingSelect = newName;
+        ReloadVersions();
+        LauncherApp.I.Notify("已复制版本", $"{old} → {newName}");
+    }
+
     private void Rename_Click(object sender, RoutedEventArgs e)
     {
         if (_selected is null) return;

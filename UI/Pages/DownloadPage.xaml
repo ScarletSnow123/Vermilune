@@ -65,6 +65,7 @@
                         <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="8" />
                         <ColumnDefinition Width="150" />
+                        <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
                     <TextBox x:Name="VersionSearch" Style="{StaticResource InputBox}" Height="34"
                              Tag="搜索版本号…" TextChanged="VersionSearch_TextChanged" />
@@ -74,6 +75,9 @@
                         <ComboBoxItem Content="快照" />
                         <ComboBoxItem Content="远古版本" />
                     </ComboBox>
+                    <CheckBox x:Name="BatchModeCheck" Grid.Column="3" Content="多选" FontSize="10.5"
+                              VerticalAlignment="Center" Margin="10,0,0,0"
+                              Checked="BatchMode_Changed" Unchecked="BatchMode_Changed" />
                 </Grid>
                 <Grid Grid.Row="1">
                     <ListBox x:Name="VersionList" Style="{StaticResource FlatListBox}" SelectionChanged="VersionList_SelectionChanged">
@@ -159,6 +163,8 @@
                     </StackPanel>
                     <Button x:Name="InstallButton" Style="{StaticResource PrimaryButton}" Height="40" Margin="0,16,0,0"
                             Content="安装此版本" IsEnabled="False" Click="InstallVanilla_Click" />
+                    <Button x:Name="BatchInstallButton" Style="{StaticResource PrimaryButton}" Height="40" Margin="0,16,0,0"
+                            Content="安装选中的原版版本" Visibility="Collapsed" Click="InstallBatch_Click" />
                     <TextBlock x:Name="InstallHint" Text="需要联网下载；可以在设置中切换镜像源。" Style="{StaticResource MutedText}"
                                Margin="0,9,0,0" />
                 </StackPanel>
