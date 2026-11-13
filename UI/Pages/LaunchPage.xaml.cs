@@ -1447,15 +1447,12 @@ public partial class LaunchPage : UserControl, IPage, INotifyPropertyChanged
                         bitmap.UriSource = new Uri(config.Data);
                         bitmap.EndInit();
                         bitmap.Freeze();
-                        var maxWidth = 496.0;
-                        var maxHeight = 360.0;
-                        var displayWidth = Math.Max(100, Math.Min(maxWidth, config.Width - 24));
-                        var displayHeight = displayWidth * bitmap.PixelHeight / bitmap.PixelWidth;
-                        if (displayHeight > maxHeight)
-                        {
-                            displayHeight = maxHeight;
-                            displayWidth = displayHeight * bitmap.PixelWidth / bitmap.PixelHeight;
-                        }
+                        const double maxWidth = 496.0;
+                        const double maxHeight = 360.0;
+                        var imageScale = Math.Min(1.0, Math.Min(maxWidth / bitmap.PixelWidth, maxHeight / bitmap.PixelHeight));
+                        var displayWidth = Math.Max(100, bitmap.PixelWidth * imageScale);
+                        var displayHeight = Math.Max(1, bitmap.PixelHeight * imageScale);
+                        card.Width = Math.Max(180, displayWidth + 24);
                         stack.Children.Add(new Image
                         {
                             Source = bitmap,
