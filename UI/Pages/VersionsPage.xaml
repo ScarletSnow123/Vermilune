@@ -45,16 +45,9 @@
                 <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
 
-            <StackPanel Orientation="Horizontal">
-                <Border Style="{StaticResource PageIconTile}">
-                    <Path Data="{DynamicResource IconCube}" Width="18" Height="18" Stretch="Uniform"
-                          Stroke="{DynamicResource AccentBrush}" StrokeThickness="1.5" Fill="Transparent"
-                          HorizontalAlignment="Center" VerticalAlignment="Center" />
-                </Border>
-                <StackPanel Margin="10,0,0,0">
-                    <TextBlock Text="版本管理" Style="{StaticResource PageTitle}" />
-                    <TextBlock Text="选择实例，修改启动参数，管理 Mods。" Style="{StaticResource PageSubtitle}" />
-                </StackPanel>
+            <StackPanel>
+                <TextBlock Text="版本管理" Style="{StaticResource PageTitle}" />
+                <TextBlock Text="选择实例，修改启动参数，管理 Mods。" Style="{StaticResource PageSubtitle}" />
             </StackPanel>
 
             <Grid Grid.Row="1" Margin="0,16,0,10">
@@ -72,8 +65,7 @@
                 </Button>
             </Grid>
 
-            <ListBox x:Name="VersionList" Grid.Row="2" Style="{StaticResource FlatListBox}" Background="#D90A0D0F"
-                     SelectionChanged="VersionList_SelectionChanged" Margin="0,0,0,8">
+            <ListBox x:Name="VersionList" Grid.Row="2" Style="{StaticResource FlatListBox}" SelectionChanged="VersionList_SelectionChanged" Margin="0,0,0,8">
                 <ListBox.ItemContainerStyle>
                     <Style TargetType="ListBoxItem" BasedOn="{StaticResource FlatListItem}">
                         <Setter Property="Opacity" Value="1" />

@@ -120,8 +120,7 @@
                                    Foreground="{DynamicResource AccentBrush}" VerticalAlignment="Center" />
                     </Grid>
                 </Border>
-                <ListBox x:Name="ProjectList" Grid.Row="1" Style="{StaticResource FlatListBox}" Background="#D90A0D0F"
-                         ItemContainerStyle="{StaticResource ResourceProjectItem}" SelectionChanged="ProjectList_SelectionChanged">
+                <ListBox x:Name="ProjectList" Grid.Row="1" Style="{StaticResource FlatListBox}" ItemContainerStyle="{StaticResource ResourceProjectItem}" SelectionChanged="ProjectList_SelectionChanged">
                     <ListBox.ItemTemplate>
                         <DataTemplate>
                             <Grid Height="84">
