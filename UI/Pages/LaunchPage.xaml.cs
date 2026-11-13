@@ -54,6 +54,7 @@ public partial class LaunchPage : UserControl, IPage, INotifyPropertyChanged
     private Point _dragStart;
     private double _dragBaseX, _dragBaseY;
     private Point _lastDragPoint;
+    private readonly HashSet<FrameworkElement> _dragIgnoredOverlaps = new();
     private readonly Dictionary<string, TranslateTransform> _homeTransforms = new();
     private readonly Dictionary<string, ScaleTransform> _homeScales = new();
     private readonly Dictionary<string, RotateTransform> _homeRotates = new();
@@ -1128,6 +1129,18 @@ public partial class LaunchPage : UserControl, IPage, INotifyPropertyChanged
         _dragKey = key;
         _dragStart = e.GetPosition(this);
         _lastDragPoint = _dragStart;
+        _dragIgnoredOverlaps.Clear();
+        var startBounds = GetCardRootBounds(card);
+        if (!startBounds.IsEmpty)
+        {
+            foreach (var other in HomeCardElements())
+            {
+                if (ReferenceEquals(other, card) || other.Visibility != Visibility.Visible) continue;
+                var otherBounds = GetCardRootBounds(other);
+                if (!otherBounds.IsEmpty && startBounds.IntersectsWith(otherBounds))
+                    _dragIgnoredOverlaps.Add(other);
+            }
+        }
         if (card.Tag is HomeWidgetConfig config)
         {
             _dragBaseX = Canvas.GetLeft(card);
@@ -1170,7 +1183,8 @@ public partial class LaunchPage : UserControl, IPage, INotifyPropertyChanged
 
         foreach (var other in HomeCardElements())
         {
-            if (ReferenceEquals(other, card) || other.Visibility != Visibility.Visible ||
+            if (ReferenceEquals(other, card) || _dragIgnoredOverlaps.Contains(other) ||
+                other.Visibility != Visibility.Visible ||
                 other.ActualWidth <= 0 || other.ActualHeight <= 0) continue;
             var otherBounds = GetCardRootBounds(other);
             if (otherBounds.IsEmpty) continue;
@@ -1229,6 +1243,7 @@ public partial class LaunchPage : UserControl, IPage, INotifyPropertyChanged
         }
         _dragCard = null;
         _dragKey = null;
+        _dragIgnoredOverlaps.Clear();
         LauncherApp.I.SaveDebounced();
     }
 
