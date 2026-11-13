@@ -1359,8 +1359,8 @@ public partial class LaunchPage : UserControl, IPage, INotifyPropertyChanged
         {
             Width = Math.Clamp(config.Width, 180, 520),
             MinHeight = 104,
-            Background = new SolidColorBrush(Color.FromArgb(0xD9, 0x0A, 0x0D, 0x0F)),
-            BorderBrush = new SolidColorBrush(Color.FromArgb(0x38, 0xFF, 0xFF, 0xFF)),
+            Background = (Brush)FindResource("HomeCardBrush"),
+            BorderBrush = (Brush)FindResource("HomeCardBorderBrush"),
             BorderThickness = new Thickness(LauncherApp.I.Settings.ShowCardBorders ? 1 : 0),
             CornerRadius = new CornerRadius(6),
             Padding = new Thickness(12),

@@ -54,7 +54,7 @@
         <!-- 编辑模式工具栏 -->
         <Border x:Name="HomeEditBar" Visibility="Collapsed" HorizontalAlignment="Center"
                 VerticalAlignment="Top" Margin="0,14,0,0" Padding="12,8" CornerRadius="6"
-                Background="#F2111518" BorderBrush="Transparent" BorderThickness="0" Panel.ZIndex="35">
+                Background="{DynamicResource HomeCardBrush}" BorderBrush="Transparent" BorderThickness="0" Panel.ZIndex="35">
             <StackPanel>
                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                     <TextBlock Text="拖动卡片调整位置，右键修改样式" Style="{StaticResource GeekLabel}"
@@ -78,7 +78,7 @@
 
         <Popup x:Name="AddCardPopup" PlacementTarget="{Binding ElementName=AddCardButton}"
                Placement="Bottom" StaysOpen="False" AllowsTransparency="True">
-            <Border Background="#F2111518" BorderBrush="#40FFFFFF" BorderThickness="1"
+            <Border Background="{DynamicResource HomeCardBrush}" BorderBrush="{DynamicResource HomeCardBorderBrush}" BorderThickness="1"
                     CornerRadius="7" Padding="10" Width="190">
                 <StackPanel>
                     <TextBlock Text="默认卡片" Style="{StaticResource GeekLabel}" Margin="2,0,0,4" />
@@ -92,7 +92,7 @@
                             HorizontalAlignment="Left" Click="AddBuiltinCard_Click" />
                     <Button Style="{StaticResource SoftLink}" Content="自定义卡片" Tag="featured"
                             HorizontalAlignment="Left" Click="AddBuiltinCard_Click" />
-                    <Separator Margin="0,5" Background="#33FFFFFF" />
+                    <Separator Margin="0,5" Background="{DynamicResource HomeCardBorderBrush}" />
                     <TextBlock Text="添加内容" Style="{StaticResource GeekLabel}" Margin="2,0,0,4" />
                     <Button Style="{StaticResource SoftLink}" Content="时钟" Tag="clock"
                             HorizontalAlignment="Left" Click="AddWidgetCard_Click" />
@@ -108,15 +108,15 @@
         <Canvas x:Name="HomeWidgetCanvas" Panel.ZIndex="15" />
         <!-- 左上：3D 皮肤卡片 -->
         <Border x:Name="HomeSkin3DPanel" HorizontalAlignment="Left" VerticalAlignment="Top"
-                Margin="24,58,0,0" Width="190" Background="#66111518"
-                BorderBrush="#26FFFFFF" BorderThickness="1" CornerRadius="8" Padding="10">
+                Margin="24,58,0,0" Width="190" Background="{DynamicResource HomeCardBrush}"
+                BorderBrush="{DynamicResource HomeCardBorderBrush}" BorderThickness="1" CornerRadius="8" Padding="10">
             <StackPanel>
                 <TextBlock Text="3D 皮肤" FontSize="10.5" Foreground="{DynamicResource TextSubBrush}"
                            Margin="2,0,0,6" />
-                <Border x:Name="Skin3DHost" Width="168" Height="192" CornerRadius="12" ClipToBounds="True" Background="#22111518">
+                <Border x:Name="Skin3DHost" Width="168" Height="192" CornerRadius="12" ClipToBounds="True" Background="{DynamicResource HomeCardBrush}">
                     <Grid>
                         <controls:SkinPreview3D x:Name="SkinPreview" Width="168" Height="192" />
-                        <Border x:Name="SkinFallback" Visibility="Collapsed" Background="#33111518" CornerRadius="12">
+                        <Border x:Name="SkinFallback" Visibility="Collapsed" Background="{DynamicResource HomeCardBrush}" CornerRadius="12">
                             <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
                                 <Image Source="pack://application:,,,/Assets/VermiluneRing.png"
                                        Width="76" Height="76" Stretch="Uniform" Opacity="0.9" />
@@ -220,7 +220,7 @@
                 <StackPanel HorizontalAlignment="Left" VerticalAlignment="Bottom" Margin="22,0,0,22">
             <StackPanel>
                 <!-- 红框位置：皮肤操作 -->
-                <Border x:Name="HomeSkinPanel" Background="#66111518" BorderBrush="#26FFFFFF" BorderThickness="1"
+                <Border x:Name="HomeSkinPanel" Background="{DynamicResource HomeCardBrush}" BorderBrush="{DynamicResource HomeCardBorderBrush}" BorderThickness="1"
                         CornerRadius="6" Padding="12" Width="370" Margin="0,0,0,8">
                     <Grid>
                         <Grid.ColumnDefinitions>
@@ -247,7 +247,7 @@
                     </Grid>
                 </Border>
 
-                <Border x:Name="HomeInstancePanel" Background="#66111518" BorderBrush="#26FFFFFF" BorderThickness="1"
+                <Border x:Name="HomeInstancePanel" Background="{DynamicResource HomeCardBrush}" BorderBrush="{DynamicResource HomeCardBorderBrush}" BorderThickness="1"
                         CornerRadius="6" Padding="16" Width="420">
                     <StackPanel>
                         <Grid>
@@ -266,7 +266,7 @@
                                             <ColumnDefinition Width="*" />
                                             <ColumnDefinition Width="Auto" />
                                         </Grid.ColumnDefinitions>
-                                        <Border Width="18" Height="18" CornerRadius="3" Background="#33111518" ClipToBounds="True">
+                                        <Border Width="18" Height="18" CornerRadius="3" Background="{DynamicResource HomeCardBrush}" ClipToBounds="True">
                                             <Grid>
                                                 <TextBlock Text="{Binding Initial}" FontSize="8" FontWeight="Bold"
                                                            Foreground="{DynamicResource AccentBrush}"
@@ -339,7 +339,7 @@
 
         <!-- 右侧：最近游玩 -->
         <Border x:Name="HomeRecentPanel" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,78,22,0"
-                Width="300" Background="#66111518" BorderBrush="#26FFFFFF" BorderThickness="1"
+                Width="300" Background="{DynamicResource HomeCardBrush}" BorderBrush="{DynamicResource HomeCardBorderBrush}" BorderThickness="1"
                 CornerRadius="6" Padding="12">
             <StackPanel>
                 <TextBlock Text="最近游玩" Style="{StaticResource GeekLabel}" />
@@ -375,14 +375,14 @@
 
         <!-- 右侧：自定义卡片 -->
         <Border x:Name="HomeFeaturedPanel" HorizontalAlignment="Right" VerticalAlignment="Top"
-                Margin="0,258,22,0" Width="300" Background="#66111518"
-                BorderBrush="#26FFFFFF" BorderThickness="1" CornerRadius="6" Padding="12">
+                Margin="0,258,22,0" Width="300" Background="{DynamicResource HomeCardBrush}"
+                BorderBrush="{DynamicResource HomeCardBorderBrush}" BorderThickness="1" CornerRadius="6" Padding="12">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="64" />
                     <ColumnDefinition Width="*" />
                 </Grid.ColumnDefinitions>
-                <Border Width="64" Height="64" CornerRadius="5" ClipToBounds="True" Background="#33111518">
+                <Border Width="64" Height="64" CornerRadius="5" ClipToBounds="True" Background="{DynamicResource HomeCardBrush}">
                     <Image x:Name="FeaturedImage" Source="pack://application:,,,/Assets/VermiluneRing.png"
                            Stretch="UniformToFill" RenderOptions.BitmapScalingMode="HighQuality" />
                 </Border>
@@ -401,7 +401,7 @@
 
         <!-- 右下：实时日志（收起时保留标题条） -->
         <Border x:Name="HomeLogPanel" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,22,22"
-                Width="480" Background="#D90A0D0F" BorderBrush="#33FFFFFF" BorderThickness="1"
+                Width="480" Background="{DynamicResource HomeLogBrush}" BorderBrush="{DynamicResource HomeCardBorderBrush}" BorderThickness="1"
                 CornerRadius="7" Padding="12">
             <StackPanel>
                 <Grid>
@@ -418,12 +418,12 @@
                             <Button Style="{StaticResource SoftLink}" Content="完整日志" Click="OpenLog_Click" />
                         </StackPanel>
                     </Grid>
-                    <Border x:Name="LogTextBox" Background="#C7000000" CornerRadius="4" Margin="0,4,0,0" Padding="8,6"
+                    <Border x:Name="LogTextBox" Background="{DynamicResource HomeLogInnerBrush}" CornerRadius="4" Margin="0,4,0,0" Padding="8,6"
                             Visibility="{Binding HasLog, Converter={StaticResource BoolToVisibility}}">
                         <ScrollViewer x:Name="LogScroll" Height="92" VerticalScrollBarVisibility="Auto"
                                       HorizontalScrollBarVisibility="Disabled" PanningMode="VerticalOnly">
                             <TextBlock Text="{Binding LogText}" FontFamily="{DynamicResource MonoFont}"
-                                       FontSize="9.2" Foreground="#FFB8C4C9" TextWrapping="NoWrap" />
+                                       FontSize="9.2" Foreground="{DynamicResource HomeLogTextBrush}" TextWrapping="NoWrap" />
                         </ScrollViewer>
                     </Border>
                     <TextBlock x:Name="StatusLabel" Text="就绪。" FontSize="10.5"
@@ -444,7 +444,7 @@
         <!-- 资源站点 -->
         <Border x:Name="SitesPanel" Visibility="Collapsed" Panel.ZIndex="40"
                 HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,22,224"
-                Width="580" Background="#F2111518" BorderBrush="#40FFFFFF" BorderThickness="1"
+                Width="580" Background="{DynamicResource HomeCardBrush}" BorderBrush="{DynamicResource HomeCardBorderBrush}" BorderThickness="1"
                 CornerRadius="8" Padding="16">
             <StackPanel>
                 <Grid>

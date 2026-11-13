@@ -34,6 +34,11 @@ public static class ThemeManager
             res["Surface2Brush"] = Solid(Color.FromArgb(surface2Alpha, 0xF0, 0xEE, 0xF4));
             res["Surface3Brush"] = Solid(Color.FromArgb(surface3Alpha, 0xE7, 0xE4, 0xEC));
             res["SurfaceHoverBrush"] = Solid(Color.FromArgb(0x10, 0x00, 0x00, 0x00));
+            res["HomeCardBrush"] = Solid(Color.FromArgb(0xE8, 0xFB, 0xFA, 0xFD));
+            res["HomeCardBorderBrush"] = Solid(Color.FromArgb(0x28, 0x00, 0x00, 0x00));
+            res["HomeLogBrush"] = Solid(Color.FromArgb(0xEA, 0xF7, 0xF5, 0xF9));
+            res["HomeLogInnerBrush"] = Solid(Color.FromArgb(0x0F, 0x00, 0x00, 0x00));
+            res["HomeLogTextBrush"] = Solid(Color.FromRgb(0x3A, 0x36, 0x40));
             res["StrokeBrush"] = Solid(Color.FromArgb(hasBackgroundImage ? (byte)0x24 : (byte)0x1A, 0x00, 0x00, 0x00));
             res["StrokeStrongBrush"] = Solid(Color.FromArgb(hasBackgroundImage ? (byte)0x38 : (byte)0x2A, 0x00, 0x00, 0x00));
             res["TextBrush"] = Solid(Color.FromRgb(0x24, 0x21, 0x2A));
@@ -55,6 +60,11 @@ public static class ThemeManager
             res["Surface2Brush"] = Solid(Color.FromArgb(surface2Alpha, 0x17, 0x1D, 0x21));
             res["Surface3Brush"] = Solid(Color.FromArgb(surface3Alpha, 0x1E, 0x26, 0x2B));
             res["SurfaceHoverBrush"] = Solid(Color.FromArgb(0x12, 0xFF, 0xFF, 0xFF));
+            res["HomeCardBrush"] = Solid(Color.FromArgb(0xB3, 0x11, 0x15, 0x18));
+            res["HomeCardBorderBrush"] = Solid(Color.FromArgb(0x26, 0xFF, 0xFF, 0xFF));
+            res["HomeLogBrush"] = Solid(Color.FromArgb(0xD9, 0x0A, 0x0D, 0x0F));
+            res["HomeLogInnerBrush"] = Solid(Color.FromArgb(0xC7, 0x00, 0x00, 0x00));
+            res["HomeLogTextBrush"] = Solid(Color.FromRgb(0xB8, 0xC4, 0xC9));
             res["StrokeBrush"] = Solid(Color.FromArgb(hasBackgroundImage ? (byte)0x24 : (byte)0x1E, 0xFF, 0xFF, 0xFF));
             res["StrokeStrongBrush"] = Solid(Color.FromArgb(hasBackgroundImage ? (byte)0x3A : (byte)0x33, 0xFF, 0xFF, 0xFF));
             res["TextBrush"] = Solid(Color.FromRgb(0xE6, 0xED, 0xF0));

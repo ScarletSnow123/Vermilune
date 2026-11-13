@@ -20,6 +20,11 @@
     <SolidColorBrush x:Key="Surface2Brush" Color="#F2171D21" />
     <SolidColorBrush x:Key="Surface3Brush" Color="#FA1E262B" />
     <SolidColorBrush x:Key="SurfaceHoverBrush" Color="#12FFFFFF" />
+    <SolidColorBrush x:Key="HomeCardBrush" Color="#B3111518" />
+    <SolidColorBrush x:Key="HomeCardBorderBrush" Color="#26FFFFFF" />
+    <SolidColorBrush x:Key="HomeLogBrush" Color="#D90A0D0F" />
+    <SolidColorBrush x:Key="HomeLogInnerBrush" Color="#C7000000" />
+    <SolidColorBrush x:Key="HomeLogTextBrush" Color="#FFB8C4C9" />
     <SolidColorBrush x:Key="StrokeBrush" Color="#1EFFFFFF" />
     <SolidColorBrush x:Key="StrokeStrongBrush" Color="#33FFFFFF" />
     <SolidColorBrush x:Key="TextBrush" Color="#FFE6EDF0" />
