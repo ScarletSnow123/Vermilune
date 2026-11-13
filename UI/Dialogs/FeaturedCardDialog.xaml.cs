@@ -8,7 +8,7 @@ namespace Vermilune.UI.Dialogs;
 
 public partial class FeaturedCardDialog : Window
 {
-    private const string DefaultTitle = "Vermilune 1.2分支";
+    private const string DefaultTitle = "Vermilune 1.3分支";
     private const string DefaultSubtitle = "这个卡片可以自定义哦！";
     private const string DefaultImage = "pack://application:,,,/Assets/VermiluneRing.png";
 

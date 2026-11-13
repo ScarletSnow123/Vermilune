@@ -63,7 +63,7 @@ public partial class MainWindow : Window
         BgOpacitySlider.Value = s.BackgroundImageOpacity * 100;
         _updatingSliders = false;
         OpacityValue.Text = $"{s.UiOpacity * 100:0}%";
-        RailVersion.Text = "v1.2.33";
+        RailVersion.Text = "v1.3.0";
 
         LauncherApp.I.SettingsChanged += OnSettingsChanged;
         LauncherApp.I.VersionsChanged += OnVersionsChanged;
@@ -143,7 +143,8 @@ public partial class MainWindow : Window
                     // 背景只按屏幕宽度解码，避免 4K 原图长期占用几十 MB 内存。
                     var targetWidth = Math.Max(1280, Math.Min(1920, (int)SystemParameters.WorkArea.Width));
                     bmp.DecodePixelWidth = targetWidth;
-                    bmp.UriSource = new Uri(s.BackgroundImage, UriKind.Absolute);
+                    // 先完整读入内存再解码，避免图片轮换/文件占用导致“无法从流中读取”。
+                    bmp.StreamSource = new MemoryStream(File.ReadAllBytes(s.BackgroundImage));
                     bmp.EndInit();
                     bmp.Freeze();
                     BgImageBrush.ImageSource = null;

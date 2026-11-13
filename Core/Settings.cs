@@ -43,11 +43,38 @@ public sealed class RecentEntry
     public DateTime LastPlayedUtc { get; set; }
 }
 
+public sealed class HomeCardOffset
+{
+    public double X { get; set; }
+    public double Y { get; set; }
+}
+
+public sealed class HomeCardStyle
+{
+    public double Rotation { get; set; }
+    public double Scale { get; set; } = 1;
+    public double FontScale { get; set; } = 1;
+    public double Opacity { get; set; } = 1;
+}
+
+public sealed class HomeWidgetConfig
+{
+    public string Id { get; set; } = Guid.NewGuid().ToString("N");
+    public string Type { get; set; } = "clock";
+    public double X { get; set; } = 420;
+    public double Y { get; set; } = 120;
+    public double Width { get; set; } = 280;
+    public string Data { get; set; } = "";
+    public bool Visible { get; set; } = true;
+}
+
 public sealed class AppSettings
 {
     public string MinecraftDir { get; set; } = "";
     public string LastVersion { get; set; } = "";
     public string Accent { get; set; } = "#8FD6B4";
+    /// <summary>头像渲染风格：minimal（正面）或 side（侧面）。</summary>
+    public string AvatarStyle { get; set; } = "minimal";
     /// <summary>界面底色不透明度，0.25 - 1.0。</summary>
     public double UiOpacity { get; set; } = 0.96;
     public string BackgroundImage { get; set; } = "";
@@ -57,10 +84,21 @@ public sealed class AppSettings
     /// <summary>高级模糊过渡时长，0 - 1000ms，默认 420ms。</summary>
     public int BlurDelayMs { get; set; } = 420;
     public string FeaturedImage { get; set; } = "";
-    public string FeaturedTitle { get; set; } = "Vermilune 1.2分支";
+    public string FeaturedTitle { get; set; } = "Vermilune 1.3分支";
     public string FeaturedSubtitle { get; set; } = "这个卡片可以自定义哦！";
     public string FeaturedTitleColor { get; set; } = "";
     public string FeaturedSubtitleColor { get; set; } = "";
+    public bool ShowHomeQuick { get; set; } = true;
+    public bool ShowHomeRecent { get; set; } = true;
+    public bool ShowHomeSkin { get; set; } = true;
+    public bool ShowHomeLog { get; set; } = true;
+    public bool ShowHomeFeatured { get; set; } = true;
+    public bool ShowHomeStats { get; set; } = true;
+    public bool ShowHome3D { get; set; } = true;
+    public bool ShowCardBorders { get; set; } = true;
+    public Dictionary<string, HomeCardOffset> HomeOffsets { get; set; } = new();
+    public List<HomeWidgetConfig> HomeWidgets { get; set; } = new();
+    public Dictionary<string, HomeCardStyle> HomeStyles { get; set; } = new();
     public string JavaPath { get; set; } = "";
     public int MemoryMb { get; set; } = 4096;
     public bool VersionIsolation { get; set; } = true;
@@ -99,6 +137,12 @@ public sealed class AppSettings
     {
         if (string.IsNullOrWhiteSpace(MinecraftDir)) MinecraftDir = AppPaths.DefaultMinecraftDir();
         if (string.IsNullOrWhiteSpace(Accent) || !Accent.StartsWith('#')) Accent = "#8FD6B4";
+        if (FeaturedTitle == "Vermilune 1.2分支") FeaturedTitle = "Vermilune 1.3分支";
+        if (string.IsNullOrWhiteSpace(AvatarStyle)) AvatarStyle = "minimal";
+        if (!string.Equals(AvatarStyle, "side", StringComparison.OrdinalIgnoreCase)) AvatarStyle = "minimal";
+        HomeOffsets ??= new();
+        HomeWidgets ??= new();
+        HomeStyles ??= new();
         UiOpacity = Math.Clamp(UiOpacity, 0.25, 1.0);
         BackgroundImageOpacity = Math.Clamp(BackgroundImageOpacity, 0.0, 1.0);
         CurseForgeApiKey = (CurseForgeApiKey ?? "").Trim();
@@ -114,7 +158,7 @@ public sealed class AppSettings
         // 兼容旧的默认卡片，换成新的 Vermilune 默认文案。
         if (FeaturedTitle == "←----觉真可爱" && FeaturedImage == "")
         {
-            FeaturedTitle = "Vermilune 1.2分支";
+            FeaturedTitle = "Vermilune 1.3分支";
             FeaturedSubtitle = "这个卡片可以自定义哦！";
             FeaturedTitleColor = "";
             FeaturedSubtitleColor = "";

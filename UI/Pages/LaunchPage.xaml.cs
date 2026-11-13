@@ -4,11 +4,15 @@ using System.Globalization;
 using System.IO;
 using System.Runtime.CompilerServices;
 using System.Text;
+using System.Text.Json.Nodes;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using System.Windows.Media.Animation;
 using System.Windows.Threading;
+using Microsoft.Win32;
 using Vermilune.Core;
 using Vermilune.UI.Dialogs;
 
@@ -31,7 +35,7 @@ public partial class LaunchPage : UserControl, IPage, INotifyPropertyChanged
     private bool _suppressSelection;
     private bool _refreshing;
     private LaunchState _state = LaunchState.Idle;
-    private string _logText = "";
+    private string _logText = "等待游戏输出…";
     private bool _hasLog;
     private string _accountName = "Player";
     private string _accountSub = "离线账号";
@@ -42,6 +46,20 @@ public partial class LaunchPage : UserControl, IPage, INotifyPropertyChanged
     private string _welcomeText = "欢迎回来";
     private string _dateText = "";
     private VersionInfo? _selectedVersion;
+    private bool _homeEditing;
+    private bool _logPanelOpen;
+    private bool _logBodyOpen;
+    private FrameworkElement? _dragCard;
+    private string? _dragKey;
+    private Point _dragStart;
+    private double _dragBaseX, _dragBaseY;
+    private Point _lastDragPoint;
+    private readonly Dictionary<string, TranslateTransform> _homeTransforms = new();
+    private readonly Dictionary<string, ScaleTransform> _homeScales = new();
+    private readonly Dictionary<string, RotateTransform> _homeRotates = new();
+    private readonly Dictionary<FrameworkElement, string> _homeCardKeys = new();
+    private readonly Dictionary<TextBlock, double> _baseFontSizes = new();
+    private readonly DispatcherTimer _clockTimer;
 
     public LaunchPage()
     {
@@ -50,8 +68,14 @@ public partial class LaunchPage : UserControl, IPage, INotifyPropertyChanged
         _logTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(140) };
         _logTimer.Tick += (_, _) => FlushLog();
         _logTimer.Start();
+        _clockTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
+        _clockTimer.Tick += (_, _) => UpdateClockWidgets();
+        _clockTimer.Start();
+        SetupHomeEditing();
 
         LauncherApp.I.SettingsChanged += OnSettingsChanged;
+        SizeChanged += (_, _) => UpdateHomeResponsiveLayout();
+        Loaded += (_, _) => UpdateHomeResponsiveLayout();
         LauncherApp.I.VersionsChanged += OnVersionsChanged;
         LauncherApp.I.Launch.ProgressChanged += OnLaunchProgress;
         LauncherApp.I.Launch.OutputLine += OnGameLine;
@@ -100,6 +124,7 @@ public partial class LaunchPage : UserControl, IPage, INotifyPropertyChanged
     public void OnShown()
     {
         RefreshState();
+        ApplyHomeLayout();
         Dispatcher.BeginInvoke(new Action(() =>
         {
             HomeContentScroll?.ScrollToTop();
@@ -137,7 +162,6 @@ public partial class LaunchPage : UserControl, IPage, INotifyPropertyChanged
             AvatarInitial = (AccountName.Length > 0 ? AccountName[..1] : "P").ToUpperInvariant();
             WelcomeText = $"欢迎回来，{AccountName}";
             DateText = DateTime.Now.ToString("yyyy.MM.dd  dddd", CultureInfo.GetCultureInfo("zh-CN"));
-            _ = LoadAvatarAsync(account);
             BuildRecent();
             UpdateVersionLabels();
             UpdateLaunchUi();
@@ -165,7 +189,7 @@ public partial class LaunchPage : UserControl, IPage, INotifyPropertyChanged
         {
             RefreshAccountHeader();
             ApplyFeaturedCard();
-            _ = LoadAvatarAsync(LauncherApp.I.Settings.Account);
+            ApplyHomeLayout();
         }));
         _ = RefreshSkinAsync();
     }
@@ -259,7 +283,32 @@ public partial class LaunchPage : UserControl, IPage, INotifyPropertyChanged
             var skin = await LauncherApp.I.Skins.LoadSkinAsync();
             var cape = await LauncherApp.I.Skins.LoadCapeAsync();
             if (token != _skinLoadToken) return;
-            SkinPreview.SetTextures(skin, cape, LauncherApp.I.Skins.IsSlim);
+            var hasSkin = skin is not null;
+            SkinPreview.Visibility = hasSkin ? Visibility.Visible : Visibility.Collapsed;
+            SkinFallback.Visibility = hasSkin ? Visibility.Collapsed : Visibility.Visible;
+            if (hasSkin) SkinPreview.SetTextures(skin, cape, LauncherApp.I.Skins.IsSlim);
+
+            CenterAvatarInitial.Text = _avatarInitial;
+            if (hasSkin)
+            {
+                try
+                {
+                    CenterAvatarImage.Source = AvatarRenderer.RenderFrontHeadDrawing(skin!);
+                    CenterAvatarImage.Visibility = Visibility.Visible;
+                    CenterAvatarFallback.Visibility = Visibility.Collapsed;
+                }
+                catch (Exception ex)
+                {
+                    Log.Warn("生成 MC 头像失败：" + ex.Message);
+                    CenterAvatarImage.Visibility = Visibility.Collapsed;
+                    CenterAvatarFallback.Visibility = Visibility.Visible;
+                }
+            }
+            else
+            {
+                CenterAvatarImage.Visibility = Visibility.Collapsed;
+                CenterAvatarFallback.Visibility = Visibility.Visible;
+            }
             SkinNameLabel.Text = "皮肤：" + LauncherApp.I.Skins.ActiveSkinName;
             CapeNameLabel.Text = "披风：" + LauncherApp.I.Skins.ActiveCapeName;
             SkinModelLabel.Content = LauncherApp.I.Skins.IsSlim ? "Alex" : "Steve";
@@ -341,7 +390,6 @@ public partial class LaunchPage : UserControl, IPage, INotifyPropertyChanged
             }
         }
         await RefreshSkinAsync();
-        _ = LoadAvatarAsync(LauncherApp.I.Settings.Account);
         RefreshAccountHeader();
         LauncherApp.I.Notify("已刷新皮肤", hasLocal ? "已重新读取本地皮肤。" : "已重新读取账号皮肤与披风。");
     }
@@ -354,7 +402,6 @@ public partial class LaunchPage : UserControl, IPage, INotifyPropertyChanged
         else if (LauncherApp.I.Settings.Account.IsYggdrasil || LauncherApp.I.Settings.Account.IsNide)
             await LauncherApp.I.RefreshAccountAsync();
         await RefreshSkinAsync();
-        _ = LoadAvatarAsync(LauncherApp.I.Settings.Account);
         RefreshAccountHeader();
         LauncherApp.I.Notify("已使用账号皮肤", "已清除本地皮肤覆盖。");
     }
@@ -500,28 +547,6 @@ public partial class LaunchPage : UserControl, IPage, INotifyPropertyChanged
         if (_state == LaunchState.Running) LaunchProgress.Value = 100;
     }
 
-    private async Task LoadAvatarAsync(AccountSettings account)
-    {
-        try
-        {
-            // 直接从当前皮肤裁头部，不再依赖 mc-heads 的远程头像缓存。
-            // 这样切换皮肤后头像会立即更新，后台挂着代理/VPN 也不会卡住。
-            var skin = await LauncherApp.I.Skins.LoadSkinAsync();
-            if (skin is not null)
-            {
-                AvatarImage.Source = CreateHead(skin);
-                AvatarInitialText.Visibility = Visibility.Collapsed;
-                return;
-            }
-        }
-        catch (Exception ex)
-        {
-            Log.Info("头像加载失败（不影响启动）：" + ex.Message);
-        }
-        AvatarImage.Source = null;
-        AvatarInitialText.Visibility = Visibility.Visible;
-    }
-
     private static string ResolveWindowTitle(string template, VersionInfo version, AccountSettings account)
     {
         if (string.IsNullOrWhiteSpace(template)) return "";
@@ -546,25 +571,6 @@ public partial class LaunchPage : UserControl, IPage, INotifyPropertyChanged
         "1920x1080" => (1920, 1080),
         _ => (0, 0)
     };
-
-    private static BitmapSource CreateHead(BitmapSource skin)
-    {
-        var visual = new DrawingVisual();
-        using (var dc = visual.RenderOpen())
-        {
-            var head = new CroppedBitmap(skin, new Int32Rect(8, 8, 8, 8));
-            dc.DrawImage(head, new Rect(0, 0, 8, 8));
-            if (skin.PixelWidth >= 48 && skin.PixelHeight >= 16)
-            {
-                var hat = new CroppedBitmap(skin, new Int32Rect(40, 8, 8, 8));
-                dc.DrawImage(hat, new Rect(0, 0, 8, 8));
-            }
-        }
-        var bitmap = new RenderTargetBitmap(8, 8, 96, 96, PixelFormats.Pbgra32);
-        bitmap.Render(visual);
-        bitmap.Freeze();
-        return bitmap;
-    }
 
     private void VersionCombo_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
@@ -715,7 +721,7 @@ public partial class LaunchPage : UserControl, IPage, INotifyPropertyChanged
             ProcessPriority = app.Settings.ProcessPriority,
             IpProtocol = app.Settings.IpProtocol,
             LauncherName = "Vermilune",
-            LauncherVersion = "1.2.33"
+            LauncherVersion = "1.3.0"
         };
 
         _cts?.Dispose();
@@ -826,8 +832,9 @@ public partial class LaunchPage : UserControl, IPage, INotifyPropertyChanged
         if (!changed) return;
         if (_logBuffer.Length > 5000) _logBuffer.Remove(0, _logBuffer.Length - 5000);
         var lines = _logBuffer.ToString().TrimEnd().Split('\n');
-        LogText = string.Join(Environment.NewLine, lines.TakeLast(4));
+        LogText = string.Join(Environment.NewLine, lines.TakeLast(8));
         HasLog = true;
+        LogScroll?.ScrollToEnd();
     }
 
     private async void OnGameExited(int code, string? crashFile)
@@ -875,6 +882,11 @@ public partial class LaunchPage : UserControl, IPage, INotifyPropertyChanged
     {
         _state = state;
         StatusLabel.Text = text;
+        if (!_logPanelOpen && (state is LaunchState.Preparing or LaunchState.Downloading or LaunchState.Starting or LaunchState.Running or LaunchState.Failed))
+        {
+            _logPanelOpen = true;
+            ApplyHomeLayout();
+        }
         UpdateLaunchUi();
     }
 
@@ -891,7 +903,805 @@ public partial class LaunchPage : UserControl, IPage, INotifyPropertyChanged
     }
 
     private void ManageVersion_Click(object sender, RoutedEventArgs e) => App.Window?.NavigateTo("versions");
+    private HomeCardStyle GetHomeStyle(string key)
+    {
+        if (!LauncherApp.I.Settings.HomeStyles.TryGetValue(key, out var style))
+        {
+            style = new HomeCardStyle();
+            LauncherApp.I.Settings.HomeStyles[key] = style;
+        }
+        return style;
+    }
+
+    private void ApplyCardStyle(FrameworkElement card, string key)
+    {
+        var style = GetHomeStyle(key);
+        if (_homeScales.TryGetValue(key, out var scale))
+        {
+            var value = Math.Clamp(style.Scale, 0.4, 2.5);
+            scale.ScaleX = value;
+            scale.ScaleY = value;
+        }
+        if (_homeRotates.TryGetValue(key, out var rotate))
+            rotate.Angle = Math.Clamp(style.Rotation, -180, 180);
+        card.Opacity = Math.Clamp(style.Opacity, 0.2, 1.0);
+        card.SnapsToDevicePixels = true;
+        card.UseLayoutRounding = true;
+        TextOptions.SetTextFormattingMode(card, TextFormattingMode.Display);
+        TextOptions.SetTextRenderingMode(card, TextRenderingMode.ClearType);
+        Dispatcher.BeginInvoke(new Action(() => ApplyFontScale(card, Math.Clamp(style.FontScale, 0.5, 2.5))),
+            DispatcherPriority.Loaded);
+    }
+
+    private void ApplyFontScale(DependencyObject root, double factor)
+    {
+        if (root is TextBlock text)
+        {
+            if (!_baseFontSizes.TryGetValue(text, out var baseSize))
+            {
+                baseSize = text.FontSize;
+                _baseFontSizes[text] = baseSize;
+            }
+            text.FontSize = Math.Max(6, Math.Round(baseSize * factor * 2) / 2);
+            TextOptions.SetTextFormattingMode(text, TextFormattingMode.Display);
+            TextOptions.SetTextRenderingMode(text, TextRenderingMode.ClearType);
+        }
+        var count = VisualTreeHelper.GetChildrenCount(root);
+        for (var i = 0; i < count; i++) ApplyFontScale(VisualTreeHelper.GetChild(root, i), factor);
+    }
+
+    private void ShowCardStyleMenu(FrameworkElement card, string key)
+    {
+        var style = GetHomeStyle(key);
+        var original = new HomeCardStyle
+        {
+            Rotation = style.Rotation,
+            Scale = style.Scale,
+            FontScale = style.FontScale,
+            Opacity = style.Opacity
+        };
+        var canDelete = key.StartsWith("widget:", StringComparison.Ordinal) ||
+                        key is "quick" or "recent" or "log" or "featured" or "skin3d";
+        var dialog = new HomeCardStyleDialog(style, canDelete,
+            preview =>
+            {
+                style.Rotation = preview.Rotation;
+                style.Scale = preview.Scale;
+                style.FontScale = preview.FontScale;
+                style.Opacity = preview.Opacity;
+                ApplyCardStyle(card, key);
+            })
+        {
+            Owner = Window.GetWindow(this)
+        };
+        var result = dialog.ShowDialog();
+        if (result != true)
+        {
+            style.Rotation = original.Rotation;
+            style.Scale = original.Scale;
+            style.FontScale = original.FontScale;
+            style.Opacity = original.Opacity;
+            ApplyCardStyle(card, key);
+            return;
+        }
+        if (dialog.DeleteRequested)
+        {
+            var settings = LauncherApp.I.Settings;
+            if (key.StartsWith("widget:", StringComparison.Ordinal))
+            {
+                var id = key["widget:".Length..];
+                settings.HomeWidgets.RemoveAll(w => w.Id == id);
+                settings.HomeStyles.Remove(key);
+                BuildHomeWidgets();
+            }
+            else
+            {
+                switch (key)
+                {
+                    case "quick": settings.ShowHomeQuick = false; break;
+                    case "recent": settings.ShowHomeRecent = false; break;
+                    case "log": settings.ShowHomeLog = false; break;
+                    case "featured": settings.ShowHomeFeatured = false; break;
+                    case "skin3d": settings.ShowHome3D = false; break;
+                }
+            }
+            LauncherApp.I.Save();
+            ApplyHomeLayout();
+            return;
+        }
+
+        style.Rotation = dialog.CardStyle.Rotation;
+        style.Scale = dialog.CardStyle.Scale;
+        style.FontScale = dialog.CardStyle.FontScale;
+        style.Opacity = dialog.CardStyle.Opacity;
+        ApplyCardStyle(card, key);
+        LauncherApp.I.SaveDebounced();
+    }
+
+    private void AddChoice(ContextMenu menu, string title, string[] labels, double[] values,
+        double current, Action<double> apply)
+    {
+        var item = new MenuItem { Header = title };
+        for (var i = 0; i < labels.Length; i++)
+        {
+            var choice = new MenuItem
+            {
+                Header = labels[i],
+                IsCheckable = true,
+                IsChecked = Math.Abs(values[i] - current) < 0.001
+            };
+            var value = values[i];
+            choice.Click += (_, _) =>
+            {
+                apply(value);
+                LauncherApp.I.SaveDebounced();
+                menu.IsOpen = false;
+            };
+            item.Items.Add(choice);
+        }
+        menu.Items.Add(item);
+    }
+
+    private void UpdateHomeResponsiveLayout()
+    {
+        if (CenterAvatarHost is null) return;
+        var width = ActualWidth;
+        var height = ActualHeight;
+        var avatarSize = Math.Round(Math.Clamp(Math.Min(width * 0.095, height * 0.16), 88, 128));
+        CenterAvatarHost.Width = avatarSize;
+        CenterAvatarHost.Height = avatarSize;
+        CenterAvatarImage.Width = avatarSize;
+        CenterAvatarImage.Height = avatarSize;
+        CenterAvatarInitial.FontSize = Math.Max(24, avatarSize * 0.32);
+
+        var leftWidth = Math.Clamp(width * 0.34, 300, 420);
+        var rightWidth = Math.Clamp(width * 0.27, 250, 340);
+        var logWidth = Math.Clamp(width * 0.38, 340, 480);
+        HomeSkinPanel.Width = leftWidth;
+        HomeInstancePanel.Width = leftWidth;
+        HomeRecentPanel.Width = rightWidth;
+        HomeFeaturedPanel.Width = rightWidth;
+        HomeLogPanel.Width = logWidth;
+
+        var modelWidth = Math.Clamp(width * 0.14, 136, 168);
+        var modelHeight = Math.Clamp(height * 0.25, 126, 192);
+        HomeSkin3DPanel.Width = modelWidth + 22;
+        Skin3DHost.Width = modelWidth;
+        Skin3DHost.Height = modelHeight;
+        SkinPreview.Width = modelWidth;
+        SkinPreview.Height = modelHeight;
+    }
+
+    private void SetupHomeEditing()
+    {
+        SetupCardDrag(HomeQuickPanel, "quick");
+        SetupCardDrag(HomeSkin3DPanel, "skin3d");
+        SetupCardDrag(HomeRecentPanel, "recent");
+        SetupCardDrag(HomeSkinPanel, "skin");
+        SetupCardDrag(HomeInstancePanel, "instance");
+        SetupCardDrag(HomeLogPanel, "log");
+        SetupCardDrag(HomeFeaturedPanel, "featured");
+        BuildHomeWidgets();
+    }
+
+    private readonly List<FrameworkElement> _homeCards = new();
+    private readonly List<TextBlock> _clockTexts = new();
+
+    private void SetupCardDrag(FrameworkElement card, string key)
+    {
+        var scale = new ScaleTransform(1, 1);
+        var rotate = new RotateTransform(0);
+        var transform = new TranslateTransform();
+        var group = new TransformGroup();
+        group.Children.Add(scale);
+        group.Children.Add(rotate);
+        group.Children.Add(transform);
+        card.RenderTransform = group;
+        card.RenderTransformOrigin = new Point(0.5, 0.5);
+        _homeScales[key] = scale;
+        _homeRotates[key] = rotate;
+        _homeTransforms[key] = transform;
+        _homeCardKeys[card] = key;
+        _homeCards.Add(card);
+        if (LauncherApp.I.Settings.HomeOffsets.TryGetValue(key, out var saved))
+        {
+            transform.X = saved.X;
+            transform.Y = saved.Y;
+        }
+        ApplyCardStyle(card, key);
+        card.PreviewMouseRightButtonUp += (_, e) =>
+        {
+            if (!_homeEditing) return;
+            ShowCardStyleMenu(card, key);
+            e.Handled = true;
+        };
+        card.PreviewMouseLeftButtonDown += (_, e) => StartCardDrag(card, key, e);
+        card.PreviewMouseMove += (_, e) => MoveCardDrag(card, e);
+        card.PreviewMouseLeftButtonUp += (_, e) => EndCardDrag(card, e);
+        card.LostMouseCapture += (_, _) => { if (ReferenceEquals(_dragCard, card)) _dragCard = null; };
+    }
+
+    private void StartCardDrag(FrameworkElement card, string? key, MouseButtonEventArgs e)
+    {
+        if (!_homeEditing || e.LeftButton != MouseButtonState.Pressed || IsInteractive(e.OriginalSource)) return;
+        _dragCard = card;
+        _dragKey = key;
+        _dragStart = e.GetPosition(this);
+        _lastDragPoint = _dragStart;
+        if (card.Tag is HomeWidgetConfig config)
+        {
+            _dragBaseX = Canvas.GetLeft(card);
+            _dragBaseY = Canvas.GetTop(card);
+            if (double.IsNaN(_dragBaseX)) _dragBaseX = config.X;
+            if (double.IsNaN(_dragBaseY)) _dragBaseY = config.Y;
+        }
+        else if (key is not null && _homeTransforms.TryGetValue(key, out var tr))
+        {
+            _dragBaseX = tr.X;
+            _dragBaseY = tr.Y;
+        }
+        else { _dragBaseX = 0; _dragBaseY = 0; }
+        card.CaptureMouse();
+        e.Handled = true;
+    }
+
+    private void MoveCardDrag(FrameworkElement card, MouseEventArgs e)
+    {
+        if (!ReferenceEquals(_dragCard, card) || e.LeftButton != MouseButtonState.Pressed) return;
+        var point = e.GetPosition(this);
+        var dx = point.X - _lastDragPoint.X;
+        var dy = point.Y - _lastDragPoint.Y;
+        _lastDragPoint = point;
+        if (Math.Abs(dx) < 0.1 && Math.Abs(dy) < 0.1) return;
+
+        if (CanMoveCard(card, dx, 0)) ApplyCardDelta(card, dx, 0);
+        if (CanMoveCard(card, 0, dy)) ApplyCardDelta(card, 0, dy);
+    }
+
+    private bool CanMoveCard(FrameworkElement card, double dx, double dy)
+    {
+        var bounds = GetCardRootBounds(card);
+        if (bounds.IsEmpty) return false;
+        var proposed = new Rect(bounds.X + dx, bounds.Y + dy, bounds.Width, bounds.Height);
+        const double edge = 8;
+        if (proposed.Left < edge || proposed.Top < edge ||
+            proposed.Right > ActualWidth - edge || proposed.Bottom > ActualHeight - edge)
+            return false;
+
+        foreach (var other in HomeCardElements())
+        {
+            if (ReferenceEquals(other, card) || other.Visibility != Visibility.Visible ||
+                other.ActualWidth <= 0 || other.ActualHeight <= 0) continue;
+            var otherBounds = GetCardRootBounds(other);
+            if (otherBounds.IsEmpty) continue;
+            if (proposed.IntersectsWith(otherBounds)) return false;
+        }
+        return true;
+    }
+
+    private Rect GetCardRootBounds(FrameworkElement card)
+    {
+        if (card.ActualWidth <= 0 || card.ActualHeight <= 0) return Rect.Empty;
+        try
+        {
+            return card.TransformToAncestor(this).TransformBounds(
+                new Rect(0, 0, card.ActualWidth, card.ActualHeight));
+        }
+        catch { return Rect.Empty; }
+    }
+
+    private IEnumerable<FrameworkElement> HomeCardElements()
+    {
+        foreach (var card in _homeCards) yield return card;
+        if (HomeWidgetCanvas is null) yield break;
+        foreach (var child in HomeWidgetCanvas.Children)
+            if (child is FrameworkElement element) yield return element;
+    }
+
+    private void ApplyCardDelta(FrameworkElement card, double dx, double dy)
+    {
+        if (card.Tag is HomeWidgetConfig)
+        {
+            var left = Canvas.GetLeft(card);
+            var top = Canvas.GetTop(card);
+            Canvas.SetLeft(card, (double.IsNaN(left) ? 0 : left) + dx);
+            Canvas.SetTop(card, (double.IsNaN(top) ? 0 : top) + dy);
+        }
+        else if (_dragKey is not null && _homeTransforms.TryGetValue(_dragKey, out var tr))
+        {
+            tr.X += dx;
+            tr.Y += dy;
+        }
+    }
+
+    private void EndCardDrag(FrameworkElement card, MouseButtonEventArgs e)
+    {
+        if (!ReferenceEquals(_dragCard, card)) return;
+        card.ReleaseMouseCapture();
+        if (card.Tag is HomeWidgetConfig config)
+        {
+            config.X = Canvas.GetLeft(card);
+            config.Y = Canvas.GetTop(card);
+        }
+        else if (_dragKey is not null && _homeTransforms.TryGetValue(_dragKey, out var tr))
+        {
+            LauncherApp.I.Settings.HomeOffsets[_dragKey] = new HomeCardOffset { X = tr.X, Y = tr.Y };
+        }
+        _dragCard = null;
+        _dragKey = null;
+        LauncherApp.I.SaveDebounced();
+    }
+
+    private static bool IsInteractive(object source)
+    {
+        var current = source as DependencyObject;
+        while (current is not null)
+        {
+            if (current is Button || current is ComboBox || current is TextBox ||
+                current is CheckBox || current is Slider || current is ListBox) return true;
+            current = VisualTreeHelper.GetParent(current);
+        }
+        return false;
+    }
+
+    private void ResetHomeLayout_Click(object sender, RoutedEventArgs e)
+    {
+        if (!MessageDialog.Show(Window.GetWindow(this), "恢复初始界面",
+                "会清除自定义卡片、卡片位置和全部样式设置，确定恢复吗？", "恢复", "取消", danger: true))
+            return;
+        var settings = LauncherApp.I.Settings;
+        settings.ShowHomeQuick = true;
+        settings.ShowHomeRecent = true;
+        settings.ShowHomeSkin = true;
+        settings.ShowHomeLog = true;
+        settings.ShowHomeFeatured = true;
+        settings.ShowHomeStats = true;
+        settings.ShowHome3D = true;
+        settings.ShowCardBorders = true;
+        settings.HomeOffsets.Clear();
+        settings.HomeStyles.Clear();
+        settings.HomeWidgets.Clear();
+        foreach (var transform in _homeTransforms.Values)
+        {
+            transform.X = 0;
+            transform.Y = 0;
+        }
+        foreach (var scale in _homeScales.Values)
+        {
+            scale.ScaleX = 1;
+            scale.ScaleY = 1;
+        }
+        foreach (var rotate in _homeRotates.Values) rotate.Angle = 0;
+        foreach (var card in _homeCards)
+        {
+            card.Opacity = 1;
+            if (_homeCardKeys.TryGetValue(card, out var key)) ApplyCardStyle(card, key);
+        }
+        LauncherApp.I.Save();
+        BuildHomeWidgets();
+        ApplyHomeLayout();
+        LauncherApp.I.Notify("已恢复初始界面", "卡片位置、样式和自定义卡片已重置。");
+    }
+
+    private void EditHome_Click(object sender, RoutedEventArgs e)
+    {
+        _homeEditing = !_homeEditing;
+        HomeEditBar.Visibility = _homeEditing ? Visibility.Visible : Visibility.Collapsed;
+        EditHomeButton.Content = _homeEditing ? "退出编辑" : "自定义主页";
+        foreach (var card in _homeCards) card.Cursor = _homeEditing ? Cursors.SizeAll : Cursors.Arrow;
+        BuildHomeWidgets();
+    }
+
+    private void ToggleAddCardPopup(object sender, RoutedEventArgs e)
+    {
+        AddCardPopup.IsOpen = !AddCardPopup.IsOpen;
+    }
+
+    private void AddBuiltinCard_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is not Button { Tag: string key }) return;
+        var s = LauncherApp.I.Settings;
+        switch (key)
+        {
+            case "quick": s.ShowHomeQuick = true; break;
+            case "recent": s.ShowHomeRecent = true; break;
+            case "log": s.ShowHomeLog = true; break;
+            case "featured": s.ShowHomeFeatured = true; break;
+            case "skin3d": s.ShowHome3D = true; break;
+        }
+        LauncherApp.I.Save();
+        ApplyHomeLayout();
+        AddCardPopup.IsOpen = false;
+    }
+
+    private void AddWidgetCard_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is not Button { Tag: string type }) return;
+        AddHomeWidget(type);
+        AddCardPopup.IsOpen = false;
+    }
+
+    private void AddClockWidget_Click(object sender, RoutedEventArgs e) => AddHomeWidget("clock");
+    private void AddImageWidget_Click(object sender, RoutedEventArgs e) => AddHomeWidget("image");
+    private void AddNewsWidget_Click(object sender, RoutedEventArgs e) => AddHomeWidget("news");
+
+    private void AddHomeWidget(string type)
+    {
+        var settings = LauncherApp.I.Settings;
+        var config = new HomeWidgetConfig
+        {
+            Type = type,
+            X = 360 + (settings.HomeWidgets.Count % 3) * 24,
+            Y = 120 + (settings.HomeWidgets.Count % 5) * 26
+        };
+        settings.HomeWidgets.Add(config);
+        LauncherApp.I.Save();
+        BuildHomeWidgets();
+    }
+
+    private void BuildHomeWidgets()
+    {
+        if (HomeWidgetCanvas is null) return;
+        HomeWidgetCanvas.Children.Clear();
+        _clockTexts.Clear();
+        foreach (var config in LauncherApp.I.Settings.HomeWidgets)
+        {
+            if (!config.Visible) continue;
+            var card = CreateHomeWidget(config);
+            HomeWidgetCanvas.Children.Add(card);
+        }
+        ApplyCardBorders();
+    }
+
+    private FrameworkElement CreateHomeWidget(HomeWidgetConfig config)
+    {
+        var card = new Border
+        {
+            Width = Math.Clamp(config.Width, 180, 520),
+            MinHeight = 104,
+            Background = new SolidColorBrush(Color.FromArgb(0xD9, 0x0A, 0x0D, 0x0F)),
+            BorderBrush = new SolidColorBrush(Color.FromArgb(0x38, 0xFF, 0xFF, 0xFF)),
+            BorderThickness = new Thickness(LauncherApp.I.Settings.ShowCardBorders ? 1 : 0),
+            CornerRadius = new CornerRadius(6),
+            Padding = new Thickness(12),
+            Tag = config,
+            Cursor = _homeEditing ? Cursors.SizeAll : Cursors.Arrow
+        };
+        Canvas.SetLeft(card, config.X);
+        Canvas.SetTop(card, config.Y);
+
+        var root = new Grid();
+        root.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+        root.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+        var header = new Grid();
+        var label = new TextBlock
+        {
+            Text = config.Type switch { "clock" => "时钟", "image" => "图片", _ => "MC 新闻" },
+            FontFamily = (FontFamily)FindResource("MonoFont"),
+            FontSize = 9,
+            Foreground = new SolidColorBrush(Color.FromArgb(0xFF, 0x9A, 0xA8, 0xB0))
+        };
+        header.Children.Add(label);
+        var handle = new TextBlock
+        {
+            Text = "⋮⋮",
+            FontSize = 11,
+            Foreground = new SolidColorBrush(Color.FromArgb(0xFF, 0x70, 0x7C, 0x84)),
+            Cursor = Cursors.SizeAll,
+            HorizontalAlignment = HorizontalAlignment.Center,
+            Visibility = _homeEditing ? Visibility.Visible : Visibility.Collapsed,
+            ToolTip = "拖动卡片"
+        };
+        handle.PreviewMouseLeftButtonDown += (_, e) => StartCardDrag(card, null, e);
+        header.Children.Add(handle);
+        var close = new Button
+        {
+            Content = "×",
+            Style = (Style)FindResource("LinkButton"),
+            HorizontalAlignment = HorizontalAlignment.Right,
+            Visibility = _homeEditing ? Visibility.Visible : Visibility.Collapsed,
+            FontSize = 13
+        };
+        close.Click += (_, _) =>
+        {
+            LauncherApp.I.Settings.HomeWidgets.RemoveAll(w => w.Id == config.Id);
+            LauncherApp.I.Save();
+            BuildHomeWidgets();
+        };
+        header.Children.Add(close);
+        root.Children.Add(header);
+
+        FrameworkElement content;
+        switch (config.Type)
+        {
+            case "clock":
+                var clock = new TextBlock
+                {
+                    Text = DateTime.Now.ToString("HH:mm:ss"),
+                    FontFamily = (FontFamily)FindResource("DisplayFont"),
+                    FontSize = 26,
+                    FontWeight = FontWeights.SemiBold,
+                    Foreground = (Brush)FindResource("TextBrush"),
+                    Margin = new Thickness(0, 3, 0, 0)
+                };
+                clock.Tag = "clock";
+                _clockTexts.Add(clock);
+                var date = new TextBlock
+                {
+                    Text = DateTime.Now.ToString("yyyy-MM-dd  dddd"),
+                    FontSize = 9.5,
+                    Foreground = (Brush)FindResource("TextMutedBrush"),
+                    Margin = new Thickness(0, 1, 0, 0)
+                };
+                content = new StackPanel { Children = { clock, date } };
+                break;
+            case "image":
+                var stack = new StackPanel();
+                if (!string.IsNullOrWhiteSpace(config.Data) && File.Exists(config.Data))
+                {
+                    try
+                    {
+                        var bitmap = new BitmapImage();
+                        bitmap.BeginInit();
+                        bitmap.CacheOption = BitmapCacheOption.OnLoad;
+                        bitmap.UriSource = new Uri(config.Data);
+                        bitmap.EndInit();
+                        bitmap.Freeze();
+                        stack.Children.Add(new Image
+                        {
+                            Source = bitmap,
+                            Height = 104,
+                            Stretch = Stretch.UniformToFill,
+                            Margin = new Thickness(0, 4, 0, 0)
+                        });
+                    }
+                    catch { }
+                }
+                if (stack.Children.Count == 0)
+                    stack.Children.Add(new TextBlock
+                    {
+                        Text = "选择一张本地图片作为卡片内容",
+                        FontSize = 10,
+                        Foreground = (Brush)FindResource("TextMutedBrush"),
+                        TextWrapping = TextWrapping.Wrap,
+                        Margin = new Thickness(0, 12, 0, 8)
+                    });
+                var pick = new Button
+                {
+                    Content = "选择图片",
+                    Style = (Style)FindResource("SoftLink"),
+                    HorizontalAlignment = HorizontalAlignment.Left,
+                    Visibility = _homeEditing ? Visibility.Visible : Visibility.Collapsed
+                };
+                pick.Click += (_, _) =>
+                {
+                    var dialog = new OpenFileDialog { Filter = "图片|*.png;*.jpg;*.jpeg;*.webp;*.bmp" };
+                    if (dialog.ShowDialog() != true) return;
+                    config.Data = dialog.FileName;
+                    LauncherApp.I.Save();
+                    BuildHomeWidgets();
+                };
+                stack.Children.Add(pick);
+                content = stack;
+                break;
+            default:
+                var news = new TextBlock
+                {
+                    Text = "正在加载 Minecraft 新闻…",
+                    FontSize = 9.5,
+                    Foreground = (Brush)FindResource("TextSubBrush"),
+                    TextWrapping = TextWrapping.Wrap,
+                    Margin = new Thickness(0, 6, 0, 0),
+                    MaxHeight = 100
+                };
+                var refresh = new Button
+                {
+                    Content = "刷新新闻",
+                    Style = (Style)FindResource("SoftLink"),
+                    HorizontalAlignment = HorizontalAlignment.Left,
+                    Margin = new Thickness(0, 4, 0, 0)
+                };
+                refresh.Click += (_, _) => _ = LoadNewsAsync(news);
+                content = new StackPanel { Children = { news, refresh } };
+                _ = LoadNewsAsync(news);
+                break;
+        }
+        root.Children.Add(content);
+        Grid.SetRow(content, 1);
+        card.Child = root;
+        var styleKey = "widget:" + config.Id;
+        var scale = new ScaleTransform(1, 1);
+        var rotate = new RotateTransform(0);
+        var translate = new TranslateTransform();
+        var group = new TransformGroup();
+        group.Children.Add(scale);
+        group.Children.Add(rotate);
+        group.Children.Add(translate);
+        card.RenderTransform = group;
+        card.RenderTransformOrigin = new Point(0.5, 0.5);
+        _homeScales[styleKey] = scale;
+        _homeRotates[styleKey] = rotate;
+        _homeTransforms[styleKey] = translate;
+        _homeCardKeys[card] = styleKey;
+        ApplyCardStyle(card, styleKey);
+        card.PreviewMouseRightButtonUp += (_, e) =>
+        {
+            if (!_homeEditing) return;
+            ShowCardStyleMenu(card, styleKey);
+            e.Handled = true;
+        };
+        card.PreviewMouseLeftButtonDown += (_, e) => StartCardDrag(card, null, e);
+        card.PreviewMouseMove += (_, e) => MoveCardDrag(card, e);
+        card.PreviewMouseLeftButtonUp += (_, e) => EndCardDrag(card, e);
+        card.LostMouseCapture += (_, _) => { if (ReferenceEquals(_dragCard, card)) _dragCard = null; };
+        return card;
+    }
+
+    private async Task LoadNewsAsync(TextBlock target)
+    {
+        try
+        {
+            var json = await HttpService.GetStringAsync("https://launchercontent.mojang.com/news.json", CancellationToken.None);
+            var root = JsonNode.Parse(json) as JsonObject;
+            var entries = root?["entries"] as JsonArray;
+            if (entries is null) { target.Text = "暂时无法获取新闻。"; return; }
+            var lines = new List<string>();
+            foreach (var entry in entries.Take(4))
+            {
+                var title = entry?["title"]?.GetValue<string>();
+                if (!string.IsNullOrWhiteSpace(title)) lines.Add("• " + title);
+            }
+            target.Text = lines.Count == 0 ? "暂时没有新闻。" : string.Join(Environment.NewLine, lines);
+        }
+        catch (Exception ex)
+        {
+            target.Text = "新闻加载失败：" + ex.Message;
+        }
+    }
+
+    private void UpdateClockWidgets()
+    {
+        var now = DateTime.Now;
+        foreach (var clock in _clockTexts) clock.Text = now.ToString("HH:mm:ss");
+    }
+
+    private void AnimateLogPanel()
+    {
+        if (HomeLogPanel is null) return;
+        if (!_homeTransforms.TryGetValue("log", out var translate))
+            return;
+        var baseY = translate.Y;
+        translate.BeginAnimation(TranslateTransform.YProperty,
+            new DoubleAnimation(baseY + 10, baseY, TimeSpan.FromMilliseconds(180))
+            {
+                EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
+            });
+        HomeLogPanel.BeginAnimation(OpacityProperty, new DoubleAnimation(0.45, 1, TimeSpan.FromMilliseconds(160)));
+    }
+
+    private void ApplyLogBodyAnimation()
+    {
+        if (LogBody is null) return;
+        if (_logPanelOpen)
+        {
+            if (_logBodyOpen) return;
+            _logBodyOpen = true;
+            LogBody.Visibility = Visibility.Visible;
+            LogBody.BeginAnimation(MaxHeightProperty, new DoubleAnimation(0, 230, TimeSpan.FromMilliseconds(180))
+            {
+                EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
+            });
+            LogBody.BeginAnimation(OpacityProperty, new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(150)));
+        }
+        else
+        {
+            if (!_logBodyOpen) return;
+            _logBodyOpen = false;
+            var fade = new DoubleAnimation(0, TimeSpan.FromMilliseconds(130));
+            fade.Completed += (_, _) =>
+            {
+                if (!_logPanelOpen) LogBody.Visibility = Visibility.Collapsed;
+            };
+            LogBody.BeginAnimation(MaxHeightProperty, new DoubleAnimation(0, TimeSpan.FromMilliseconds(180))
+            {
+                EasingFunction = new CubicEase { EasingMode = EasingMode.EaseIn }
+            });
+            LogBody.BeginAnimation(OpacityProperty, fade);
+        }
+    }
+
+    private FrameworkElement? FindHomeCard(string key)
+    {
+        foreach (var pair in _homeCardKeys)
+            if (string.Equals(pair.Value, key, StringComparison.OrdinalIgnoreCase))
+                return pair.Key;
+        if (key.StartsWith("widget:", StringComparison.Ordinal))
+        {
+            var id = key["widget:".Length..];
+            return HomeWidgetCanvas.Children.OfType<Border>()
+                .FirstOrDefault(b => b.Tag is HomeWidgetConfig c && c.Id == id);
+        }
+        return null;
+    }
+
+    private void ToggleCardBorders_Click(object sender, RoutedEventArgs e)
+    {
+        var settings = LauncherApp.I.Settings;
+        settings.ShowCardBorders = !settings.ShowCardBorders;
+        LauncherApp.I.Save();
+        ApplyCardBorders();
+    }
+
+    private void ApplyCardBorders()
+    {
+        var settings = LauncherApp.I.Settings;
+        var thickness = settings.ShowCardBorders ? new Thickness(1) : new Thickness(0);
+        foreach (var card in new[]
+                 {
+                     HomeSkin3DPanel, HomeRecentPanel, HomeFeaturedPanel, HomeLogPanel,
+                     HomeSkinPanel, HomeInstancePanel
+                 })
+            if (card is not null) card.BorderThickness = thickness;
+
+        if (HomeWidgetCanvas is not null)
+            foreach (var border in HomeWidgetCanvas.Children.OfType<Border>())
+                border.BorderThickness = thickness;
+
+        if (CardBorderButton is not null)
+            CardBorderButton.Content = settings.ShowCardBorders ? "边缘线：开" : "边缘线：关";
+    }
+
+    private void ApplyHomeLayout()
+    {
+        var s = LauncherApp.I.Settings;
+        HomeQuickPanel.Visibility = s.ShowHomeQuick ? Visibility.Visible : Visibility.Collapsed;
+        HomeRecentPanel.Visibility = s.ShowHomeRecent ? Visibility.Visible : Visibility.Collapsed;
+        HomeSkin3DPanel.Visibility = s.ShowHome3D ? Visibility.Visible : Visibility.Collapsed;
+        HomeSkinPanel.Visibility = s.ShowHomeSkin ? Visibility.Visible : Visibility.Collapsed;
+        HomeLogPanel.Visibility = s.ShowHomeLog ? Visibility.Visible : Visibility.Collapsed;
+        if (LogBody is not null)
+        {
+            LogBody.Visibility = Visibility.Visible;
+            LogBody.MaxHeight = double.PositiveInfinity;
+            LogBody.Opacity = 1;
+        }
+        ApplyCardBorders();
+        HomeFeaturedPanel.Visibility = s.ShowHomeFeatured ? Visibility.Visible : Visibility.Collapsed;
+        HomeStatsPanel.Visibility = s.ShowHomeStats ? Visibility.Visible : Visibility.Collapsed;
+        HomeFeaturedPanel.Margin = s.ShowHomeRecent
+            ? new Thickness(0, 258, 22, 0)
+            : new Thickness(0, 78, 22, 0);
+    }
+
+    private void CustomizeHome_Click(object sender, RoutedEventArgs e)
+    {
+        var s = LauncherApp.I.Settings;
+        var dialog = new HomeCustomizeDialog(s, key =>
+        {
+            var card = FindHomeCard(key);
+            if (card is not null) ShowCardStyleMenu(card, key);
+        })
+        { Owner = Window.GetWindow(this) };
+        if (dialog.ShowDialog() != true) return;
+        bool Value(string key, bool fallback) => dialog.CardVisibility.TryGetValue(key, out var v) ? v : fallback;
+        s.ShowHome3D = Value("skin3d", s.ShowHome3D);
+        s.ShowHomeQuick = Value("quick", s.ShowHomeQuick);
+        s.ShowHomeRecent = Value("recent", s.ShowHomeRecent);
+        s.ShowHomeLog = Value("log", s.ShowHomeLog);
+        s.ShowHomeFeatured = Value("featured", s.ShowHomeFeatured);
+        foreach (var widget in s.HomeWidgets)
+        {
+            if (dialog.CardVisibility.TryGetValue("widget:" + widget.Id, out var visible))
+                widget.Visible = visible;
+        }
+        LauncherApp.I.Save();
+        ApplyHomeLayout();
+        BuildHomeWidgets();
+        LauncherApp.I.Notify("主页已更新", "卡片显示设置已保存。");
+    }
+
     private void OpenSettings_Click(object sender, RoutedEventArgs e) => App.Window?.NavigateTo("settings");
+    private void OpenDownload_Click(object sender, RoutedEventArgs e) => App.Window?.NavigateTo("download");
 
     private void EditVersion_Click(object sender, RoutedEventArgs e)
     {
@@ -928,6 +1738,25 @@ public partial class LaunchPage : UserControl, IPage, INotifyPropertyChanged
         }
     }
 
+    private void CopyLog_Click(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            var text = _logBuffer.Length > 0 ? _logBuffer.ToString() : LogText;
+            Clipboard.SetText(text);
+            LauncherApp.I.Notify("日志已复制", $"{text.Length} 个字符");
+        }
+        catch (Exception ex) { Log.Warn("复制日志失败：" + ex.Message); }
+    }
+
+    private void ClearLog_Click(object sender, RoutedEventArgs e)
+    {
+        _logBuffer.Clear();
+        LogText = "等待游戏输出…";
+        HasLog = false;
+        StatusLabel.Text = "日志显示已清空。";
+    }
+
     private void OpenLog_Click(object sender, RoutedEventArgs e)
     {
         var path = LauncherApp.I.Launch.LastLogPath;
@@ -943,9 +1772,24 @@ public partial class LaunchPage : UserControl, IPage, INotifyPropertyChanged
         LauncherApp.I.Notify("主页已刷新", "版本列表与最近游玩已更新。");
     }
 
+    private void ToggleLog_Click(object sender, RoutedEventArgs e)
+    {
+        _logPanelOpen = !_logPanelOpen;
+        if (_logPanelOpen) LauncherApp.I.Settings.ShowHomeLog = true;
+        ApplyHomeLayout();
+        if (_logPanelOpen) AnimateLogPanel();
+    }
+
+    private void ToggleSites_Click(object sender, RoutedEventArgs e)
+    {
+        SitesPanel.Visibility = SitesPanel.Visibility == Visibility.Visible
+            ? Visibility.Collapsed : Visibility.Visible;
+    }
+
     private void Site_Click(object sender, RoutedEventArgs e)
     {
         if (sender is Button { Tag: string url }) Shell.OpenUrl(url);
+        SitesPanel.Visibility = Visibility.Collapsed;
     }
 
     private void ToolTaskmgr_Click(object sender, RoutedEventArgs e) => Shell.Run("taskmgr.exe");

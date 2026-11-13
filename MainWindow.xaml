@@ -34,7 +34,7 @@
                 BorderThickness="0" ClipToBounds="True">
             <Grid>
                 <Grid.RowDefinitions>
-                    <RowDefinition Height="48" />
+                    <RowDefinition Height="52" />
                     <RowDefinition Height="*" />
                 </Grid.RowDefinitions>
 
@@ -90,7 +90,7 @@
 
                 <Grid Grid.Row="1">
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="86" />
+                        <ColumnDefinition Width="94" />
                         <ColumnDefinition Width="*" />
                     </Grid.ColumnDefinitions>
 
@@ -102,14 +102,14 @@
                                 <RowDefinition Height="*" />
                                 <RowDefinition Height="Auto" />
                             </Grid.RowDefinitions>
-                            <StackPanel Margin="11,10,11,0" VerticalAlignment="Top">
+                            <StackPanel Margin="14,12,14,0" VerticalAlignment="Top">
                                 <RadioButton x:Name="NavLaunch" Style="{StaticResource NavItem}" GroupName="Nav"
                                              Tag="launch" IsChecked="True" Checked="Nav_Checked" ToolTip="启动">
                                     <StackPanel HorizontalAlignment="Center">
                                         <Path Data="{DynamicResource IconPlay}" Width="18" Height="18" Stretch="Uniform"
                                               Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=RadioButton}}"
                                               HorizontalAlignment="Center" />
-                                        <TextBlock Text="启动" FontSize="9.5" Margin="0,4,0,0" HorizontalAlignment="Center" />
+                                        <TextBlock Text="启动" FontSize="10.5" Margin="0,4,0,0" HorizontalAlignment="Center" />
                                     </StackPanel>
                                 </RadioButton>
                                 <RadioButton x:Name="NavDownload" Style="{StaticResource NavItem}" GroupName="Nav"
@@ -118,7 +118,7 @@
                                         <Path Data="{DynamicResource IconDownload}" Width="18" Height="18" Stretch="Uniform"
                                               Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=RadioButton}}"
                                               StrokeThickness="1.6" Fill="Transparent" HorizontalAlignment="Center" />
-                                        <TextBlock Text="下载" FontSize="9.5" Margin="0,4,0,0" HorizontalAlignment="Center" />
+                                        <TextBlock Text="下载" FontSize="10.5" Margin="0,4,0,0" HorizontalAlignment="Center" />
                                     </StackPanel>
                                 </RadioButton>
                                 <RadioButton x:Name="NavVersions" Style="{StaticResource NavItem}" GroupName="Nav"
@@ -127,7 +127,7 @@
                                         <Path Data="{DynamicResource IconCube}" Width="18" Height="18" Stretch="Uniform"
                                               Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=RadioButton}}"
                                               StrokeThickness="1.5" Fill="Transparent" HorizontalAlignment="Center" />
-                                        <TextBlock Text="版本" FontSize="9.5" Margin="0,4,0,0" HorizontalAlignment="Center" />
+                                        <TextBlock Text="版本" FontSize="10.5" Margin="0,4,0,0" HorizontalAlignment="Center" />
                                     </StackPanel>
                                 </RadioButton>
                                 <RadioButton x:Name="NavSettings" Style="{StaticResource NavItem}" GroupName="Nav"
@@ -136,7 +136,7 @@
                                         <Path Data="{DynamicResource IconTune}" Width="18" Height="18" Stretch="Uniform"
                                               Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=RadioButton}}"
                                               StrokeThickness="1.6" Fill="Transparent" HorizontalAlignment="Center" />
-                                        <TextBlock Text="设置" FontSize="9.5" Margin="0,4,0,0" HorizontalAlignment="Center" />
+                                        <TextBlock Text="设置" FontSize="10.5" Margin="0,4,0,0" HorizontalAlignment="Center" />
                                     </StackPanel>
                                 </RadioButton>
                                 <RadioButton x:Name="NavError" Style="{StaticResource NavItem}" GroupName="Nav"
@@ -145,7 +145,7 @@
                                         <Path Data="{DynamicResource IconWarning}" Width="18" Height="18" Stretch="Uniform"
                                               Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=RadioButton}}"
                                               StrokeThickness="1.5" Fill="Transparent" HorizontalAlignment="Center" />
-                                        <TextBlock Text="报错" FontSize="9.5" Margin="0,4,0,0" HorizontalAlignment="Center" />
+                                        <TextBlock Text="报错" FontSize="10.5" Margin="0,4,0,0" HorizontalAlignment="Center" />
                                     </StackPanel>
                                 </RadioButton>
                                 <RadioButton x:Name="NavMore" Style="{StaticResource NavItem}" GroupName="Nav"
@@ -156,13 +156,13 @@
                                             <Ellipse Width="3" Height="3" Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=RadioButton}}" HorizontalAlignment="Center" VerticalAlignment="Center" />
                                             <Ellipse Width="3" Height="3" Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=RadioButton}}" HorizontalAlignment="Right" VerticalAlignment="Center" />
                                         </Grid>
-                                        <TextBlock Text="更多" FontSize="9.5" Margin="0,4,0,0" HorizontalAlignment="Center" />
+                                        <TextBlock Text="更多" FontSize="10.5" Margin="0,4,0,0" HorizontalAlignment="Center" />
                                     </StackPanel>
                                 </RadioButton>
                             </StackPanel>
 
                             <StackPanel Grid.Row="1" Margin="0,0,0,14" HorizontalAlignment="Center">
-                                <TextBlock x:Name="RailVersion" Text="v1.2.33" FontSize="9"
+                                <TextBlock x:Name="RailVersion" Text="v1.3.0" FontSize="9.5"
                                            Foreground="{DynamicResource TextMutedBrush}" HorizontalAlignment="Center" />
                             </StackPanel>
                         </Grid>

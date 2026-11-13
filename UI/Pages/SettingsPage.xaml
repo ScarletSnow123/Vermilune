@@ -1,4 +1,4 @@
-﻿<UserControl x:Class="Vermilune.UI.Pages.SettingsPage"
+<UserControl x:Class="Vermilune.UI.Pages.SettingsPage"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              FontFamily="{DynamicResource UiFont}"
@@ -28,18 +28,28 @@
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
+        <Border Background="#66111518" BorderBrush="#26FFFFFF" BorderThickness="1"
+                CornerRadius="8" Padding="16" Margin="0,12,0,0">
         <Grid>
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
-            <StackPanel>
-                <TextBlock Text="设置" Style="{StaticResource PageTitle}" />
-                <TextBlock Text="外观、启动、下载与数据目录。所有修改自动保存。" Style="{StaticResource PageSubtitle}" />
+            <StackPanel Orientation="Horizontal">
+                <Border Style="{StaticResource PageIconTile}">
+                    <Path Data="{DynamicResource IconTune}" Width="18" Height="18" Stretch="Uniform"
+                          Stroke="{DynamicResource AccentBrush}" StrokeThickness="1.5" Fill="Transparent"
+                          HorizontalAlignment="Center" VerticalAlignment="Center" />
+                </Border>
+                <StackPanel Margin="12,0,0,0">
+                    <TextBlock Text="设置" Style="{StaticResource PageTitle}" />
+                    <TextBlock Text="外观、启动、下载与数据目录。所有修改自动保存。" Style="{StaticResource PageSubtitle}" />
+                </StackPanel>
             </StackPanel>
             <Button Grid.Column="1" Style="{StaticResource ButtonBase}" Height="34" Content="打开数据目录"
                     VerticalAlignment="Center" Click="OpenDataFolder_Click" />
         </Grid>
+        </Border>
 
         <ScrollViewer Grid.Row="1" Margin="0,14,0,0" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
             <StackPanel Margin="0,0,10,30">
@@ -443,7 +453,7 @@
                 <Border Style="{StaticResource Card}" Margin="0,12,0,0">
                     <StackPanel>
                         <TextBlock Text="关于 Vermilune" Style="{StaticResource SectionHeader}" />
-                        <TextBlock Text="版本 1.2.33  ·  Minecraft 启动器  ·  .NET 10 / WPF"
+                        <TextBlock Text="版本 1.3.0  ·  Minecraft 启动器  ·  .NET 10 / WPF"
                                    Style="{StaticResource Hint}" Margin="0,7,0,0" />
                         <TextBlock Text="启动、下载、Mod 管理与诊断功能都在本地完成。"
                                    Style="{StaticResource Hint}" Margin="0,7,0,0" />

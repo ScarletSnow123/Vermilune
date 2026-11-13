@@ -4,7 +4,7 @@
              xmlns:pages="clr-namespace:Vermilune.UI.Pages"
              FontFamily="{DynamicResource UiFont}"
              Foreground="{DynamicResource TextBrush}">
-    <Grid Margin="24,0,24,20" Background="#A60D0912">
+    <Grid Margin="24,0,24,20">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
@@ -13,14 +13,23 @@
         </Grid.RowDefinitions>
 
         <!-- 头部 -->
+        <Border Background="#66111518" BorderBrush="#26FFFFFF" BorderThickness="1"
+                CornerRadius="8" Padding="16" Margin="0,12,0,0">
         <Grid>
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
-            <StackPanel>
-                <TextBlock Text="下载" Style="{StaticResource PageTitle}" />
-                <TextBlock Text="安装原版、Fabric、Forge，或搜索整合包与资源；安装前请确认下载源可用。" Style="{StaticResource PageSubtitle}" />
+            <StackPanel Orientation="Horizontal">
+                <Border Style="{StaticResource PageIconTile}">
+                    <Path Data="{DynamicResource IconDownload}" Width="18" Height="18" Stretch="Uniform"
+                          Stroke="{DynamicResource AccentBrush}" StrokeThickness="1.5" Fill="Transparent"
+                          HorizontalAlignment="Center" VerticalAlignment="Center" />
+                </Border>
+                <StackPanel Margin="12,0,0,0">
+                    <TextBlock Text="下载" Style="{StaticResource PageTitle}" />
+                    <TextBlock Text="安装原版、Fabric、Forge，或搜索整合包与资源；安装前请确认下载源可用。" Style="{StaticResource PageSubtitle}" />
+                </StackPanel>
             </StackPanel>
             <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
                 <TextBlock x:Name="SourceText" Text="下载源：自动" Style="{StaticResource MutedText}"
@@ -33,6 +42,7 @@
                 </Button>
             </StackPanel>
         </Grid>
+        </Border>
 
         <!-- 标签 -->
         <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,14,0,0">
@@ -76,7 +86,7 @@
                     </ComboBox>
                 </Grid>
                 <Grid Grid.Row="1">
-                    <ListBox x:Name="VersionList" Style="{StaticResource FlatListBox}" SelectionChanged="VersionList_SelectionChanged">
+                    <ListBox x:Name="VersionList" Style="{StaticResource FlatListBox}" Background="#D90A0D0F" SelectionChanged="VersionList_SelectionChanged">
                         <ListBox.ItemContainerStyle>
                             <Style TargetType="ListBoxItem" BasedOn="{StaticResource FlatListItem}">
                                 <Setter Property="Padding" Value="10,5" />

@@ -7,564 +7,485 @@
              Foreground="{DynamicResource TextBrush}">
     <UserControl.Resources>
         <converters:PathImageConverter x:Key="PathImage" />
-
-        <Style x:Key="HomeKicker" TargetType="TextBlock">
+        <Style x:Key="GeekLabel" TargetType="TextBlock">
             <Setter Property="FontFamily" Value="{DynamicResource MonoFont}" />
-            <Setter Property="FontSize" Value="8.5" />
+            <Setter Property="FontSize" Value="9.5" />
             <Setter Property="Foreground" Value="{DynamicResource TextMutedBrush}" />
         </Style>
-
-        <Style x:Key="HomeCard" TargetType="Border" BasedOn="{StaticResource Card}">
-            <Setter Property="CornerRadius" Value="8" />
-            <Setter Property="Padding" Value="14" />
-            <Setter Property="Background" Value="#F2111518" />
-            <Setter Property="BorderBrush" Value="#1EFFFFFF" />
+        <Style x:Key="SoftLink" TargetType="Button" BasedOn="{StaticResource LinkButton}">
+            <Setter Property="FontSize" Value="9.5" />
         </Style>
-
-        <Style x:Key="StatCard" TargetType="Border" BasedOn="{StaticResource HomeCard}">
-            <Setter Property="Padding" Value="11,9" />
-            <Setter Property="CornerRadius" Value="6" />
-        </Style>
-
-        <Style x:Key="CardAction" TargetType="Button" BasedOn="{StaticResource LinkButton}">
-            <Setter Property="FontSize" Value="10" />
-            <Setter Property="FontWeight" Value="SemiBold" />
-            <Setter Property="HorizontalAlignment" Value="Left" />
-            <Setter Property="Padding" Value="0" />
-            <Setter Property="Margin" Value="0,10,0,0" />
-        </Style>
-
-        <Style x:Key="IconTile" TargetType="Border">
-            <Setter Property="Width" Value="30" />
-            <Setter Property="Height" Value="30" />
-            <Setter Property="CornerRadius" Value="6" />
-            <Setter Property="Background" Value="#14FFFFFF" />
-            <Setter Property="BorderBrush" Value="#24FFFFFF" />
-            <Setter Property="BorderThickness" Value="1" />
-        </Style>
-
-        <Style x:Key="RecentCard" TargetType="Button">
-            <Setter Property="Width" Value="212" />
-            <Setter Property="Height" Value="56" />
-            <Setter Property="Margin" Value="0,0,8,8" />
-            <Setter Property="Background" Value="#F2171D21" />
-            <Setter Property="BorderBrush" Value="#1EFFFFFF" />
-            <Setter Property="BorderThickness" Value="1" />
+        <Style x:Key="RecentRow" TargetType="Button">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
             <Setter Property="Cursor" Value="Hand" />
             <Setter Property="FocusVisualStyle" Value="{x:Null}" />
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
-                        <Border x:Name="Bd" Background="{TemplateBinding Background}"
-                                BorderBrush="{TemplateBinding BorderBrush}"
-                                BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="6">
+                        <Border x:Name="Bd" Background="{TemplateBinding Background}" CornerRadius="4" Padding="7,5">
                             <ContentPresenter />
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="Bd" Property="Background" Value="#18E8A2BE" />
-                                <Setter TargetName="Bd" Property="BorderBrush" Value="#55E8A2BE" />
+                                <Setter TargetName="Bd" Property="Background" Value="#30FFFFFF" />
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
                 </Setter.Value>
             </Setter>
         </Style>
+        <Style x:Key="HomeStat" TargetType="Border">
+            <Setter Property="Background" Value="#4D111518" />
+            <Setter Property="BorderBrush" Value="#26FFFFFF" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="4" />
+            <Setter Property="Padding" Value="8,4" />
+            <Setter Property="Margin" Value="0,0,6,6" />
+        </Style>
     </UserControl.Resources>
 
-    <Grid Margin="20,4,20,18" Background="#660A0C0D">
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="*" />
-        </Grid.RowDefinitions>
+    <Grid>
+        <Button x:Name="EditHomeButton" Style="{StaticResource SoftLink}" Content="自定义主页"
+                HorizontalAlignment="Left" VerticalAlignment="Top" Margin="24,18,0,0"
+                FontSize="11" Click="EditHome_Click" Panel.ZIndex="30" />
 
-        <!-- 主视觉：当前实例 -->
-        <Border Grid.Row="0" Height="234" CornerRadius="10" BorderBrush="#24FFFFFF" BorderThickness="1" ClipToBounds="True" Background="#F2111518">
+        <!-- 编辑模式工具栏 -->
+        <Border x:Name="HomeEditBar" Visibility="Collapsed" HorizontalAlignment="Center"
+                VerticalAlignment="Top" Margin="0,14,0,0" Padding="12,8" CornerRadius="6"
+                Background="#F2111518" BorderBrush="Transparent" BorderThickness="0" Panel.ZIndex="35">
+            <StackPanel>
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <TextBlock Text="拖动卡片调整位置，右键修改样式" Style="{StaticResource GeekLabel}"
+                               VerticalAlignment="Center" Margin="0,0,12,0" />
+                    <Button x:Name="AddCardButton" Style="{StaticResource ButtonBase}" Height="28" Padding="10,0"
+                            FontSize="10" Content="+ 卡片" Click="ToggleAddCardPopup" Margin="0,0,6,0" />
+                    <Button Style="{StaticResource ButtonBase}" Height="28" Padding="10,0" FontSize="10"
+                            Content="卡片显隐" Click="CustomizeHome_Click" Margin="0,0,6,0" />
+                    <Button x:Name="CardBorderButton" Style="{StaticResource ButtonBase}" Height="28" Padding="10,0"
+                            FontSize="10" Content="边缘线：开" Click="ToggleCardBorders_Click" Margin="0,0,6,0" />
+                    <Button Style="{StaticResource SoftLink}" Height="28" Padding="6,4,6,0"
+                            VerticalContentAlignment="Center" HorizontalContentAlignment="Center"
+                            Content="恢复初始界面" Click="ResetHomeLayout_Click" Margin="0,0,10,0" FontSize="10" />
+                    <Button Style="{StaticResource PrimaryButton}" Height="28" Padding="14,0" FontSize="10"
+                            Content="完成" Click="EditHome_Click" />
+                </StackPanel>
+                <TextBlock Text="欢迎给自定义卡片提建议" FontSize="9.5"
+                           Foreground="{DynamicResource TextMutedBrush}" Margin="0,6,0,0" />
+            </StackPanel>
+        </Border>
 
-            <Grid>
+        <Popup x:Name="AddCardPopup" PlacementTarget="{Binding ElementName=AddCardButton}"
+               Placement="Bottom" StaysOpen="False" AllowsTransparency="True">
+            <Border Background="#F2111518" BorderBrush="#40FFFFFF" BorderThickness="1"
+                    CornerRadius="7" Padding="10" Width="190">
+                <StackPanel>
+                    <TextBlock Text="默认卡片" Style="{StaticResource GeekLabel}" Margin="2,0,0,4" />
+                    <Button Style="{StaticResource SoftLink}" Content="3D 皮肤" Tag="skin3d"
+                            HorizontalAlignment="Left" Click="AddBuiltinCard_Click" />
+                    <Button Style="{StaticResource SoftLink}" Content="快捷入口" Tag="quick"
+                            HorizontalAlignment="Left" Click="AddBuiltinCard_Click" />
+                    <Button Style="{StaticResource SoftLink}" Content="最近游玩" Tag="recent"
+                            HorizontalAlignment="Left" Click="AddBuiltinCard_Click" />
+                    <Button Style="{StaticResource SoftLink}" Content="实时日志" Tag="log"
+                            HorizontalAlignment="Left" Click="AddBuiltinCard_Click" />
+                    <Button Style="{StaticResource SoftLink}" Content="自定义卡片" Tag="featured"
+                            HorizontalAlignment="Left" Click="AddBuiltinCard_Click" />
+                    <Separator Margin="0,5" Background="#33FFFFFF" />
+                    <TextBlock Text="添加内容" Style="{StaticResource GeekLabel}" Margin="2,0,0,4" />
+                    <Button Style="{StaticResource SoftLink}" Content="时钟" Tag="clock"
+                            HorizontalAlignment="Left" Click="AddWidgetCard_Click" />
+                    <Button Style="{StaticResource SoftLink}" Content="图片" Tag="image"
+                            HorizontalAlignment="Left" Click="AddWidgetCard_Click" />
+                    <Button Style="{StaticResource SoftLink}" Content="MC 新闻" Tag="news"
+                            HorizontalAlignment="Left" Click="AddWidgetCard_Click" />
+                </StackPanel>
+            </Border>
+        </Popup>
 
+        <!-- 自定义卡片画布 -->
+        <Canvas x:Name="HomeWidgetCanvas" Panel.ZIndex="15" />
+        <!-- 左上：3D 皮肤卡片 -->
+        <Border x:Name="HomeSkin3DPanel" HorizontalAlignment="Left" VerticalAlignment="Top"
+                Margin="24,58,0,0" Width="190" Background="#66111518"
+                BorderBrush="#26FFFFFF" BorderThickness="1" CornerRadius="8" Padding="10">
+            <StackPanel>
+                <TextBlock Text="3D 皮肤" FontSize="10.5" Foreground="{DynamicResource TextSubBrush}"
+                           Margin="2,0,0,6" />
+                <Border x:Name="Skin3DHost" Width="168" Height="192" CornerRadius="12" ClipToBounds="True" Background="#22111518">
+                    <Grid>
+                        <controls:SkinPreview3D x:Name="SkinPreview" Width="168" Height="192" />
+                        <Border x:Name="SkinFallback" Visibility="Collapsed" Background="#33111518" CornerRadius="12">
+                            <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+                                <Image Source="pack://application:,,,/Assets/VermiluneRing.png"
+                                       Width="76" Height="76" Stretch="Uniform" Opacity="0.9" />
+                                <TextBlock Text="未设置皮肤" FontSize="11" FontWeight="SemiBold"
+                                           HorizontalAlignment="Center" Margin="0,8,0,0" />
+                                <TextBlock Text="选择皮肤后可预览" FontSize="9"
+                                           Foreground="{DynamicResource TextMutedBrush}"
+                                           HorizontalAlignment="Center" Margin="0,2,0,0" />
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+                </Border>
+            </StackPanel>
+        </Border>
 
-                <Grid Margin="20,16,20,16">
+        <!-- 中央：MC 头像 + 启动，不遮挡背景 -->
+        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,-26,0,0">
+            <Border x:Name="CenterAvatarHost" Width="168" Height="168" CornerRadius="0" ClipToBounds="True"
+                    Background="Transparent" BorderBrush="Transparent" BorderThickness="0"
+                    HorizontalAlignment="Center">
+                <Grid>
+                    <Image x:Name="CenterAvatarImage" Width="168" Height="168" Stretch="Fill" RenderOptions.EdgeMode="Aliased"
+                           RenderOptions.BitmapScalingMode="NearestNeighbor" />
+                    <Border x:Name="CenterAvatarFallback" Background="Transparent">
+                        <TextBlock x:Name="CenterAvatarInitial" Text="P" FontFamily="{DynamicResource DisplayFont}"
+                                   FontSize="44" FontWeight="SemiBold" Foreground="{DynamicResource AccentBrush}"
+                                   HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Border>
+                </Grid>
+            </Border>
+
+            <TextBlock Text="{Binding AccountName}" FontSize="20" FontWeight="SemiBold"
+                       HorizontalAlignment="Center" Margin="0,10,0,0">
+                <TextBlock.Effect>
+                    <DropShadowEffect BlurRadius="10" ShadowDepth="1" Opacity="0.8" Color="#000000" />
+                </TextBlock.Effect>
+            </TextBlock>
+            <TextBlock Text="{Binding AccountSub}" FontSize="11" HorizontalAlignment="Center"
+                       Foreground="{DynamicResource TextSubBrush}" Margin="0,2,0,0" />
+            <Button Style="{StaticResource LinkButton}" Content="切换账号" FontSize="9"
+                    HorizontalAlignment="Center" Margin="0,2,0,0" Click="Account_Click" />
+
+            <Button x:Name="LaunchButton" Width="280" Height="56" Margin="0,20,0,0"
+                    Style="{StaticResource PrimaryButton}" Click="Launch_Click"
+                    Padding="18,0" HorizontalContentAlignment="Stretch">
+                <Grid>
                     <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
                         <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
-
-                    <StackPanel Grid.Column="0" MaxWidth="620" HorizontalAlignment="Left">
-                        <TextBlock Text="INSTANCE // 当前实例" Style="{StaticResource HomeKicker}" />
-                        <TextBlock Text="{Binding SelectedVersion.DisplayName}" FontFamily="{DynamicResource DisplayFont}"
-                                   FontSize="29" FontWeight="SemiBold" Margin="0,5,0,0"
+                    <Path x:Name="LaunchIcon" Width="16" Height="18" Stretch="Uniform"
+                          Data="{DynamicResource IconPlay}" Fill="#FF08110D" VerticalAlignment="Center" />
+                    <StackPanel Grid.Column="1" Margin="10,0,0,0" VerticalAlignment="Center">
+                        <TextBlock x:Name="LaunchTitleText" Text="{Binding LaunchTitle}" FontSize="15.5"
+                                   FontWeight="Bold" FontFamily="{DynamicResource DisplayFont}"
+                                   Foreground="#FF08110D" />
+                        <TextBlock x:Name="LaunchSubText" Text="{Binding LaunchSub}" FontSize="9.5"
+                                   Foreground="#9908110D" Margin="0,2,0,0"
                                    TextTrimming="CharacterEllipsis" />
-                        <ComboBox x:Name="VersionCombo" Height="36" Margin="0,9,0,0" MaxWidth="420"
-                                  HorizontalAlignment="Left" MinWidth="300"
+                    </StackPanel>
+                    <TextBlock Grid.Column="2" x:Name="LaunchHint" Text="ENTER" FontSize="8"
+                               Foreground="#8008110D" VerticalAlignment="Center" />
+                </Grid>
+            </Button>
+
+            <TextBlock Text="{Binding SelectedVersion.DisplayName}" FontSize="14.5" HorizontalAlignment="Center"
+                       Foreground="{DynamicResource TextSubBrush}" Margin="0,8,0,0"
+                       TextTrimming="CharacterEllipsis" MaxWidth="360" />
+
+            <Border x:Name="ProgressPanel" Visibility="Collapsed" Width="300" Margin="0,10,0,0"
+                    Background="#8A111518" BorderBrush="#2AFFFFFF" BorderThickness="1"
+                    CornerRadius="4" Padding="9,6">
+                <StackPanel>
+                    <Grid>
+                        <TextBlock x:Name="ProgressText" Text="准备启动…" FontSize="8.5"
+                                   Foreground="{DynamicResource TextSubBrush}" TextTrimming="CharacterEllipsis"
+                                   MaxWidth="200" />
+                        <Button HorizontalAlignment="Right" Style="{StaticResource LinkButton}" Content="取消"
+                                FontSize="8" Click="CancelLaunch_Click" />
+                    </Grid>
+                    <ProgressBar x:Name="LaunchProgress" Height="2" Margin="0,5,0,0" Minimum="0" Maximum="100"
+                                 Foreground="{DynamicResource AccentBrush}" Background="{DynamicResource TrackBrush}"
+                                 BorderThickness="0" />
+                </StackPanel>
+            </Border>
+
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,8,0,0">
+                <Button Style="{StaticResource SoftLink}" Content="实例设置" Click="EditVersion_Click" />
+                <TextBlock Text="·" Foreground="{DynamicResource TextMutedBrush}" Margin="7,0" />
+                <Button Style="{StaticResource SoftLink}" Content="版本管理" Click="ManageVersion_Click" />
+            </StackPanel>
+        </StackPanel>
+
+        <!-- 左下：版本切换，低存在感 -->
+        <ScrollViewer x:Name="HomeContentScroll" Panel.ZIndex="-1" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
+                      Margin="0" VerticalScrollBarVisibility="Disabled"
+                      HorizontalScrollBarVisibility="Disabled" ClipToBounds="False"
+                      VerticalContentAlignment="Stretch" HorizontalContentAlignment="Stretch">
+            <Grid VerticalAlignment="Stretch" HorizontalAlignment="Stretch">
+                <StackPanel HorizontalAlignment="Left" VerticalAlignment="Bottom" Margin="22,0,0,22">
+            <StackPanel>
+                <!-- 红框位置：皮肤操作 -->
+                <Border x:Name="HomeSkinPanel" Background="#66111518" BorderBrush="#26FFFFFF" BorderThickness="1"
+                        CornerRadius="6" Padding="12" Width="370" Margin="0,0,0,8">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel VerticalAlignment="Center">
+                            <TextBlock Text="角色外观" Style="{StaticResource GeekLabel}" />
+                            <TextBlock x:Name="SkinNameLabel" Text="皮肤：默认" FontSize="11"
+                                       Margin="0,3,0,0" TextTrimming="CharacterEllipsis" />
+                            <TextBlock x:Name="CapeNameLabel" Text="披风：无" FontSize="10"
+                                       Foreground="{DynamicResource TextMutedBrush}" Margin="0,2,0,0"
+                                       TextTrimming="CharacterEllipsis" />
+                        </StackPanel>
+                        <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                            <Button Style="{StaticResource SoftLink}" Content="切换皮肤" Click="SwitchSkin_Click" />
+                            <TextBlock Text="·" Foreground="{DynamicResource TextMutedBrush}" Margin="7,0" />
+                            <Button Style="{StaticResource SoftLink}" Content="切换披风" Click="SwitchCape_Click" />
+                            <TextBlock Text="·" Foreground="{DynamicResource TextMutedBrush}" Margin="7,0" />
+                            <Button Style="{StaticResource SoftLink}" Content="账号皮肤" Click="UseAccountSkin_Click" />
+                            <Button x:Name="SkinModelLabel" Style="{StaticResource SoftLink}" Content="Steve"
+                                    Margin="8,0,0,0" Click="ToggleSkinModel_Click" />
+                        </StackPanel>
+                    </Grid>
+                </Border>
+
+                <Border x:Name="HomeInstancePanel" Background="#66111518" BorderBrush="#26FFFFFF" BorderThickness="1"
+                        CornerRadius="6" Padding="16" Width="420">
+                    <StackPanel>
+                        <Grid>
+                            <TextBlock Text="当前实例" Style="{StaticResource GeekLabel}" />
+                            <TextBlock Text="{Binding DateText}" FontSize="9" HorizontalAlignment="Right"
+                                       Foreground="{DynamicResource TextMutedBrush}" />
+                        </Grid>
+                        <ComboBox x:Name="VersionCombo" Height="32" Margin="0,7,0,0"
                                   ItemsSource="{Binding Versions}" SelectedItem="{Binding SelectedVersion, Mode=TwoWay}"
                                   SelectionChanged="VersionCombo_SelectionChanged" VerticalContentAlignment="Center">
                             <ComboBox.ItemTemplate>
                                 <DataTemplate>
-                                    <Grid Height="30">
+                                    <Grid Height="24">
                                         <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="25" />
+                                            <ColumnDefinition Width="20" />
                                             <ColumnDefinition Width="*" />
                                             <ColumnDefinition Width="Auto" />
                                         </Grid.ColumnDefinitions>
-                                        <Border Width="23" Height="23" CornerRadius="7"
-                                                Background="{DynamicResource Surface2Brush}" ClipToBounds="True">
+                                        <Border Width="18" Height="18" CornerRadius="3" Background="#33111518" ClipToBounds="True">
                                             <Grid>
-                                                <TextBlock Text="{Binding Initial}" FontSize="10" FontWeight="Bold"
+                                                <TextBlock Text="{Binding Initial}" FontSize="8" FontWeight="Bold"
                                                            Foreground="{DynamicResource AccentBrush}"
                                                            HorizontalAlignment="Center" VerticalAlignment="Center" />
                                                 <Image Source="{Binding IconPath, Converter={StaticResource PathImage}}"
                                                        Stretch="UniformToFill" RenderOptions.BitmapScalingMode="HighQuality" />
                                             </Grid>
                                         </Border>
-                                        <StackPanel Grid.Column="1" Margin="8,0,0,0" VerticalAlignment="Center">
-                                            <TextBlock Text="{Binding DisplayName}" FontSize="11.5" FontWeight="SemiBold"
-                                                       TextTrimming="CharacterEllipsis" />
-                                            <TextBlock FontSize="9" Foreground="{DynamicResource TextMutedBrush}"
-                                                       Text="{Binding SubLine}" />
-                                        </StackPanel>
+                                        <TextBlock Grid.Column="1" Text="{Binding DisplayName}" FontSize="12"
+                                                   Margin="6,0,0,0" VerticalAlignment="Center"
+                                                   TextTrimming="CharacterEllipsis" />
                                         <TextBlock Grid.Column="2" Text="{Binding LoaderBadge}" FontSize="9"
-                                                   Foreground="{DynamicResource AccentBrush}" VerticalAlignment="Center"
-                                                   Margin="10,0,0,0" />
+                                                   Foreground="{DynamicResource TextMutedBrush}" VerticalAlignment="Center"
+                                                   Margin="6,0,0,0" />
                                     </Grid>
                                 </DataTemplate>
                             </ComboBox.ItemTemplate>
                         </ComboBox>
-
-                        <StackPanel Orientation="Horizontal" Margin="0,9,0,0">
-                            <Border Style="{StaticResource Pill}" Background="#22E8A2BE" BorderBrush="#40E8A2BE"
-                                    BorderThickness="1" Padding="8,3" Margin="0,0,7,0">
-                                <TextBlock Text="{Binding SelectedVersion.MinecraftVersion}" FontSize="9.5"
-                                           Foreground="{DynamicResource AccentBrush}" FontWeight="SemiBold" />
-                            </Border>
-                            <Border Style="{StaticResource Pill}" Background="#16FFFFFF" BorderBrush="#28FFFFFF"
-                                    BorderThickness="1" Padding="8,3" Margin="0,0,7,0">
-                                <TextBlock Text="{Binding SelectedVersion.LoaderBadge}" FontSize="9.5" />
-                            </Border>
-                            <Border Style="{StaticResource Pill}" Background="#16FFFFFF" BorderBrush="#28FFFFFF"
-                                    BorderThickness="1" Padding="8,3">
-                                <TextBlock Text="Java" FontSize="9.5" Foreground="{DynamicResource TextSubBrush}" />
-                            </Border>
-                        </StackPanel>
-
-                        <TextBlock Text="{Binding VersionMeta}" FontSize="10.5" Margin="0,8,0,0"
-                                   Foreground="{DynamicResource TextSubBrush}" TextWrapping="Wrap" MaxWidth="560" />
-
-                        <StackPanel Orientation="Horizontal" Margin="0,11,0,0">
-                            <Button Style="{StaticResource ButtonBase}" Height="32" Padding="14,0" Content="修改实例"
-                                    Click="EditVersion_Click" Margin="0,0,7,0" />
-                            <Button Style="{StaticResource ButtonBase}" Height="32" Padding="14,0" Content="打开目录"
-                                    Click="OpenVersionFolder_Click" Margin="0,0,7,0" />
-                            <Button Style="{StaticResource GhostButton}" Height="32" Padding="10,0" Content="版本管理 →"
-                                    Click="ManageVersion_Click" />
-                        </StackPanel>
-                    </StackPanel>
-
-                    <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="26,0,0,0" Width="232">
-                        <Button x:Name="LaunchButton" Height="52" Style="{StaticResource PrimaryButton}"
-                                Click="Launch_Click" Padding="18,0" HorizontalContentAlignment="Stretch">
-                            <Grid>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="Auto" />
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="Auto" />
-                                </Grid.ColumnDefinitions>
-                                <Path x:Name="LaunchIcon" Width="18" Height="20" Stretch="Uniform"
-                                      Data="{DynamicResource IconPlay}" Fill="#FF2A101B" VerticalAlignment="Center" />
-                                <StackPanel Grid.Column="1" Margin="12,0,0,0" VerticalAlignment="Center">
-                                    <TextBlock x:Name="LaunchTitleText" Text="{Binding LaunchTitle}" FontSize="14.5"
-                                               FontWeight="Bold" FontFamily="{DynamicResource DisplayFont}"
-                                               Foreground="#FF2A101B" />
-                                    <TextBlock x:Name="LaunchSubText" Text="{Binding LaunchSub}" FontSize="9.5"
-                                               Foreground="#B02A101B" Margin="0,2,0,0"
-                                               TextTrimming="CharacterEllipsis" />
+                        <TextBlock Text="{Binding VersionMeta}" FontSize="11" Margin="0,8,0,0"
+                                   Foreground="{DynamicResource TextSubBrush}" TextWrapping="Wrap" MaxHeight="52" />
+                        <WrapPanel x:Name="HomeStatsPanel" Margin="0,9,0,0">
+                            <Border Style="{StaticResource HomeStat}">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="MODS" Style="{StaticResource GeekLabel}" Margin="0,0,5,0" />
+                                    <TextBlock Text="{Binding ModCount}" FontSize="12" FontWeight="SemiBold" />
                                 </StackPanel>
-                                <TextBlock Grid.Column="2" x:Name="LaunchHint" Text="ENTER" FontSize="8.5"
-                                           Foreground="#802A101B" VerticalAlignment="Center" />
-                            </Grid>
-                        </Button>
-
-                        <Border x:Name="ProgressPanel" Visibility="Collapsed" Margin="0,8,0,0"
-                                Background="#AA0F0A14" BorderBrush="#33FFFFFF"
-                                BorderThickness="1" CornerRadius="11" Padding="11,8">
-                            <StackPanel>
-                                <Grid>
-                                    <TextBlock x:Name="ProgressText" Text="准备启动…" FontSize="9.5"
-                                               Foreground="{DynamicResource TextSubBrush}"
-                                               TextTrimming="CharacterEllipsis" />
-                                    <Button HorizontalAlignment="Right" Style="{StaticResource LinkButton}" Content="取消"
-                                            FontSize="9" Click="CancelLaunch_Click" />
-                                </Grid>
-                                <ProgressBar x:Name="LaunchProgress" Height="3" Margin="0,6,0,0" Minimum="0" Maximum="100"
-                                             Foreground="{DynamicResource AccentBrush}" Background="{DynamicResource TrackBrush}"
-                                             BorderThickness="0" />
-                            </StackPanel>
-                        </Border>
-
-                        <TextBlock Text="{Binding DateText}" FontSize="9.5" Foreground="{DynamicResource TextMutedBrush}"
-                                   HorizontalAlignment="Right" Margin="0,10,0,0" />
-                        <TextBlock Text="MINECRAFT · VERMILUNE" FontSize="8.5"
-                                   Foreground="{DynamicResource TextMutedBrush}" HorizontalAlignment="Right"
-                                   Margin="0,4,0,0" />
+                            </Border>
+                            <Border Style="{StaticResource HomeStat}">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="PACKS" Style="{StaticResource GeekLabel}" Margin="0,0,5,0" />
+                                    <TextBlock Text="{Binding ResourcePackCount}" FontSize="12" FontWeight="SemiBold" />
+                                </StackPanel>
+                            </Border>
+                            <Border Style="{StaticResource HomeStat}">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="SAVES" Style="{StaticResource GeekLabel}" Margin="0,0,5,0" />
+                                    <TextBlock Text="{Binding SaveCount}" FontSize="12" FontWeight="SemiBold" />
+                                </StackPanel>
+                            </Border>
+                            <Border Style="{StaticResource HomeStat}">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="SHADERS" Style="{StaticResource GeekLabel}" Margin="0,0,5,0" />
+                                    <TextBlock Text="{Binding ShaderCount}" FontSize="12" FontWeight="SemiBold" />
+                                </StackPanel>
+                            </Border>
+                        </WrapPanel>
+                        <StackPanel Orientation="Horizontal" Margin="0,5,0,0">
+                            <Button Style="{StaticResource SoftLink}" Content="打开目录" Click="OpenVersionFolder_Click" />
+                            <TextBlock Text="·" Foreground="{DynamicResource TextMutedBrush}" Margin="7,0" />
+                            <Button Style="{StaticResource SoftLink}" Content="刷新" Click="RefreshHome_Click" />
+                        </StackPanel>
                     </StackPanel>
-                </Grid>
+                </Border>
+            </StackPanel>
+                        </StackPanel>
+            </Grid>
+</ScrollViewer>
+
+        <!-- 右上：快捷入口 -->
+        <StackPanel x:Name="HomeQuickPanel" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,20,22,0">
+            <TextBlock Text="快捷入口" Style="{StaticResource GeekLabel}" HorizontalAlignment="Right" />
+            <WrapPanel HorizontalAlignment="Right" Margin="0,5,0,0">
+                <Button Style="{StaticResource SoftLink}" Content="下载游戏" FontSize="11" Click="OpenDownload_Click" Margin="0,0,10,0" />
+                <Button Style="{StaticResource SoftLink}" Content="版本管理" FontSize="11" Click="ManageVersion_Click" Margin="0,0,10,0" />
+                <Button Style="{StaticResource SoftLink}" Content="设置" FontSize="11" Click="OpenSettings_Click" Margin="0,0,10,0" />
+                <Button Style="{StaticResource SoftLink}" Content="资源站点" FontSize="11" Click="ToggleSites_Click" Margin="0,0,10,0" />
+                <Button Style="{StaticResource SoftLink}" Content="自定义" FontSize="11" Click="CustomizeHome_Click" />
+            </WrapPanel>
+        </StackPanel>
+
+        <!-- 右侧：最近游玩 -->
+        <Border x:Name="HomeRecentPanel" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,78,22,0"
+                Width="300" Background="#66111518" BorderBrush="#26FFFFFF" BorderThickness="1"
+                CornerRadius="6" Padding="12">
+            <StackPanel>
+                <TextBlock Text="最近游玩" Style="{StaticResource GeekLabel}" />
+                <ItemsControl ItemsSource="{Binding RecentItems}" Margin="0,5,0,0">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Button Style="{StaticResource RecentRow}" Tag="{Binding VersionId}" Click="Recent_Click">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel>
+                                        <TextBlock Text="{Binding Name}" FontSize="12" FontWeight="SemiBold"
+                                                   TextTrimming="CharacterEllipsis" />
+                                        <TextBlock Text="{Binding SubLine}" FontSize="10"
+                                                   Foreground="{DynamicResource TextMutedBrush}"
+                                                   TextTrimming="CharacterEllipsis" />
+                                    </StackPanel>
+                                    <TextBlock Grid.Column="1" Text="{Binding TimeText}" FontSize="8.5"
+                                               Foreground="{DynamicResource TextMutedBrush}"
+                                               VerticalAlignment="Center" Margin="8,0,0,0" />
+                                </Grid>
+                            </Button>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+                <TextBlock x:Name="RecentEmpty" Text="暂无游玩记录" FontSize="9"
+                           Foreground="{DynamicResource TextMutedBrush}" Margin="2,5,0,0"
+                           Visibility="Collapsed" />
+            </StackPanel>
+        </Border>
+
+        <!-- 右侧：自定义卡片 -->
+        <Border x:Name="HomeFeaturedPanel" HorizontalAlignment="Right" VerticalAlignment="Top"
+                Margin="0,258,22,0" Width="300" Background="#66111518"
+                BorderBrush="#26FFFFFF" BorderThickness="1" CornerRadius="6" Padding="12">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="64" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <Border Width="64" Height="64" CornerRadius="5" ClipToBounds="True" Background="#33111518">
+                    <Image x:Name="FeaturedImage" Source="pack://application:,,,/Assets/VermiluneRing.png"
+                           Stretch="UniformToFill" RenderOptions.BitmapScalingMode="HighQuality" />
+                </Border>
+                <StackPanel Grid.Column="1" Margin="10,0,0,0" VerticalAlignment="Center">
+                    <TextBlock x:Name="FeaturedTitleText" Text="Vermilune 1.3分支" FontSize="13"
+                               FontWeight="SemiBold" Foreground="{DynamicResource AccentBrush}"
+                               TextTrimming="CharacterEllipsis" />
+                    <TextBlock x:Name="FeaturedSubtitleText" Text="这个卡片可以自定义哦！" FontSize="9.5"
+                               Foreground="{DynamicResource TextMutedBrush}" Margin="0,3,0,0"
+                               TextTrimming="CharacterEllipsis" />
+                    <Button Style="{StaticResource SoftLink}" Content="编辑卡片" HorizontalAlignment="Left"
+                            Margin="0,4,0,0" Click="CustomizeFeatured_Click" />
+                </StackPanel>
             </Grid>
         </Border>
 
-        <!-- 状态条 -->
-        <Grid Grid.Row="1" Margin="0,13,0,0">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="1.35*" />
-                <ColumnDefinition Width="10" />
-                <ColumnDefinition Width="1*" />
-                <ColumnDefinition Width="10" />
-                <ColumnDefinition Width="1*" />
-                <ColumnDefinition Width="10" />
-                <ColumnDefinition Width="1.05*" />
-            </Grid.ColumnDefinitions>
-
-            <Border Grid.Column="0" Style="{StaticResource StatCard}">
+        <!-- 右下：实时日志（收起时保留标题条） -->
+        <Border x:Name="HomeLogPanel" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,22,22"
+                Width="480" Background="#D90A0D0F" BorderBrush="#33FFFFFF" BorderThickness="1"
+                CornerRadius="7" Padding="12">
+            <StackPanel>
                 <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="Auto" />
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="Auto" />
-                    </Grid.ColumnDefinitions>
-                    <Border Width="38" Height="38" CornerRadius="12" Background="{DynamicResource AccentSoftBrush}"
-                            BorderBrush="#38E8A2BE" BorderThickness="1" ClipToBounds="True">
-                        <Grid>
-                            <TextBlock x:Name="AvatarInitialText" Text="{Binding AvatarInitial}" FontSize="15"
-                                       FontWeight="SemiBold" Foreground="{DynamicResource AccentBrush}"
-                                       HorizontalAlignment="Center" VerticalAlignment="Center" />
-                            <Image x:Name="AvatarImage" Stretch="UniformToFill"
-                                   RenderOptions.BitmapScalingMode="NearestNeighbor" />
-                        </Grid>
-                    </Border>
-                    <StackPanel Grid.Column="1" Margin="10,0,0,0" VerticalAlignment="Center">
-                        <TextBlock Text="{Binding AccountName}" FontSize="12" FontWeight="SemiBold"
-                                   TextTrimming="CharacterEllipsis" />
-                        <TextBlock Text="{Binding AccountSub}" FontSize="9"
-                                   Foreground="{DynamicResource TextMutedBrush}" Margin="0,2,0,0"
-                                   TextTrimming="CharacterEllipsis" />
-                    </StackPanel>
-                    <Button Grid.Column="2" Style="{StaticResource GhostButton}" Height="25" Padding="8,0"
-                            FontSize="9.5" Content="切换" Click="Account_Click" VerticalAlignment="Center" />
-                </Grid>
-            </Border>
-
-            <Border Grid.Column="2" Style="{StaticResource StatCard}">
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="Auto" />
-                        <ColumnDefinition Width="*" />
-                    </Grid.ColumnDefinitions>
-                    <Border Style="{StaticResource IconTile}">
-                        <Path Data="{DynamicResource IconBox}" Width="15" Height="15" Stretch="Uniform"
-                              Stroke="{DynamicResource AccentBrush}" StrokeThickness="1.5" Fill="Transparent"
-                              HorizontalAlignment="Center" VerticalAlignment="Center" />
-                    </Border>
-                    <StackPanel Grid.Column="1" Margin="10,0,0,0" VerticalAlignment="Center">
-                        <TextBlock Text="{Binding ModCount}" FontFamily="{DynamicResource DisplayFont}" FontSize="19"
-                                   FontWeight="SemiBold" />
-                        <TextBlock Text="已安装 Mod" FontSize="9" Foreground="{DynamicResource TextMutedBrush}" />
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <Ellipse x:Name="StatusDot" Width="5" Height="5" Fill="{DynamicResource TextMutedBrush}" Margin="0,0,7,0" />
+                        <TextBlock Text="日志" FontSize="11" FontWeight="SemiBold" />
                     </StackPanel>
                 </Grid>
-            </Border>
-
-            <Border Grid.Column="4" Style="{StaticResource StatCard}">
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="Auto" />
-                        <ColumnDefinition Width="*" />
-                    </Grid.ColumnDefinitions>
-                    <Border Style="{StaticResource IconTile}">
-                        <Path Data="{DynamicResource IconSpark}" Width="15" Height="15" Stretch="Uniform"
-                              Stroke="{DynamicResource AccentBrush}" StrokeThickness="1.5" Fill="Transparent"
-                              HorizontalAlignment="Center" VerticalAlignment="Center" />
-                    </Border>
-                    <StackPanel Grid.Column="1" Margin="10,0,0,0" VerticalAlignment="Center">
-                        <TextBlock Text="{Binding ResourcePackCount}" FontFamily="{DynamicResource DisplayFont}"
-                                   FontSize="19" FontWeight="SemiBold" />
-                        <TextBlock Text="资源包" FontSize="9" Foreground="{DynamicResource TextMutedBrush}" />
-                    </StackPanel>
-                </Grid>
-            </Border>
-
-            <Border Grid.Column="6" Style="{StaticResource StatCard}">
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="Auto" />
-                        <ColumnDefinition Width="*" />
-                    </Grid.ColumnDefinitions>
-                    <Ellipse x:Name="StatusDot" Width="9" Height="9" Fill="{DynamicResource SuccessBrush}"
-                             VerticalAlignment="Center" Margin="4,0,0,0" />
-                    <StackPanel Grid.Column="1" Margin="10,0,0,0" VerticalAlignment="Center">
-                        <TextBlock Text="启动状态" FontSize="9" Foreground="{DynamicResource TextMutedBrush}" />
-                        <TextBlock Text="{Binding Text, ElementName=StatusLabel}" FontSize="9.5"
-                                   TextTrimming="CharacterEllipsis" Margin="0,2,0,0" />
-                    </StackPanel>
-                </Grid>
-            </Border>
-        </Grid>
-
-        <!-- 主内容 -->
-        <Grid Grid.Row="2" Margin="0,13,0,0">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="14" />
-                <ColumnDefinition Width="330" />
-            </Grid.ColumnDefinitions>
-
-            <ScrollViewer x:Name="HomeContentScroll" Grid.Column="0" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-                <StackPanel Margin="0,0,4,16">
-                    <Grid Margin="2,0,0,9">
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="RESOURCES" Style="{StaticResource SectionTitle}" />
-                            <TextBlock Text="// 实例资源" Style="{StaticResource HomeKicker}" Margin="10,0,0,0"
-                                       VerticalAlignment="Center" />
-                        </StackPanel>
-                        <Button HorizontalAlignment="Right" Style="{StaticResource GhostButton}" Height="25"
-                                Padding="8,0" FontSize="9.5" Content="刷新" Click="RefreshHome_Click" />
-                    </Grid>
-
-                    <UniformGrid Columns="4">
-                        <Border Style="{StaticResource HomeCard}" Margin="0,0,10,0">
-                            <StackPanel>
-                                <Grid>
-                                    <Border Style="{StaticResource IconTile}" Width="32" Height="32" HorizontalAlignment="Left">
-                                        <Path Data="{DynamicResource IconBox}" Width="15" Height="15" Stretch="Uniform"
-                                              Stroke="{DynamicResource AccentBrush}" StrokeThickness="1.5" Fill="Transparent"
-                                              HorizontalAlignment="Center" VerticalAlignment="Center" />
-                                    </Border>
-                                    <TextBlock Text="MODS" FontSize="8" Foreground="{DynamicResource TextMutedBrush}"
-                                               HorizontalAlignment="Right" VerticalAlignment="Top" />
-                                </Grid>
-                                <TextBlock Text="Mods" FontSize="12.5" FontWeight="SemiBold" Margin="0,8,0,0" />
-                                <TextBlock Text="{Binding ModCount, StringFormat={}{0} 个}" FontSize="10"
-                                           Foreground="{DynamicResource TextMutedBrush}" Margin="0,2,0,0" />
-                                <Button Style="{StaticResource CardAction}" Content="管理 →" Click="ManageVersion_Click" />
-                            </StackPanel>
-                        </Border>
-                        <Border Style="{StaticResource HomeCard}" Margin="0,0,10,0">
-                            <StackPanel>
-                                <Grid>
-                                    <Border Style="{StaticResource IconTile}" Width="32" Height="32" HorizontalAlignment="Left">
-                                        <Path Data="{DynamicResource IconSpark}" Width="15" Height="15" Stretch="Uniform"
-                                              Stroke="{DynamicResource AccentBrush}" StrokeThickness="1.5" Fill="Transparent"
-                                              HorizontalAlignment="Center" VerticalAlignment="Center" />
-                                    </Border>
-                                    <TextBlock Text="PACKS" FontSize="8" Foreground="{DynamicResource TextMutedBrush}"
-                                               HorizontalAlignment="Right" VerticalAlignment="Top" />
-                                </Grid>
-                                <TextBlock Text="资源包" FontSize="12.5" FontWeight="SemiBold" Margin="0,8,0,0" />
-                                <TextBlock Text="{Binding ResourcePackCount, StringFormat={}{0} 个}" FontSize="10"
-                                           Foreground="{DynamicResource TextMutedBrush}" Margin="0,2,0,0" />
-                                <Button Style="{StaticResource CardAction}" Content="打开 →" Click="OpenVersionFolder_Click" />
-                            </StackPanel>
-                        </Border>
-                        <Border Style="{StaticResource HomeCard}" Margin="0,0,10,0">
-                            <StackPanel>
-                                <Grid>
-                                    <Border Style="{StaticResource IconTile}" Width="32" Height="32" HorizontalAlignment="Left">
-                                        <Path Data="{DynamicResource IconFolder}" Width="15" Height="15" Stretch="Uniform"
-                                              Stroke="{DynamicResource AccentBrush}" StrokeThickness="1.5" Fill="Transparent"
-                                              HorizontalAlignment="Center" VerticalAlignment="Center" />
-                                    </Border>
-                                    <TextBlock Text="SAVES" FontSize="8" Foreground="{DynamicResource TextMutedBrush}"
-                                               HorizontalAlignment="Right" VerticalAlignment="Top" />
-                                </Grid>
-                                <TextBlock Text="存档" FontSize="12.5" FontWeight="SemiBold" Margin="0,8,0,0" />
-                                <TextBlock Text="{Binding SaveCount, StringFormat={}{0} 个}" FontSize="10"
-                                           Foreground="{DynamicResource TextMutedBrush}" Margin="0,2,0,0" />
-                                <Button Style="{StaticResource CardAction}" Content="打开 →" Click="OpenVersionFolder_Click" />
-                            </StackPanel>
-                        </Border>
-                        <Border Style="{StaticResource HomeCard}">
-                            <StackPanel>
-                                <Grid>
-                                    <Border Style="{StaticResource IconTile}" Width="32" Height="32" HorizontalAlignment="Left">
-                                        <Path Data="{DynamicResource IconSpark}" Width="15" Height="15" Stretch="Uniform"
-                                              Stroke="{DynamicResource AccentBrush}" StrokeThickness="1.5" Fill="Transparent"
-                                              HorizontalAlignment="Center" VerticalAlignment="Center" />
-                                    </Border>
-                                    <TextBlock Text="SHADERS" FontSize="8" Foreground="{DynamicResource TextMutedBrush}"
-                                               HorizontalAlignment="Right" VerticalAlignment="Top" />
-                                </Grid>
-                                <TextBlock Text="光影" FontSize="12.5" FontWeight="SemiBold" Margin="0,8,0,0" />
-                                <TextBlock Text="{Binding ShaderCount, StringFormat={}{0} 个}" FontSize="10"
-                                           Foreground="{DynamicResource TextMutedBrush}" Margin="0,2,0,0" />
-                                <Button Style="{StaticResource CardAction}" Content="打开 →" Click="OpenVersionFolder_Click" />
-                            </StackPanel>
-                        </Border>
-                    </UniformGrid>
-
-                    <Grid Margin="2,18,0,9">
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="RECENT" Style="{StaticResource SectionTitle}" />
-                            <TextBlock Text="// 最近游玩" Style="{StaticResource HomeKicker}" Margin="10,0,0,0"
-                                       VerticalAlignment="Center" />
+                <StackPanel x:Name="LogBody">
+                    <Grid Margin="0,7,0,0">
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                            <Button Style="{StaticResource SoftLink}" Content="复制" Click="CopyLog_Click" Margin="0,0,8,0" />
+                            <Button Style="{StaticResource SoftLink}" Content="清空" Click="ClearLog_Click" Margin="0,0,8,0" />
+                            <Button Style="{StaticResource SoftLink}" Content="完整日志" Click="OpenLog_Click" />
                         </StackPanel>
                     </Grid>
-                    <ItemsControl ItemsSource="{Binding RecentItems}">
-                        <ItemsControl.ItemsPanel>
-                            <ItemsPanelTemplate>
-                                <WrapPanel />
-                            </ItemsPanelTemplate>
-                        </ItemsControl.ItemsPanel>
-                        <ItemsControl.ItemTemplate>
-                            <DataTemplate>
-                                <Button Style="{StaticResource RecentCard}" Tag="{Binding VersionId}" Click="Recent_Click">
-                                    <Grid Margin="12,0">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="Auto" />
-                                            <ColumnDefinition Width="*" />
-                                            <ColumnDefinition Width="Auto" />
-                                        </Grid.ColumnDefinitions>
-                                        <Border Width="32" Height="32" CornerRadius="10"
-                                                Background="{DynamicResource AccentSoftBrush}"
-                                                BorderBrush="#38E8A2BE" BorderThickness="1">
-                                            <Path Data="{DynamicResource IconPlay}" Fill="{DynamicResource AccentBrush}"
-                                                  Width="9" Height="9" Stretch="Uniform"
-                                                  HorizontalAlignment="Center" VerticalAlignment="Center" />
-                                        </Border>
-                                        <StackPanel Grid.Column="1" Margin="10,0,0,0" VerticalAlignment="Center">
-                                            <TextBlock Text="{Binding Name}" FontSize="11.5" FontWeight="SemiBold"
-                                                       TextTrimming="CharacterEllipsis" />
-                                            <TextBlock Text="{Binding SubLine}" FontSize="9"
-                                                       Foreground="{DynamicResource TextMutedBrush}" Margin="0,2,0,0"
-                                                       TextTrimming="CharacterEllipsis" />
-                                        </StackPanel>
-                                        <TextBlock Grid.Column="2" Text="{Binding TimeText}" FontSize="8.5"
-                                                   Foreground="{DynamicResource TextMutedBrush}" VerticalAlignment="Center" />
-                                    </Grid>
-                                </Button>
-                            </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                    </ItemsControl>
-                    <TextBlock x:Name="RecentEmpty" Text="还没有游玩记录。启动一次游戏后，这里会出现快捷入口。"
-                               FontSize="10.5" Foreground="{DynamicResource TextMutedBrush}" Margin="2,2,0,4"
-                               Visibility="Collapsed" />
-
-                    <Border Style="{StaticResource HomeCard}" Margin="0,16,0,0" Padding="16">
-                        <StackPanel>
-                            <Grid>
-                                <StackPanel Orientation="Horizontal">
-                                    <Ellipse Width="7" Height="7" Fill="{DynamicResource SuccessBrush}" VerticalAlignment="Center" />
-                                    <TextBlock Text="启动日志" FontSize="12" FontWeight="SemiBold" Margin="8,0,0,0" />
-                                </StackPanel>
-                                <Button HorizontalAlignment="Right" Style="{StaticResource GhostButton}" Height="24"
-                                        Padding="8,0" FontSize="9.5" Content="完整日志" Click="OpenLog_Click" />
-                            </Grid>
-                            <TextBlock x:Name="StatusLabel" Text="就绪。" FontSize="10.5"
-                                       Foreground="{DynamicResource TextSubBrush}" Margin="0,7,0,0" TextWrapping="Wrap" />
-                            <Border Background="{DynamicResource OverlayBrush}" CornerRadius="9" Padding="9,7" Margin="0,8,0,0"
-                                    Visibility="{Binding HasLog, Converter={StaticResource BoolToVisibility}}">
-                                <ScrollViewer MaxHeight="92" VerticalScrollBarVisibility="Auto"
-                                              HorizontalScrollBarVisibility="Disabled" PanningMode="VerticalOnly">
-                                    <TextBlock Text="{Binding LogText}" FontFamily="{DynamicResource MonoFont}"
-                                               FontSize="9" Foreground="{DynamicResource TextMutedBrush}"
-                                               TextWrapping="Wrap" />
-                                </ScrollViewer>
-                            </Border>
-                        </StackPanel>
+                    <Border x:Name="LogTextBox" Background="#C7000000" CornerRadius="4" Margin="0,4,0,0" Padding="8,6"
+                            Visibility="{Binding HasLog, Converter={StaticResource BoolToVisibility}}">
+                        <ScrollViewer x:Name="LogScroll" Height="92" VerticalScrollBarVisibility="Auto"
+                                      HorizontalScrollBarVisibility="Disabled" PanningMode="VerticalOnly">
+                            <TextBlock Text="{Binding LogText}" FontFamily="{DynamicResource MonoFont}"
+                                       FontSize="9.2" Foreground="#FFB8C4C9" TextWrapping="NoWrap" />
+                        </ScrollViewer>
                     </Border>
+                    <TextBlock x:Name="StatusLabel" Text="就绪。" FontSize="10.5"
+                               Foreground="{DynamicResource TextSubBrush}" TextTrimming="CharacterEllipsis"
+                               Margin="0,5,0,0" />
+                    <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
+                        <Button Style="{StaticResource ButtonBase}" Height="26" Padding="9,0" FontSize="9.5"
+                                Content="资源站点" Click="ToggleSites_Click" Margin="0,0,6,0" />
+                        <Button Style="{StaticResource ButtonBase}" Height="26" Padding="9,0" FontSize="9.5"
+                                Content="游戏目录" Click="OpenMcFolder_Click" Margin="0,0,6,0" />
+                        <Button Style="{StaticResource ButtonBase}" Height="26" Padding="9,0" FontSize="9.5"
+                                Content="启动器数据" Click="OpenDataFolder_Click" />
+                    </StackPanel>
                 </StackPanel>
-            </ScrollViewer>
+            </StackPanel>
+        </Border>
 
-            <ScrollViewer x:Name="HomeSideScroll" Grid.Column="2" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-                <StackPanel Margin="0,0,4,18">
-                    <Border Style="{StaticResource HomeCard}">
-                        <StackPanel>
-                            <Grid>
-                                <StackPanel Orientation="Horizontal">
-                                    <TextBlock Text="APPEARANCE" FontSize="12.5" FontWeight="SemiBold" />
-                                    <TextBlock Text="// 角色外观" Style="{StaticResource HomeKicker}" Margin="9,0,0,0"
-                                               VerticalAlignment="Center" />
-                                </StackPanel>
-                                <Button x:Name="SkinModelLabel" Style="{StaticResource GhostButton}" Content="Steve"
-                                        Height="23" Padding="7,0" FontSize="9" HorizontalAlignment="Right"
-                                        Click="ToggleSkinModel_Click" />
-                            </Grid>
-                            <Grid Margin="0,11,0,0">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="128" />
-                                    <ColumnDefinition Width="*" />
-                                </Grid.ColumnDefinitions>
-                                <Border Width="128" Height="166" CornerRadius="13" Background="#8A0F0A14"
-                                        BorderBrush="#2CFFFFFF" BorderThickness="1" ClipToBounds="True">
-                                    <controls:SkinPreview3D x:Name="SkinPreview" />
-                                </Border>
-                                <StackPanel Grid.Column="1" Margin="12,0,0,0" VerticalAlignment="Center">
-                                    <TextBlock x:Name="SkinNameLabel" Text="皮肤：默认" FontSize="9.5"
-                                               TextTrimming="CharacterEllipsis" />
-                                    <TextBlock x:Name="CapeNameLabel" Text="披风：无" FontSize="9"
-                                               Foreground="{DynamicResource TextMutedBrush}" Margin="0,3,0,0"
-                                               TextTrimming="CharacterEllipsis" />
-                                    <TextBlock Text="拖动预览旋转" FontSize="8.5"
-                                               Foreground="{DynamicResource TextMutedBrush}" Margin="0,4,0,0" />
-                                    <Button Style="{StaticResource ButtonBase}" Height="27" Content="切换皮肤"
-                                            Margin="0,8,0,0" FontSize="9.5" Click="SwitchSkin_Click" />
-                                    <Button Style="{StaticResource ButtonBase}" Height="27" Content="切换披风"
-                                            Margin="0,5,0,0" FontSize="9.5" Click="SwitchCape_Click" />
-                                    <Button Style="{StaticResource LinkButton}" Content="使用账号皮肤" FontSize="8.5"
-                                            HorizontalAlignment="Left" Margin="0,5,0,0" Click="UseAccountSkin_Click" />
-                                </StackPanel>
-                            </Grid>
-                        </StackPanel>
-                    </Border>
+        <!-- 资源站点 -->
+        <Border x:Name="SitesPanel" Visibility="Collapsed" Panel.ZIndex="40"
+                HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,22,224"
+                Width="580" Background="#F2111518" BorderBrush="#40FFFFFF" BorderThickness="1"
+                CornerRadius="8" Padding="16">
+            <StackPanel>
+                <Grid>
+                    <TextBlock Text="资源站点" Style="{StaticResource GeekLabel}" />
+                    <Button HorizontalAlignment="Right" Style="{StaticResource SoftLink}" Content="关闭"
+                            Click="ToggleSites_Click" />
+                </Grid>
+                <Grid Margin="0,10,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+                    <Button Grid.Row="0" Grid.Column="0" Style="{StaticResource SoftLink}" Content="MC 百科" Tag="https://www.mcmod.cn/" Click="Site_Click" Margin="0,3" />
+                    <Button Grid.Row="1" Grid.Column="0" Style="{StaticResource SoftLink}" Content="Planet MC" Tag="https://www.planetminecraft.com/" Click="Site_Click" Margin="0,3" />
+                    <Button Grid.Row="2" Grid.Column="0" Style="{StaticResource SoftLink}" Content="CurseForge" Tag="https://www.curseforge.com/minecraft" Click="Site_Click" Margin="0,3" />
+                    <Button Grid.Row="3" Grid.Column="0" Style="{StaticResource SoftLink}" Content="哔哩哔哩" Tag="https://www.bilibili.com/" Click="Site_Click" Margin="0,3" />
+                    <Button Grid.Row="0" Grid.Column="1" Style="{StaticResource SoftLink}" Content="MCBBS（纪念）" Tag="https://www.mcbbs.net/" Click="Site_Click" Margin="0,3" />
+                    <Button Grid.Row="1" Grid.Column="1" Style="{StaticResource SoftLink}" Content="MC Tools" Tag="https://www.mctools.net/" Click="Site_Click" Margin="0,3" />
+                    <Button Grid.Row="2" Grid.Column="1" Style="{StaticResource SoftLink}" Content="Modrinth" Tag="https://modrinth.com/" Click="Site_Click" Margin="0,3" />
+                    <Button Grid.Row="3" Grid.Column="1" Style="{StaticResource SoftLink}" Content="GitHub" Tag="https://github.com/" Click="Site_Click" Margin="0,3" />
+                    <Button Grid.Row="0" Grid.Column="2" Style="{StaticResource SoftLink}" Content="苦力怕论坛" Tag="https://www.mcbbs.net/" Click="Site_Click" Margin="0,3" />
+                    <Button Grid.Row="1" Grid.Column="2" Style="{StaticResource SoftLink}" Content="Chunkbase" Tag="https://www.chunkbase.com/" Click="Site_Click" Margin="0,3" />
+                    <Button Grid.Row="2" Grid.Column="2" Style="{StaticResource SoftLink}" Content="Minecraft 新闻" Tag="https://www.minecraft.net/en-us/news" Click="Site_Click" Margin="0,3" />
+                    <Button Grid.Row="3" Grid.Column="2" Style="{StaticResource SoftLink}" Content="OSU!" Tag="https://osu.ppy.sh/" Click="Site_Click" Margin="0,3" />
+                </Grid>
+            </StackPanel>
+        </Border>
 
-                    <Border Style="{StaticResource HomeCard}" Margin="0,12,0,0" Padding="14">
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="72" />
-                                <ColumnDefinition Width="*" />
-                            </Grid.ColumnDefinitions>
-                            <Border Width="72" Height="72" CornerRadius="14" ClipToBounds="True"
-                                    Background="{DynamicResource Surface2Brush}">
-                                <Image x:Name="FeaturedImage" Source="pack://application:,,,/Assets/VermiluneRing.png"
-                                       Stretch="UniformToFill" RenderOptions.BitmapScalingMode="HighQuality" />
-                            </Border>
-                            <StackPanel Grid.Column="1" Margin="12,0,0,0" VerticalAlignment="Center">
-                                <TextBlock x:Name="FeaturedTitleText" Text="Vermilune 1.2" FontSize="15"
-                                           FontWeight="SemiBold" Foreground="{DynamicResource AccentBrush}"
-                                           TextTrimming="CharacterEllipsis" />
-                                <TextBlock x:Name="FeaturedSubtitleText" Text="这张卡片可以自定义。"
-                                           FontSize="9.5" Foreground="{DynamicResource TextMutedBrush}"
-                                           Margin="0,4,0,0" TextTrimming="CharacterEllipsis" />
-                                <Button Style="{StaticResource CardAction}" Content="自定义 →"
-                                        Click="CustomizeFeatured_Click" />
-                            </StackPanel>
-                        </Grid>
-                    </Border>
-
-                    <Border Style="{StaticResource HomeCard}" Margin="0,12,0,0" Padding="14">
-                        <StackPanel>
-                            <TextBlock Text="TOOLS" FontSize="11.5" FontWeight="SemiBold" />
-                            <Grid Margin="0,9,0,0">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="7" />
-                                    <ColumnDefinition Width="*" />
-                                </Grid.ColumnDefinitions>
-                                <Grid.RowDefinitions>
-                                    <RowDefinition Height="Auto" />
-                                    <RowDefinition Height="7" />
-                                    <RowDefinition Height="Auto" />
-                                </Grid.RowDefinitions>
-                                <Button Grid.Row="0" Grid.Column="0" Style="{StaticResource ButtonBase}" Height="28"
-                                        FontSize="9.5" Content="游戏目录" Click="OpenMcFolder_Click" />
-                                <Button Grid.Row="0" Grid.Column="2" Style="{StaticResource ButtonBase}" Height="28"
-                                        FontSize="9.5" Content="启动器数据" Click="OpenDataFolder_Click" />
-                                <Button Grid.Row="2" Grid.Column="0" Style="{StaticResource ButtonBase}" Height="28"
-                                        FontSize="9.5" Content="任务管理器" Click="ToolTaskmgr_Click" />
-                                <Button Grid.Row="2" Grid.Column="2" Style="{StaticResource ButtonBase}" Height="28"
-                                        FontSize="9.5" Content="CMD" Click="ToolCmd_Click" />
-                            </Grid>
-                        </StackPanel>
-                    </Border>
-                </StackPanel>
-            </ScrollViewer>
-        </Grid>
+        <!-- 兼容原有皮肤 / 自定义卡片数据源，主页不再展示 -->
+        <ScrollViewer x:Name="HomeSideScroll" Visibility="Collapsed" VerticalScrollBarVisibility="Hidden"
+                      HorizontalScrollBarVisibility="Hidden">
+            <StackPanel>
+                <Border Width="1" Height="1" />
+            </StackPanel>
+        </ScrollViewer>
     </Grid>
 </UserControl>

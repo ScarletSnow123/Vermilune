@@ -8,9 +8,21 @@
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
-        <StackPanel>
-            <TextBlock Text="更多" Style="{StaticResource PageTitle}" />
-            <TextBlock Text="关于、参考与诊断。这里集中放版本信息和常用工具。" Style="{StaticResource PageSubtitle}" />
+        <StackPanel Orientation="Horizontal">
+            <Border Style="{StaticResource PageIconTile}">
+                <Grid Width="18" Height="18" HorizontalAlignment="Center" VerticalAlignment="Center">
+                    <Ellipse Width="3.5" Height="3.5" Fill="{DynamicResource AccentBrush}"
+                             HorizontalAlignment="Left" VerticalAlignment="Center" />
+                    <Ellipse Width="3.5" Height="3.5" Fill="{DynamicResource AccentBrush}"
+                             HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    <Ellipse Width="3.5" Height="3.5" Fill="{DynamicResource AccentBrush}"
+                             HorizontalAlignment="Right" VerticalAlignment="Center" />
+                </Grid>
+            </Border>
+            <StackPanel Margin="12,0,0,0">
+                <TextBlock Text="更多" Style="{StaticResource PageTitle}" />
+                <TextBlock Text="关于、参考与诊断。这里集中放版本信息和常用工具。" Style="{StaticResource PageSubtitle}" />
+            </StackPanel>
         </StackPanel>
 
         <ScrollViewer Grid.Row="1" Margin="0,14,0,0" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
@@ -30,7 +42,7 @@
                             <TextBlock Text="Vermilune" FontFamily="{DynamicResource DisplayFont}" FontSize="24" FontWeight="SemiBold" />
                             <TextBlock Text="Minecraft 启动器 · .NET 10 / WPF" FontSize="11.5"
                                        Foreground="{DynamicResource TextMutedBrush}" Margin="0,6,0,0" />
-                            <TextBlock Text="版本 1.2.33" FontSize="10.5" Foreground="{DynamicResource TextMutedBrush}" Margin="0,4,0,0" />
+                            <TextBlock Text="版本 1.3.0" FontSize="10.5" Foreground="{DynamicResource TextMutedBrush}" Margin="0,4,0,0" />
                         </StackPanel>
                         <StackPanel Grid.Column="2" VerticalAlignment="Center">
                             <Button Style="{StaticResource PrimaryButton}" Height="34" Content="打开数据目录" Click="OpenData_Click" />
