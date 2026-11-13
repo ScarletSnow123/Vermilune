@@ -6,25 +6,25 @@
     <FontFamily x:Key="DisplayFont">Segoe UI Variable Display, Microsoft YaHei UI, Segoe UI</FontFamily>
     <FontFamily x:Key="MonoFont">Cascadia Mono, Consolas, Microsoft YaHei UI</FontFamily>
 
-    <SolidColorBrush x:Key="AccentBrush" Color="#FFE8A2BE" />
-    <SolidColorBrush x:Key="AccentHoverBrush" Color="#FFF3BED2" />
-    <SolidColorBrush x:Key="AccentPressedBrush" Color="#FFD985A3" />
-    <SolidColorBrush x:Key="AccentSoftBrush" Color="#2EE8A2BE" />
+    <SolidColorBrush x:Key="AccentBrush" Color="#FF8FD6B4" />
+    <SolidColorBrush x:Key="AccentHoverBrush" Color="#FFA8E3C8" />
+    <SolidColorBrush x:Key="AccentPressedBrush" Color="#FF6FB391" />
+    <SolidColorBrush x:Key="AccentSoftBrush" Color="#1E8FD6B4" />
     <LinearGradientBrush x:Key="AccentGradientBrush" StartPoint="0,0" EndPoint="1,1">
-        <GradientStop Color="#FFF4BCD0" Offset="0" />
-        <GradientStop Color="#FFD987A6" Offset="1" />
+        <GradientStop Color="#FF9EE0C2" Offset="0" />
+        <GradientStop Color="#FF79BE9E" Offset="1" />
     </LinearGradientBrush>
 
-    <SolidColorBrush x:Key="WindowBgBrush" Color="#F00D0912" />
-    <SolidColorBrush x:Key="SurfaceBrush" Color="#C718121F" />
-    <SolidColorBrush x:Key="Surface2Brush" Color="#D9221A2A" />
-    <SolidColorBrush x:Key="Surface3Brush" Color="#F02A2033" />
-    <SolidColorBrush x:Key="SurfaceHoverBrush" Color="#18FFFFFF" />
-    <SolidColorBrush x:Key="StrokeBrush" Color="#26FFFFFF" />
-    <SolidColorBrush x:Key="StrokeStrongBrush" Color="#3DFFFFFF" />
-    <SolidColorBrush x:Key="TextBrush" Color="#FFF9F3F7" />
-    <SolidColorBrush x:Key="TextSubBrush" Color="#FFB5A9B8" />
-    <SolidColorBrush x:Key="TextMutedBrush" Color="#FF807584" />
+    <SolidColorBrush x:Key="WindowBgBrush" Color="#F00A0C0D" />
+    <SolidColorBrush x:Key="SurfaceBrush" Color="#EE111518" />
+    <SolidColorBrush x:Key="Surface2Brush" Color="#F2171D21" />
+    <SolidColorBrush x:Key="Surface3Brush" Color="#FA1E262B" />
+    <SolidColorBrush x:Key="SurfaceHoverBrush" Color="#12FFFFFF" />
+    <SolidColorBrush x:Key="StrokeBrush" Color="#1EFFFFFF" />
+    <SolidColorBrush x:Key="StrokeStrongBrush" Color="#33FFFFFF" />
+    <SolidColorBrush x:Key="TextBrush" Color="#FFE6EDF0" />
+    <SolidColorBrush x:Key="TextSubBrush" Color="#FF9AA8B0" />
+    <SolidColorBrush x:Key="TextMutedBrush" Color="#FF66757E" />
     <SolidColorBrush x:Key="DangerBrush" Color="#FFEB6B6B" />
     <SolidColorBrush x:Key="WarnBrush" Color="#FFF0C86A" />
     <SolidColorBrush x:Key="SuccessBrush" Color="#FF7BD88F" />
@@ -70,15 +70,15 @@
     <!-- ============================ 文本 ============================ -->
     <Style x:Key="PageTitle" TargetType="TextBlock">
         <Setter Property="FontFamily" Value="{DynamicResource DisplayFont}" />
-        <Setter Property="FontSize" Value="30" />
+        <Setter Property="FontSize" Value="24" />
         <Setter Property="FontWeight" Value="SemiBold" />
         <Setter Property="Foreground" Value="{DynamicResource TextBrush}" />
         <Setter Property="TextTrimming" Value="CharacterEllipsis" />
     </Style>
     <Style x:Key="PageSubtitle" TargetType="TextBlock">
-        <Setter Property="FontSize" Value="12.5" />
+        <Setter Property="FontSize" Value="11.5" />
         <Setter Property="Foreground" Value="{DynamicResource TextMutedBrush}" />
-        <Setter Property="Margin" Value="0,7,0,0" />
+        <Setter Property="Margin" Value="0,6,0,0" />
     </Style>
     <Style x:Key="SectionTitle" TargetType="TextBlock">
         <Setter Property="FontFamily" Value="{DynamicResource DisplayFont}" />
@@ -124,8 +124,8 @@
         <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
         <Setter Property="BorderBrush" Value="{DynamicResource StrokeBrush}" />
         <Setter Property="BorderThickness" Value="1" />
-        <Setter Property="CornerRadius" Value="16" />
-        <Setter Property="Padding" Value="20" />
+        <Setter Property="CornerRadius" Value="8" />
+        <Setter Property="Padding" Value="16" />
         <Setter Property="SnapsToDevicePixels" Value="True" />
     </Style>
     <Style x:Key="CardTight" TargetType="Border" BasedOn="{StaticResource Card}">
@@ -189,7 +189,7 @@
     <Style x:Key="PrimaryButton" TargetType="Button" BasedOn="{StaticResource ButtonBase}">
         <Setter Property="Background" Value="{DynamicResource AccentGradientBrush}" />
         <Setter Property="BorderThickness" Value="0" />
-        <Setter Property="Foreground" Value="#FF2A101B" />
+        <Setter Property="Foreground" Value="#FF08110D" />
         <Setter Property="FontWeight" Value="SemiBold" />
         <Setter Property="HorizontalContentAlignment" Value="Center" />
         <Setter Property="Template">

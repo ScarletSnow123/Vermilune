@@ -90,6 +90,8 @@ public partial class LaunchPage : UserControl, IPage, INotifyPropertyChanged
     public int ShaderCount { get => _shaderCount; private set { _shaderCount = value; OnPropertyChanged(); } }
     public int ScreenshotCount { get => _screenshotCount; private set { _screenshotCount = value; OnPropertyChanged(); } }
     private int _modCount, _resourcePackCount, _saveCount, _shaderCount, _screenshotCount;
+    private string _statsCacheKey = "";
+    private DateTime _statsCacheAt;
 
     public event PropertyChangedEventHandler? PropertyChanged;
     private void OnPropertyChanged([CallerMemberName] string? name = null)
@@ -427,11 +429,18 @@ public partial class LaunchPage : UserControl, IPage, INotifyPropertyChanged
 
     private void UpdateInstanceStats(VersionInfo version, InstanceSettings instance)
     {
+        var dir = "";
+        try { dir = LauncherApp.I.Versions.GetGameDir(version.Id, instance, LauncherApp.I.Settings.VersionIsolation); }
+        catch { }
+        var key = version.Id + "|" + version.LastWriteUtc.Ticks + "|" + dir;
+        if (key == _statsCacheKey && DateTime.UtcNow - _statsCacheAt < TimeSpan.FromSeconds(8)) return;
+        _statsCacheKey = key;
+        _statsCacheAt = DateTime.UtcNow;
+
         ModCount = version.ModCount;
         ResourcePackCount = SaveCount = ShaderCount = ScreenshotCount = 0;
         try
         {
-            var dir = LauncherApp.I.Versions.GetGameDir(version.Id, instance, LauncherApp.I.Settings.VersionIsolation);
             if (Directory.Exists(dir))
             {
                 var resourceDir = Path.Combine(dir, "resourcepacks");
@@ -706,7 +715,7 @@ public partial class LaunchPage : UserControl, IPage, INotifyPropertyChanged
             ProcessPriority = app.Settings.ProcessPriority,
             IpProtocol = app.Settings.IpProtocol,
             LauncherName = "Vermilune",
-            LauncherVersion = "1.2.32"
+            LauncherVersion = "1.2.33"
         };
 
         _cts?.Dispose();
@@ -928,6 +937,7 @@ public partial class LaunchPage : UserControl, IPage, INotifyPropertyChanged
 
     private void RefreshHome_Click(object sender, RoutedEventArgs e)
     {
+        _statsCacheKey = "";
         LauncherApp.I.ReloadVersions();
         RefreshState();
         LauncherApp.I.Notify("主页已刷新", "版本列表与最近游玩已更新。");

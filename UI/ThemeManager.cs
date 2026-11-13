@@ -5,11 +5,11 @@ namespace Vermilune.UI;
 
 public static class ThemeManager
 {
-    public static Color Accent { get; private set; } = Color.FromRgb(0xE8, 0xA2, 0xBE);
+    public static Color Accent { get; private set; } = Color.FromRgb(0x8F, 0xD6, 0xB4);
 
     public static void Apply(string accentHex, double opacity, bool hasBackgroundImage, bool light = false)
     {
-        var accent = ParseColor(accentHex, Color.FromRgb(0xE8, 0xA2, 0xBE));
+        var accent = ParseColor(accentHex, Color.FromRgb(0x8F, 0xD6, 0xB4));
         Accent = accent;
         opacity = Math.Clamp(opacity, 0.25, 1.0);
 
@@ -50,16 +50,16 @@ public static class ThemeManager
         }
         else
         {
-            res["WindowBgBrush"] = Solid(Color.FromArgb(windowAlpha, 0x0D, 0x09, 0x12));
-            res["SurfaceBrush"] = Solid(Color.FromArgb(surfaceAlpha, 0x1A, 0x13, 0x22));
-            res["Surface2Brush"] = Solid(Color.FromArgb(surface2Alpha, 0x22, 0x1A, 0x2A));
-            res["Surface3Brush"] = Solid(Color.FromArgb(surface3Alpha, 0x2A, 0x20, 0x33));
-            res["SurfaceHoverBrush"] = Solid(Color.FromArgb(0x18, 0xFF, 0xFF, 0xFF));
-            res["StrokeBrush"] = Solid(Color.FromArgb(hasBackgroundImage ? (byte)0x30 : (byte)0x26, 0xFF, 0xFF, 0xFF));
-            res["StrokeStrongBrush"] = Solid(Color.FromArgb(hasBackgroundImage ? (byte)0x4C : (byte)0x3D, 0xFF, 0xFF, 0xFF));
-            res["TextBrush"] = Solid(Color.FromRgb(0xF9, 0xF3, 0xF7));
-            res["TextSubBrush"] = Solid(Color.FromRgb(0xB5, 0xA9, 0xB8));
-            res["TextMutedBrush"] = Solid(Color.FromRgb(0x80, 0x75, 0x84));
+            res["WindowBgBrush"] = Solid(Color.FromArgb(windowAlpha, 0x0A, 0x0C, 0x0D));
+            res["SurfaceBrush"] = Solid(Color.FromArgb(surfaceAlpha, 0x11, 0x15, 0x18));
+            res["Surface2Brush"] = Solid(Color.FromArgb(surface2Alpha, 0x17, 0x1D, 0x21));
+            res["Surface3Brush"] = Solid(Color.FromArgb(surface3Alpha, 0x1E, 0x26, 0x2B));
+            res["SurfaceHoverBrush"] = Solid(Color.FromArgb(0x12, 0xFF, 0xFF, 0xFF));
+            res["StrokeBrush"] = Solid(Color.FromArgb(hasBackgroundImage ? (byte)0x24 : (byte)0x1E, 0xFF, 0xFF, 0xFF));
+            res["StrokeStrongBrush"] = Solid(Color.FromArgb(hasBackgroundImage ? (byte)0x3A : (byte)0x33, 0xFF, 0xFF, 0xFF));
+            res["TextBrush"] = Solid(Color.FromRgb(0xE6, 0xED, 0xF0));
+            res["TextSubBrush"] = Solid(Color.FromRgb(0x9A, 0xA8, 0xB0));
+            res["TextMutedBrush"] = Solid(Color.FromRgb(0x66, 0x75, 0x7E));
             res["DangerBrush"] = Solid(Color.FromRgb(0xEB, 0x6B, 0x6B));
             res["WarnBrush"] = Solid(Color.FromRgb(0xF0, 0xC8, 0x6A));
             res["SuccessBrush"] = Solid(Color.FromRgb(0x7B, 0xD8, 0x8F));

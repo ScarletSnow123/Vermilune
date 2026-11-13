@@ -9,21 +9,21 @@
         <converters:PathImageConverter x:Key="PathImage" />
 
         <Style x:Key="HomeKicker" TargetType="TextBlock">
-            <Setter Property="FontSize" Value="9" />
-            <Setter Property="FontWeight" Value="SemiBold" />
-            <Setter Property="Foreground" Value="{DynamicResource AccentBrush}" />
+            <Setter Property="FontFamily" Value="{DynamicResource MonoFont}" />
+            <Setter Property="FontSize" Value="8.5" />
+            <Setter Property="Foreground" Value="{DynamicResource TextMutedBrush}" />
         </Style>
 
         <Style x:Key="HomeCard" TargetType="Border" BasedOn="{StaticResource Card}">
-            <Setter Property="CornerRadius" Value="18" />
-            <Setter Property="Padding" Value="18" />
-            <Setter Property="Background" Value="#E61A1322" />
-            <Setter Property="BorderBrush" Value="#2CFFFFFF" />
+            <Setter Property="CornerRadius" Value="8" />
+            <Setter Property="Padding" Value="14" />
+            <Setter Property="Background" Value="#F2111518" />
+            <Setter Property="BorderBrush" Value="#1EFFFFFF" />
         </Style>
 
         <Style x:Key="StatCard" TargetType="Border" BasedOn="{StaticResource HomeCard}">
-            <Setter Property="Padding" Value="15,13" />
-            <Setter Property="CornerRadius" Value="16" />
+            <Setter Property="Padding" Value="11,9" />
+            <Setter Property="CornerRadius" Value="6" />
         </Style>
 
         <Style x:Key="CardAction" TargetType="Button" BasedOn="{StaticResource LinkButton}">
@@ -35,20 +35,20 @@
         </Style>
 
         <Style x:Key="IconTile" TargetType="Border">
-            <Setter Property="Width" Value="36" />
-            <Setter Property="Height" Value="36" />
-            <Setter Property="CornerRadius" Value="11" />
-            <Setter Property="Background" Value="{DynamicResource AccentSoftBrush}" />
-            <Setter Property="BorderBrush" Value="#36E8A2BE" />
+            <Setter Property="Width" Value="30" />
+            <Setter Property="Height" Value="30" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="Background" Value="#14FFFFFF" />
+            <Setter Property="BorderBrush" Value="#24FFFFFF" />
             <Setter Property="BorderThickness" Value="1" />
         </Style>
 
         <Style x:Key="RecentCard" TargetType="Button">
-            <Setter Property="Width" Value="228" />
-            <Setter Property="Height" Value="66" />
-            <Setter Property="Margin" Value="0,0,10,10" />
-            <Setter Property="Background" Value="#D91A1322" />
-            <Setter Property="BorderBrush" Value="#2CFFFFFF" />
+            <Setter Property="Width" Value="212" />
+            <Setter Property="Height" Value="56" />
+            <Setter Property="Margin" Value="0,0,8,8" />
+            <Setter Property="Background" Value="#F2171D21" />
+            <Setter Property="BorderBrush" Value="#1EFFFFFF" />
             <Setter Property="BorderThickness" Value="1" />
             <Setter Property="Cursor" Value="Hand" />
             <Setter Property="FocusVisualStyle" Value="{x:Null}" />
@@ -57,7 +57,7 @@
                     <ControlTemplate TargetType="Button">
                         <Border x:Name="Bd" Background="{TemplateBinding Background}"
                                 BorderBrush="{TemplateBinding BorderBrush}"
-                                BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="13">
+                                BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="6">
                             <ContentPresenter />
                         </Border>
                         <ControlTemplate.Triggers>
@@ -72,7 +72,7 @@
         </Style>
     </UserControl.Resources>
 
-    <Grid Margin="24,4,24,22" Background="#420D0912">
+    <Grid Margin="20,4,20,18" Background="#660A0C0D">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
@@ -80,33 +80,23 @@
         </Grid.RowDefinitions>
 
         <!-- 主视觉：当前实例 -->
-        <Border Grid.Row="0" Height="258" CornerRadius="22" BorderBrush="#30FFFFFF" BorderThickness="1" ClipToBounds="True">
-            <Border.Background>
-                <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-                    <GradientStop Color="#D92A1526" Offset="0" />
-                    <GradientStop Color="#C71E1424" Offset="0.48" />
-                    <GradientStop Color="#B417101D" Offset="1" />
-                </LinearGradientBrush>
-            </Border.Background>
-            <Grid>
-                <Image Source="pack://application:,,,/Assets/VermiluneRing.png" Stretch="UniformToFill"
-                       HorizontalAlignment="Right" VerticalAlignment="Center" Width="360" Height="230" Opacity="0.11"
-                       RenderOptions.BitmapScalingMode="HighQuality" IsHitTestVisible="False" />
-                <Border HorizontalAlignment="Right" Width="280" Margin="0,-40,-80,0" Height="280"
-                        CornerRadius="140" Background="#16E8A2BE" IsHitTestVisible="False" />
+        <Border Grid.Row="0" Height="234" CornerRadius="10" BorderBrush="#24FFFFFF" BorderThickness="1" ClipToBounds="True" Background="#F2111518">
 
-                <Grid Margin="26,22,26,22">
+            <Grid>
+
+
+                <Grid Margin="20,16,20,16">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
 
                     <StackPanel Grid.Column="0" MaxWidth="620" HorizontalAlignment="Left">
-                        <TextBlock Text="CURRENT INSTANCE  ·  当前实例" Style="{StaticResource HomeKicker}" />
+                        <TextBlock Text="INSTANCE // 当前实例" Style="{StaticResource HomeKicker}" />
                         <TextBlock Text="{Binding SelectedVersion.DisplayName}" FontFamily="{DynamicResource DisplayFont}"
-                                   FontSize="37" FontWeight="SemiBold" Margin="0,7,0,0"
+                                   FontSize="29" FontWeight="SemiBold" Margin="0,5,0,0"
                                    TextTrimming="CharacterEllipsis" />
-                        <ComboBox x:Name="VersionCombo" Height="42" Margin="0,12,0,0" MaxWidth="420"
+                        <ComboBox x:Name="VersionCombo" Height="36" Margin="0,9,0,0" MaxWidth="420"
                                   HorizontalAlignment="Left" MinWidth="300"
                                   ItemsSource="{Binding Versions}" SelectedItem="{Binding SelectedVersion, Mode=TwoWay}"
                                   SelectionChanged="VersionCombo_SelectionChanged" VerticalContentAlignment="Center">
@@ -142,7 +132,7 @@
                             </ComboBox.ItemTemplate>
                         </ComboBox>
 
-                        <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
+                        <StackPanel Orientation="Horizontal" Margin="0,9,0,0">
                             <Border Style="{StaticResource Pill}" Background="#22E8A2BE" BorderBrush="#40E8A2BE"
                                     BorderThickness="1" Padding="8,3" Margin="0,0,7,0">
                                 <TextBlock Text="{Binding SelectedVersion.MinecraftVersion}" FontSize="9.5"
@@ -158,10 +148,10 @@
                             </Border>
                         </StackPanel>
 
-                        <TextBlock Text="{Binding VersionMeta}" FontSize="10.5" Margin="0,11,0,0"
+                        <TextBlock Text="{Binding VersionMeta}" FontSize="10.5" Margin="0,8,0,0"
                                    Foreground="{DynamicResource TextSubBrush}" TextWrapping="Wrap" MaxWidth="560" />
 
-                        <StackPanel Orientation="Horizontal" Margin="0,15,0,0">
+                        <StackPanel Orientation="Horizontal" Margin="0,11,0,0">
                             <Button Style="{StaticResource ButtonBase}" Height="32" Padding="14,0" Content="修改实例"
                                     Click="EditVersion_Click" Margin="0,0,7,0" />
                             <Button Style="{StaticResource ButtonBase}" Height="32" Padding="14,0" Content="打开目录"
@@ -171,8 +161,8 @@
                         </StackPanel>
                     </StackPanel>
 
-                    <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="26,0,0,0" Width="252">
-                        <Button x:Name="LaunchButton" Height="64" Style="{StaticResource PrimaryButton}"
+                    <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="26,0,0,0" Width="232">
+                        <Button x:Name="LaunchButton" Height="52" Style="{StaticResource PrimaryButton}"
                                 Click="Launch_Click" Padding="18,0" HorizontalContentAlignment="Stretch">
                             <Grid>
                                 <Grid.ColumnDefinitions>
@@ -183,7 +173,7 @@
                                 <Path x:Name="LaunchIcon" Width="18" Height="20" Stretch="Uniform"
                                       Data="{DynamicResource IconPlay}" Fill="#FF2A101B" VerticalAlignment="Center" />
                                 <StackPanel Grid.Column="1" Margin="12,0,0,0" VerticalAlignment="Center">
-                                    <TextBlock x:Name="LaunchTitleText" Text="{Binding LaunchTitle}" FontSize="16"
+                                    <TextBlock x:Name="LaunchTitleText" Text="{Binding LaunchTitle}" FontSize="14.5"
                                                FontWeight="Bold" FontFamily="{DynamicResource DisplayFont}"
                                                Foreground="#FF2A101B" />
                                     <TextBlock x:Name="LaunchSubText" Text="{Binding LaunchSub}" FontSize="9.5"
@@ -330,8 +320,8 @@
                 <StackPanel Margin="0,0,4,16">
                     <Grid Margin="2,0,0,9">
                         <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="实例资源" Style="{StaticResource SectionTitle}" />
-                            <TextBlock Text="INSTANCE CONTENT" Style="{StaticResource HomeKicker}" Margin="10,0,0,0"
+                            <TextBlock Text="RESOURCES" Style="{StaticResource SectionTitle}" />
+                            <TextBlock Text="// 实例资源" Style="{StaticResource HomeKicker}" Margin="10,0,0,0"
                                        VerticalAlignment="Center" />
                         </StackPanel>
                         <Button HorizontalAlignment="Right" Style="{StaticResource GhostButton}" Height="25"
@@ -411,8 +401,8 @@
 
                     <Grid Margin="2,18,0,9">
                         <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="最近游玩" Style="{StaticResource SectionTitle}" />
-                            <TextBlock Text="RECENT" Style="{StaticResource HomeKicker}" Margin="10,0,0,0"
+                            <TextBlock Text="RECENT" Style="{StaticResource SectionTitle}" />
+                            <TextBlock Text="// 最近游玩" Style="{StaticResource HomeKicker}" Margin="10,0,0,0"
                                        VerticalAlignment="Center" />
                         </StackPanel>
                     </Grid>
@@ -488,8 +478,8 @@
                         <StackPanel>
                             <Grid>
                                 <StackPanel Orientation="Horizontal">
-                                    <TextBlock Text="角色外观" FontSize="12.5" FontWeight="SemiBold" />
-                                    <TextBlock Text="APPEARANCE" Style="{StaticResource HomeKicker}" Margin="9,0,0,0"
+                                    <TextBlock Text="APPEARANCE" FontSize="12.5" FontWeight="SemiBold" />
+                                    <TextBlock Text="// 角色外观" Style="{StaticResource HomeKicker}" Margin="9,0,0,0"
                                                VerticalAlignment="Center" />
                                 </StackPanel>
                                 <Button x:Name="SkinModelLabel" Style="{StaticResource GhostButton}" Content="Steve"
@@ -550,7 +540,7 @@
 
                     <Border Style="{StaticResource HomeCard}" Margin="0,12,0,0" Padding="14">
                         <StackPanel>
-                            <TextBlock Text="快捷工具" FontSize="11.5" FontWeight="SemiBold" />
+                            <TextBlock Text="TOOLS" FontSize="11.5" FontWeight="SemiBold" />
                             <Grid Margin="0,9,0,0">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*" />
