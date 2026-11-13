@@ -4,7 +4,7 @@
              xmlns:pages="clr-namespace:Vermilune.UI.Pages"
              FontFamily="{DynamicResource UiFont}"
              Foreground="{DynamicResource TextBrush}">
-    <Grid Margin="24,0,24,20">
+    <Grid Margin="24,0,24,20" Background="#A60D0912">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
@@ -162,11 +162,20 @@
                              Tag="留空使用自动名称" TextChanged="InstallName_Changed" />
                     <TextBlock Text="同一个游戏版本可以安装多份，用不同实例名区分。"
                                Style="{StaticResource MutedText}" Margin="0,5,0,0" TextWrapping="Wrap" />
-                    <Button x:Name="InstallButton" Style="{StaticResource PrimaryButton}" Height="40" Margin="0,14,0,0"
+                    <Button x:Name="NewInstanceButton" Style="{StaticResource SoftButton}" Height="38" Margin="0,14,0,0"
+                            FontSize="11.5" FontWeight="SemiBold" HorizontalAlignment="Stretch"
+                            Content="安装同一版本的新实例" Click="NewInstance_Click"
+                            Visibility="Collapsed" Opacity="0"
+                            RenderTransformOrigin="0.5,0.5">
+                        <Button.RenderTransform>
+                            <TransformGroup>
+                                <ScaleTransform x:Name="NewInstanceScale" ScaleX="0.94" ScaleY="0.94" />
+                                <TranslateTransform x:Name="NewInstanceTranslate" Y="6" />
+                            </TransformGroup>
+                        </Button.RenderTransform>
+                    </Button>
+                    <Button x:Name="InstallButton" Style="{StaticResource PrimaryButton}" Height="40" Margin="0,8,0,0"
                             Content="安装此版本" IsEnabled="False" Click="InstallVanilla_Click" />
-                    <Button x:Name="NewInstanceButton" Style="{StaticResource LinkButton}"
-                            Content="安装为同一版本的新实例" HorizontalAlignment="Left" Margin="0,8,0,0"
-                            Click="NewInstance_Click" />
                     <TextBlock x:Name="InstallHint" Text="需要联网下载；可以在设置中切换镜像源。" Style="{StaticResource MutedText}"
                                Margin="0,9,0,0" />
                 </StackPanel>

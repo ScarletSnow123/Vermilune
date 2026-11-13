@@ -84,6 +84,12 @@ public partial class LaunchPage : UserControl, IPage, INotifyPropertyChanged
     public string DateText { get => _dateText; private set { _dateText = value; OnPropertyChanged(); } }
     public string LogText { get => _logText; private set { _logText = value; OnPropertyChanged(); } }
     public bool HasLog { get => _hasLog; private set { _hasLog = value; OnPropertyChanged(); } }
+    public int ModCount { get => _modCount; private set { _modCount = value; OnPropertyChanged(); } }
+    public int ResourcePackCount { get => _resourcePackCount; private set { _resourcePackCount = value; OnPropertyChanged(); } }
+    public int SaveCount { get => _saveCount; private set { _saveCount = value; OnPropertyChanged(); } }
+    public int ShaderCount { get => _shaderCount; private set { _shaderCount = value; OnPropertyChanged(); } }
+    public int ScreenshotCount { get => _screenshotCount; private set { _screenshotCount = value; OnPropertyChanged(); } }
+    private int _modCount, _resourcePackCount, _saveCount, _shaderCount, _screenshotCount;
 
     public event PropertyChangedEventHandler? PropertyChanged;
     private void OnPropertyChanged([CallerMemberName] string? name = null)
@@ -92,6 +98,12 @@ public partial class LaunchPage : UserControl, IPage, INotifyPropertyChanged
     public void OnShown()
     {
         RefreshState();
+        Dispatcher.BeginInvoke(new Action(() =>
+        {
+            HomeContentScroll?.ScrollToTop();
+            HomeSideScroll?.ScrollToTop();
+            LaunchButton?.Focus();
+        }), DispatcherPriority.Loaded);
         if (LauncherApp.I.Settings.FirstRun)
         {
             LauncherApp.I.Settings.FirstRun = false;
@@ -404,12 +416,38 @@ public partial class LaunchPage : UserControl, IPage, INotifyPropertyChanged
         }
         var mods = v.ModCount > 0 ? $"{v.ModCount} 个 Mod" : "无 Mod";
         var instance = InstanceStore.Load(v.Id);
+        UpdateInstanceStats(v, instance);
         var memory = LauncherApp.I.DefaultMemoryFor(v, instance);
         var memoryText = instance.MemoryMb is null ? $"自动 {memory} MB 内存" : $"{memory} MB 内存";
         VersionMeta = $"{v.MinecraftVersion} · {v.LoaderBadge} · {mods} · {memoryText} · 建议 Java {v.JavaMajor}";
         LaunchSub = v.DisplayName;
         if (LauncherApp.I.Launch.IsRunning && LauncherApp.I.Launch.CurrentVersionId == v.Id)
             LaunchTitle = "游戏运行中";
+    }
+
+    private void UpdateInstanceStats(VersionInfo version, InstanceSettings instance)
+    {
+        ModCount = version.ModCount;
+        ResourcePackCount = SaveCount = ShaderCount = ScreenshotCount = 0;
+        try
+        {
+            var dir = LauncherApp.I.Versions.GetGameDir(version.Id, instance, LauncherApp.I.Settings.VersionIsolation);
+            if (Directory.Exists(dir))
+            {
+                var resourceDir = Path.Combine(dir, "resourcepacks");
+                if (Directory.Exists(resourceDir)) ResourcePackCount = Directory.EnumerateFiles(resourceDir, "*.zip").Count();
+                var savesDir = Path.Combine(dir, "saves");
+                if (Directory.Exists(savesDir)) SaveCount = Directory.EnumerateDirectories(savesDir).Count();
+                var shaderDir = Path.Combine(dir, "shaderpacks");
+                if (Directory.Exists(shaderDir)) ShaderCount = Directory.EnumerateFiles(shaderDir, "*.zip").Count();
+                var shotDir = Path.Combine(dir, "screenshots");
+                if (Directory.Exists(shotDir))
+                    ScreenshotCount = Directory.EnumerateFiles(shotDir)
+                        .Count(f => f.EndsWith(".png", StringComparison.OrdinalIgnoreCase) ||
+                                    f.EndsWith(".jpg", StringComparison.OrdinalIgnoreCase));
+            }
+        }
+        catch (Exception ex) { Log.Warn("统计实例资源失败：" + ex.Message); }
     }
 
     private static string AccountSubText(AccountSettings account)
@@ -668,7 +706,7 @@ public partial class LaunchPage : UserControl, IPage, INotifyPropertyChanged
             ProcessPriority = app.Settings.ProcessPriority,
             IpProtocol = app.Settings.IpProtocol,
             LauncherName = "Vermilune",
-            LauncherVersion = "1.2.31"
+            LauncherVersion = "1.2.32"
         };
 
         _cts?.Dispose();

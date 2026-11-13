@@ -47,7 +47,7 @@ public sealed class AppSettings
 {
     public string MinecraftDir { get; set; } = "";
     public string LastVersion { get; set; } = "";
-    public string Accent { get; set; } = "#E5B567";
+    public string Accent { get; set; } = "#E8A2BE";
     /// <summary>界面底色不透明度，0.25 - 1.0。</summary>
     public double UiOpacity { get; set; } = 0.96;
     public string BackgroundImage { get; set; } = "";
@@ -98,7 +98,7 @@ public sealed class AppSettings
     public void Normalize()
     {
         if (string.IsNullOrWhiteSpace(MinecraftDir)) MinecraftDir = AppPaths.DefaultMinecraftDir();
-        if (string.IsNullOrWhiteSpace(Accent) || !Accent.StartsWith('#')) Accent = "#E5B567";
+        if (string.IsNullOrWhiteSpace(Accent) || !Accent.StartsWith('#')) Accent = "#E8A2BE";
         UiOpacity = Math.Clamp(UiOpacity, 0.25, 1.0);
         BackgroundImageOpacity = Math.Clamp(BackgroundImageOpacity, 0.0, 1.0);
         CurseForgeApiKey = (CurseForgeApiKey ?? "").Trim();

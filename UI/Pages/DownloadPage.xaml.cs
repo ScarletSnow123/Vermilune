@@ -1,6 +1,8 @@
 using System.IO;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Media;
+using System.Windows.Media.Animation;
 using System.Windows.Threading;
 using Microsoft.Win32;
 using Vermilune.Core;
@@ -130,7 +132,34 @@ public partial class DownloadPage : UserControl, IPage
         InstallButton.IsEnabled = !_installing;
         if (NewInstanceButton is not null) NewInstanceButton.IsEnabled = !_installing && _selected is not null;
         UpdateInstallButtonLabel();
+        ShowNewInstanceButton(v.Installed);
         UpdateFabricOptions();
+    }
+
+    private void ShowNewInstanceButton(bool show)
+    {
+        if (NewInstanceButton is null) return;
+        if (!show)
+        {
+            NewInstanceButton.BeginAnimation(OpacityProperty, null);
+            NewInstanceButton.Visibility = Visibility.Collapsed;
+            return;
+        }
+
+        NewInstanceButton.Visibility = Visibility.Visible;
+        NewInstanceButton.Opacity = 0;
+        NewInstanceScale.ScaleX = 0.94;
+        NewInstanceScale.ScaleY = 0.94;
+        NewInstanceTranslate.Y = 6;
+        var ease = new CubicEase { EasingMode = EasingMode.EaseOut };
+        NewInstanceButton.BeginAnimation(OpacityProperty,
+            new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(180)) { EasingFunction = ease });
+        NewInstanceScale.BeginAnimation(ScaleTransform.ScaleXProperty,
+            new DoubleAnimation(0.94, 1, TimeSpan.FromMilliseconds(220)) { EasingFunction = ease });
+        NewInstanceScale.BeginAnimation(ScaleTransform.ScaleYProperty,
+            new DoubleAnimation(0.94, 1, TimeSpan.FromMilliseconds(220)) { EasingFunction = ease });
+        NewInstanceTranslate.BeginAnimation(TranslateTransform.YProperty,
+            new DoubleAnimation(6, 0, TimeSpan.FromMilliseconds(220)) { EasingFunction = ease });
     }
 
     private void UpdateInstallButtonLabel()
