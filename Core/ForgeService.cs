@@ -214,6 +214,115 @@ public sealed class ForgeService
         catch (Exception ex) { Log.Warn("清理失败的 Forge 版本失败：" + ex.Message); }
     }
 
+    private static readonly Dictionary<string, (List<ForgeVersionInfo> List, DateTime Time)> NeoCache = new(StringComparer.OrdinalIgnoreCase);
+    private static readonly object NeoCacheLock = new();
+
+    public async Task<List<ForgeVersionInfo>> GetNeoForgeVersionsAsync(string mcVersion, CancellationToken ct)
+    {
+        lock (NeoCacheLock)
+        {
+            if (NeoCache.TryGetValue(mcVersion, out var cached) && DateTime.UtcNow - cached.Time < TimeSpan.FromMinutes(20))
+                return cached.List.ToList();
+        }
+
+        var parts = mcVersion.Split('.');
+        if (parts.Length < 2) return new();
+        var prefix = parts[1] + "." + (parts.Length >= 3 ? parts[2] : "0") + ".";
+        var result = new List<ForgeVersionInfo>();
+        try
+        {
+            var xml = await HttpService.GetStringAsync(
+                "https://maven.neoforged.net/releases/net/neoforged/neoforge/maven-metadata.xml", ct);
+            foreach (Match match in Regex.Matches(xml, @"<version>([^<]+)</version>"))
+            {
+                var version = match.Groups[1].Value.Trim();
+                if (!version.StartsWith(prefix, StringComparison.OrdinalIgnoreCase)) continue;
+                if (!Version.TryParse(version, out var parsed)) continue;
+                result.Add(new ForgeVersionInfo { ForgeVersion = version, Latest = result.Count == 0 });
+            }
+        }
+        catch (Exception ex) { Log.Warn("NeoForge maven 版本获取失败：" + ex.Message); }
+
+        result = result.OrderByDescending(x => ParseForgeVersion(x.ForgeVersion)).Take(24).ToList();
+        lock (NeoCacheLock) NeoCache[mcVersion] = (result, DateTime.UtcNow);
+        return result;
+    }
+
+    public async Task<string> InstallNeoForgeAsync(string mcVersion, string neoVersion, string mcDir, string javaPath,
+        IProgress<DownloadProgress>? progress, CancellationToken ct)
+    {
+        EnsureLauncherProfiles(mcDir);
+        var versionsDir = Path.Combine(mcDir, "versions");
+        var before = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        if (Directory.Exists(versionsDir))
+            foreach (var versionDir in Directory.EnumerateDirectories(versionsDir))
+                before.Add(Path.GetFileName(versionDir));
+
+        var installerUrl = $"https://maven.neoforged.net/releases/net/neoforged/neoforge/{neoVersion}/neoforge-{neoVersion}-installer.jar";
+        var installerDir = Path.Combine(AppPaths.CacheDir, "installers");
+        Directory.CreateDirectory(installerDir);
+        var installer = Path.Combine(installerDir, $"neoforge-{neoVersion}-installer.jar");
+        if (!File.Exists(installer) || new FileInfo(installer).Length < 1024 * 100)
+        {
+            progress?.Report(new DownloadProgress { Stage = "下载 NeoForge 部署器", Detail = "NeoForge " + neoVersion });
+            await HttpService.DownloadFileAsync(installerUrl, installer, "", null, ct, 3);
+        }
+
+        var start = DateTime.UtcNow;
+        progress?.Report(new DownloadProgress { Stage = "运行 NeoForge 部署器", Detail = "正在写入 libraries 与版本 JSON，可能需要几分钟" });
+        var psi = new ProcessStartInfo
+        {
+            FileName = javaPath,
+            WorkingDirectory = mcDir,
+            UseShellExecute = false,
+            CreateNoWindow = true,
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            StandardOutputEncoding = Encoding.UTF8,
+            StandardErrorEncoding = Encoding.UTF8
+        };
+        psi.ArgumentList.Add("-jar");
+        psi.ArgumentList.Add(installer);
+        psi.ArgumentList.Add("--installClient");
+        psi.ArgumentList.Add(mcDir);
+
+        using var process = new Process { StartInfo = psi };
+        var log = new StringBuilder();
+        process.OutputDataReceived += (_, e) => { if (e.Data is not null) { lock (log) log.AppendLine(e.Data); progress?.Report(new DownloadProgress { Stage = "NeoForge 部署", Detail = Trim(e.Data) }); } };
+        process.ErrorDataReceived += (_, e) => { if (e.Data is not null) { lock (log) log.AppendLine(e.Data); progress?.Report(new DownloadProgress { Stage = "NeoForge 部署", Detail = Trim(e.Data) }); } };
+        if (!process.Start()) throw new InvalidOperationException("无法启动 NeoForge 部署器。");
+        process.BeginOutputReadLine();
+        process.BeginErrorReadLine();
+        using var cancelRegistration = ct.Register(() => { try { if (!process.HasExited) process.Kill(true); } catch { } });
+        var exited = await Task.Run(() => process.WaitForExit(15 * 60 * 1000), ct);
+        if (!exited)
+        {
+            try { process.Kill(true); } catch { }
+            throw new TimeoutException("NeoForge 部署器超过 15 分钟未结束，已终止。");
+        }
+        if (process.ExitCode != 0)
+        {
+            var detail = Tail(log.ToString());
+            throw new InvalidOperationException("NeoForge 部署器退出码 " + process.ExitCode + "：\n" + detail);
+        }
+
+        var candidate = Directory.Exists(versionsDir)
+            ? Directory.EnumerateDirectories(versionsDir)
+                .Select(Path.GetFileName)
+                .Where(name => name is not null && !before.Contains(name) &&
+                               name.Contains("neoforge", StringComparison.OrdinalIgnoreCase) &&
+                               File.Exists(Path.Combine(versionsDir, name, name + ".json")))
+                .OrderByDescending(name => Directory.GetLastWriteTime(Path.Combine(versionsDir, name!)))
+                .FirstOrDefault()
+            : null;
+        candidate ??= $"neoforge-{neoVersion}";
+        var json = Path.Combine(versionsDir, candidate, candidate + ".json");
+        if (!File.Exists(json))
+            throw new InvalidOperationException("NeoForge 部署器已结束，但没有找到生成的版本 JSON。");
+        progress?.Report(new DownloadProgress { Stage = "NeoForge 部署完成", Current = 1, Total = 1, Detail = candidate });
+        return candidate;
+    }
+
     private async Task<string> PrepareOfflineMappingsAsync(string mcVersion, string forgeVersion, string mcDir,
         string installer, IProgress<DownloadProgress>? progress, CancellationToken ct)
     {

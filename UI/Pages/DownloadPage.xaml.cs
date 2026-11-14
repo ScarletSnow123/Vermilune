@@ -23,6 +23,7 @@ public partial class DownloadPage : UserControl, IPage
     private List<ForgeVersionInfo> _forgeVersions = new();
     private string _detailFabricMc = "";
     private string _detailForgeMc = "";
+    private string _detailNeoForgeMc = "";
 
     public DownloadPage()
     {
@@ -172,7 +173,13 @@ public partial class DownloadPage : UserControl, IPage
         }
         InstallButton.Content = _selected.Installed ? "补齐 / 重新安装" : "安装此版本";
         if (VanillaLoaderCombo?.SelectedItem is ComboBoxItem item && (item.Tag as string) is { Length: > 0 } loader)
-            InstallButton.Content = loader == "fabric" ? "下载本体并部署 Fabric" : "下载本体并部署 Forge";
+            InstallButton.Content = loader switch
+            {
+                "fabric" => "下载本体并部署 Fabric",
+                "forge" => "下载本体并部署 Forge",
+                "neoforge" => "下载本体并部署 NeoForge",
+                _ => "下载本体并部署"
+            };
     }
 
     private void InstallName_Changed(object sender, TextChangedEventArgs e) => UpdateInstallButtonLabel();
@@ -316,7 +323,13 @@ public partial class DownloadPage : UserControl, IPage
         if (_selected is null || _installing) return;
         var version = _selected;
         var loader = (VanillaLoaderCombo.SelectedItem as ComboBoxItem)?.Tag as string ?? "";
-        var loaderName = loader == "fabric" ? "Fabric" : loader == "forge" ? "Forge" : "";
+        var loaderName = loader switch
+        {
+            "fabric" => "Fabric",
+            "forge" => "Forge",
+            "neoforge" => "NeoForge",
+            _ => ""
+        };
         var customName = InstallNameBox?.Text.Trim() ?? "";
         if (customName.Length > 0)
         {
@@ -381,6 +394,19 @@ public partial class DownloadPage : UserControl, IPage
                            ?? throw new InvalidOperationException("部署 Forge 需要对应版本的 Java，请先在设置里指定。");
                 installedLoader = await LauncherApp.I.Forge.InstallAsync(version.Id, forge.ForgeVersion, LauncherApp.I.MinecraftDir, java.Path, progress, _cts.Token);
             }
+            else if (loader == "neoforge")
+            {
+                var chosen = (NeoForgeDetailCombo.SelectedItem as ForgeVersionInfo)?.ForgeVersion ?? "";
+                reporter.Report(new DownloadProgress { Stage = "部署 NeoForge", Detail = string.IsNullOrEmpty(chosen) ? "正在获取最新版本" : "NeoForge " + chosen });
+                var versions = await LauncherApp.I.Forge.GetNeoForgeVersionsAsync(version.Id, _cts.Token);
+                var neo = versions.FirstOrDefault(x => x.ForgeVersion == chosen)
+                          ?? versions.FirstOrDefault()
+                          ?? throw new InvalidOperationException("没有找到该 Minecraft 版本的 NeoForge。");
+                await LauncherApp.I.EnsureJavaAsync();
+                var java = LauncherApp.I.Java.Pick(VersionResolver.InferJavaMajor(version.Id, ""), LauncherApp.I.Settings.JavaPath)
+                           ?? throw new InvalidOperationException("部署 NeoForge 需要对应版本的 Java，请先在设置里指定。");
+                installedLoader = await LauncherApp.I.Forge.InstallNeoForgeAsync(version.Id, neo.ForgeVersion, LauncherApp.I.MinecraftDir, java.Path, progress, _cts.Token);
+            }
 
             var finalId = string.IsNullOrEmpty(installedLoader) ? version.Id : installedLoader;
             if (customName.Length > 0)
@@ -431,8 +457,10 @@ public partial class DownloadPage : UserControl, IPage
         var loader = (VanillaLoaderCombo?.SelectedItem as ComboBoxItem)?.Tag as string ?? "";
         FabricOptions.Visibility = loader == "fabric" ? Visibility.Visible : Visibility.Collapsed;
         ForgeOptions.Visibility = loader == "forge" ? Visibility.Visible : Visibility.Collapsed;
+        NeoForgeOptions.Visibility = loader == "neoforge" ? Visibility.Visible : Visibility.Collapsed;
         if (loader == "fabric" && _selected is not null) _ = LoadDetailFabricAsync(_selected.Id);
         else if (loader == "forge" && _selected is not null) _ = LoadDetailForgeAsync(_selected.Id);
+        else if (loader == "neoforge" && _selected is not null) _ = LoadDetailNeoForgeAsync(_selected.Id);
     }
 
     private async Task LoadDetailForgeAsync(string mc)
@@ -461,6 +489,35 @@ public partial class DownloadPage : UserControl, IPage
             _detailForgeMc = "";
             ForgeDetailStatus.Text = "Forge 版本加载失败：" + ex.Message;
             Log.Warn("Forge 版本列表加载失败：" + ex.Message);
+        }
+    }
+
+    private async Task LoadDetailNeoForgeAsync(string mc)
+    {
+        if (_detailNeoForgeMc == mc && NeoForgeDetailCombo.Items.Count > 0) return;
+        _detailNeoForgeMc = mc;
+        NeoForgeDetailCombo.ItemsSource = null;
+        NeoForgeDetailStatus.Text = "正在加载 NeoForge 版本列表…";
+        using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(20));
+        try
+        {
+            var list = await LauncherApp.I.Forge.GetNeoForgeVersionsAsync(mc, timeout.Token);
+            NeoForgeDetailCombo.ItemsSource = list;
+            NeoForgeDetailCombo.SelectedItem = list.FirstOrDefault();
+            NeoForgeDetailStatus.Text = list.Count == 0
+                ? "没有找到该 Minecraft 版本的 NeoForge。"
+                : $"{list.Count} 个版本，默认选择最新版。";
+        }
+        catch (OperationCanceledException)
+        {
+            _detailNeoForgeMc = "";
+            NeoForgeDetailStatus.Text = "NeoForge 版本列表加载超时。";
+        }
+        catch (Exception ex)
+        {
+            _detailNeoForgeMc = "";
+            NeoForgeDetailStatus.Text = "NeoForge 版本加载失败：" + ex.Message;
+            Log.Warn("NeoForge 版本列表加载失败：" + ex.Message);
         }
     }
 
