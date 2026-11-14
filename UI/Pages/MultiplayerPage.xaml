@@ -82,10 +82,9 @@
                                         <TextBox x:Name="OpenFrpAddressBox" Style="{StaticResource InputBox}" Height="32" />
                                     </StackPanel>
                                 </Grid>
-                                <TextBlock Text="服务端始终运行在你的电脑上；OpenFrp 只转发 TCP 流量，不运行服务端、不保存世界。先在 console.openfrp.net 创建 TCP 隧道，本地地址填 127.0.0.1，本地端口填 Minecraft 端口（默认 25565），再填访问密钥、隧道 ID 和公网地址。"
-                                           Style="{StaticResource MutedText}" Margin="0,6,0,0" TextWrapping="Wrap" />
-                                <Button Style="{StaticResource ButtonBase}" Height="30" Content="打开 OpenFrp 控制台"
-                                        HorizontalAlignment="Left" Margin="0,8,0,0" Click="OpenFrpSite_Click" />
+                                <Button Style="{StaticResource PrimaryButton}" Height="34"
+                                        Content="打开 OpenFrp 官网  →"
+                                        HorizontalAlignment="Left" Margin="0,10,0,0" Click="OpenFrpSite_Click" />
                             </StackPanel>
 
                             <StackPanel x:Name="FrpCustomPanel" Visibility="Collapsed">
