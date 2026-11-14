@@ -83,6 +83,11 @@ public sealed class AppSettings
     public string MultiplayerPublicNode { get; set; } = "tcp://easytier-us.slarker.me:11010,tcp://225284.xyz:11010";
     public int ServerMemoryMb { get; set; } = 2048;
     public int ServerPort { get; set; } = 25565;
+    public bool UseFrp { get; set; }
+    public string FrpServer { get; set; } = "";
+    public int FrpServerPort { get; set; } = 7000;
+    public string FrpToken { get; set; } = "";
+    public int FrpRemotePort { get; set; } = 25565;
 
     public string BackgroundMode { get; set; } = "default"; // default | custom | wallpaper
     public string BackgroundImage { get; set; } = "";
@@ -162,6 +167,8 @@ public sealed class AppSettings
             BackgroundMode = "default";
         ServerMemoryMb = Math.Clamp(ServerMemoryMb, 1024, 16384);
         ServerPort = Math.Clamp(ServerPort, 1024, 65535);
+        FrpServerPort = Math.Clamp(FrpServerPort, 1, 65535);
+        FrpRemotePort = Math.Clamp(FrpRemotePort, 1, 65535);
         BackgroundImageOpacity = Math.Clamp(BackgroundImageOpacity, 0.0, 1.0);
         CurseForgeApiKey = (CurseForgeApiKey ?? "").Trim();
         CurseForgeProxyUrl = (CurseForgeProxyUrl ?? "").Trim().TrimEnd('/');

@@ -5,3 +5,7 @@ https://github.com/lontivero/Open.NAT
 UPnP port mapping library distributed via NuGet.
 
 Minecraft server files are downloaded from Mojang / Fabric meta on demand.
+
+FRP (Apache-2.0)
+https://github.com/fatedier/frp
+The Windows frpc component is downloaded on demand at runtime.

@@ -37,7 +37,11 @@ public partial class MainWindow : Window
         _toastTimer.Tick += (_, _) => HideToast();
         PreviewKeyDown += OnPreviewKeyDown;
         Closing += OnClosing;
-        Closed += (_, _) => LauncherApp.I.Server.Dispose();
+                Closed += (_, _) =>
+        {
+            LauncherApp.I.Frp.Stop();
+            LauncherApp.I.Server.Dispose();
+        };
         StateChanged += (_, _) => { };
     }
 

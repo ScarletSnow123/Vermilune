@@ -39,11 +39,23 @@ public partial class MultiplayerPage : UserControl, IPage
             : serverVersions.FirstOrDefault();
         ServerMemoryBox.Text = s.ServerMemoryMb.ToString();
         ServerPortBox.Text = s.ServerPort.ToString();
+        UseFrpCheck.IsChecked = s.UseFrp;
+        FrpServerBox.Text = s.FrpServer;
+        FrpPortBox.Text = s.FrpServerPort.ToString();
+        FrpTokenBox.Text = s.FrpToken;
+        FrpRemotePortBox.Text = s.FrpRemotePort.ToString();
+        FrpPanel.Visibility = s.UseFrp ? Visibility.Visible : Visibility.Collapsed;
         ServerStartButton.IsEnabled = !LauncherApp.I.Server.IsRunning;
         ServerStopButton.IsEnabled = LauncherApp.I.Server.IsRunning;
         ServerStatusText.Text = LauncherApp.I.Server.IsRunning ? "服务端运行中。" : "未启动。";
         if (LauncherApp.I.Server.IsRunning) _serverTimer.Start();
         UpdateAddress();
+    }
+
+    private void UseFrp_Checked(object sender, RoutedEventArgs e)
+    {
+        if (FrpPanel is not null)
+            FrpPanel.Visibility = UseFrpCheck.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;
     }
 
     private async void StartServer_Click(object sender, RoutedEventArgs e)
@@ -62,9 +74,23 @@ public partial class MultiplayerPage : UserControl, IPage
         }
         if (!int.TryParse(ServerMemoryBox.Text.Trim(), out var memory)) memory = 2048;
         if (!int.TryParse(ServerPortBox.Text.Trim(), out var port)) port = 25565;
+        if (!int.TryParse(FrpPortBox.Text.Trim(), out var frpPort)) frpPort = 7000;
+        if (!int.TryParse(FrpRemotePortBox.Text.Trim(), out var frpRemotePort)) frpRemotePort = 25565;
+        var useFrp = UseFrpCheck.IsChecked == true;
+        if (useFrp && (string.IsNullOrWhiteSpace(FrpServerBox.Text.Trim()) || string.IsNullOrWhiteSpace(FrpTokenBox.Text.Trim())))
+        {
+            MessageDialog.Show(Window.GetWindow(this), "FRP 配置不完整",
+                "启用 FRP 中继时需要填写服务器地址和 Token。", "知道了", danger: true);
+            return;
+        }
         var s = LauncherApp.I.Settings;
         s.ServerMemoryMb = Math.Clamp(memory, 1024, 16384);
         s.ServerPort = Math.Clamp(port, 1024, 65535);
+        s.UseFrp = useFrp;
+        s.FrpServer = FrpServerBox.Text.Trim();
+        s.FrpServerPort = Math.Clamp(frpPort, 1, 65535);
+        s.FrpToken = FrpTokenBox.Text.Trim();
+        s.FrpRemotePort = Math.Clamp(frpRemotePort, 1, 65535);
         LauncherApp.I.Save();
 
         ServerStartButton.IsEnabled = false;
@@ -76,8 +102,18 @@ public partial class MultiplayerPage : UserControl, IPage
             await LauncherApp.I.Server.StartAsync(version, s.ServerMemoryMb, s.ServerPort, true,
                 ServerWhitelistCheck.IsChecked == true, progress, CancellationToken.None);
             ServerStopButton.IsEnabled = true;
-            ServerStatusText.Text = "服务端启动中，正在尝试 UPnP 端口映射…";
             _serverTimer.Start();
+            if (s.UseFrp)
+            {
+                ServerStatusText.Text = "服务端已启动，正在连接 FRP 中继…";
+                await LauncherApp.I.Frp.StartAsync(s.FrpServer, s.FrpServerPort, s.FrpToken,
+                    s.ServerPort, s.FrpRemotePort, progress, CancellationToken.None);
+                ServerStatusText.Text = "服务端与 FRP 中继已启动。";
+            }
+            else
+            {
+                ServerStatusText.Text = "服务端启动中，正在检查端口…";
+            }
             UpdateAddress();
         }
         catch (Exception ex)
@@ -93,6 +129,7 @@ public partial class MultiplayerPage : UserControl, IPage
     {
         ServerStopButton.IsEnabled = false;
         _serverTimer.Stop();
+        LauncherApp.I.Frp.Stop();
         ServerStatusText.Text = "正在关闭服务器…";
         await LauncherApp.I.Server.StopAsync();
         ServerStartButton.IsEnabled = true;
@@ -151,9 +188,11 @@ public partial class MultiplayerPage : UserControl, IPage
             return;
         }
 
-        var ipv4 = server.PublicAddress ?? server.LocalAddress;
+        var s = LauncherApp.I.Settings;
+        var frpActive = s.UseFrp && LauncherApp.I.Frp.IsRunning;
+        var ipv4 = frpActive ? s.FrpServer : (server.PublicAddress ?? server.LocalAddress);
         var ipv6 = server.Ipv6Address;
-        var portValue = server.Port > 0 ? server.Port : LauncherApp.I.Settings.ServerPort;
+        var portValue = frpActive ? s.FrpRemotePort : (server.Port > 0 ? server.Port : s.ServerPort);
 
         if (!string.IsNullOrWhiteSpace(ipv4))
         {
@@ -172,13 +211,15 @@ public partial class MultiplayerPage : UserControl, IPage
         Ipv6Text.Visibility = string.IsNullOrWhiteSpace(ipv6) ? Visibility.Collapsed : Visibility.Visible;
         CopyIpv6Button.Visibility = string.IsNullOrWhiteSpace(ipv6) ? Visibility.Collapsed : Visibility.Visible;
 
-        var warning = string.IsNullOrWhiteSpace(server.PublicAddress) && string.IsNullOrWhiteSpace(ipv6) ||
+        var warning = (s.UseFrp && !frpActive) ||
+                      (!frpActive && string.IsNullOrWhiteSpace(server.PublicAddress) && string.IsNullOrWhiteSpace(ipv6)) ||
                       (server.MappingStatus?.Contains("失败", StringComparison.OrdinalIgnoreCase) ?? false) ||
                       (server.MappingStatus?.Contains("内网", StringComparison.OrdinalIgnoreCase) ?? false) ||
                       (server.MappingStatus?.Contains("CGNAT", StringComparison.OrdinalIgnoreCase) ?? false) ||
                       (server.MappingStatus?.Contains("手动", StringComparison.OrdinalIgnoreCase) ?? false);
         MappingCallout.Visibility = Visibility.Visible;
-        MappingTitle.Text = warning ? "无法从公网连接" : (string.IsNullOrWhiteSpace(server.PublicAddress) ? "可使用 IPv6 直连" : "端口映射成功");
+        MappingTitle.Text = warning ? "无法从公网连接" : (frpActive ? "已通过 FRP 发布" :
+            (string.IsNullOrWhiteSpace(server.PublicAddress) ? "可使用 IPv6 直连" : "端口映射成功"));
         MappingTitle.Foreground = (Brush)FindResource(warning ? "DangerBrush" : "AccentBrush");
         MappingIcon.Data = (Geometry)FindResource(warning ? "IconWarning" : "IconCheck");
         MappingIcon.Stroke = (Brush)FindResource(warning ? "DangerBrush" : "AccentBrush");
@@ -190,11 +231,13 @@ public partial class MultiplayerPage : UserControl, IPage
             : Color.FromArgb(0x40, 0x8F, 0xD6, 0xB4));
         MappingText.Text = string.Join("\n", new[]
         {
-            server.FirewallStatus,
-            server.MappingStatus,
-            string.IsNullOrWhiteSpace(server.PublicAddress)
+            frpActive ? "FRP 客户端已连接，朋友连接上方服务器地址。" : null,
+            s.UseFrp && !frpActive ? ("FRP 未连接：" + (LauncherApp.I.Frp.LastError ?? "请检查服务器地址、Token 和 frps 状态。")) : null,
+            frpActive ? null : server.FirewallStatus,
+            frpActive ? null : server.MappingStatus,
+            frpActive ? null : (string.IsNullOrWhiteSpace(server.PublicAddress)
                 ? (string.IsNullOrWhiteSpace(ipv6) ? "未获取到公网 IPv4 或 IPv6 地址。" : "没有可用的公网 IPv4；如果双方都有 IPv6，可使用上方 IPv6 地址。")
-                : "公网 IPv4 地址已获取。"
+                : "公网 IPv4 地址已获取。")
         }.Where(x => !string.IsNullOrWhiteSpace(x)));
     }
 }
