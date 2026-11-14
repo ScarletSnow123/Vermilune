@@ -16,6 +16,7 @@ public sealed class LauncherApp
     public DownloadService Downloads { get; } = new();
     public ForgeService Forge { get; } = new();
     public QuiltService Quilt { get; } = new();
+    public MultiplayerService Multiplayer { get; } = new();
     public ModrinthService Modrinth { get; } = new();
     public CurseForgeService CurseForge { get; } = new();
     public CrashAnalysis? LastAnalysis { get; set; }

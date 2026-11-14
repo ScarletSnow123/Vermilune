@@ -37,6 +37,7 @@ public partial class MainWindow : Window
         _toastTimer.Tick += (_, _) => HideToast();
         PreviewKeyDown += OnPreviewKeyDown;
         Closing += OnClosing;
+        Closed += (_, _) => LauncherApp.I.Multiplayer.Stop();
         StateChanged += (_, _) => { };
     }
 
@@ -449,6 +450,7 @@ public partial class MainWindow : Window
             "launch" => new LaunchPage(),
             "download" => new DownloadPage(),
             "versions" => new VersionsPage(),
+            "multiplayer" => new MultiplayerPage(),
             "settings" => new SettingsPage(),
             "error" => new ErrorPage(),
             "more" => new MorePage(),
@@ -461,6 +463,7 @@ public partial class MainWindow : Window
         NavLaunch.IsChecked = key == "launch";
         NavDownload.IsChecked = key == "download";
         NavVersions.IsChecked = key == "versions";
+        NavMultiplayer.IsChecked = key == "multiplayer";
         NavSettings.IsChecked = key == "settings";
         NavError.IsChecked = key == "error";
         NavMore.IsChecked = key == "more";

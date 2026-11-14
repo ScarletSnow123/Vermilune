@@ -77,6 +77,11 @@ public sealed class AppSettings
     public string AvatarStyle { get; set; } = "minimal";
     /// <summary>界面底色不透明度，0.25 - 1.0。</summary>
     public double UiOpacity { get; set; } = 0.96;
+    public string MultiplayerRoom { get; set; } = "";
+    public string MultiplayerSecret { get; set; } = "";
+    public string MultiplayerIp { get; set; } = "10.126.126.1";
+    public string MultiplayerPublicNode { get; set; } = "tcp://public.easytier.cn:11010";
+
     public string BackgroundMode { get; set; } = "default"; // default | custom | wallpaper
     public string BackgroundImage { get; set; } = "";
     public double BackgroundImageOpacity { get; set; } = 0.34;
