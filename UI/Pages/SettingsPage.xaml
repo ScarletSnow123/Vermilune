@@ -197,7 +197,8 @@
                             </Grid>
                         </Border>
 
-                        <Border Style="{StaticResource SettingRow}" BorderThickness="0">
+                        <Border x:Name="CustomBackgroundPanel" Style="{StaticResource SettingRow}"
+                                BorderThickness="0" Visibility="Collapsed">
                             <Grid>
                                 <StackPanel>
                                     <TextBlock Text="自定义背景" FontSize="12.5" FontWeight="SemiBold" />

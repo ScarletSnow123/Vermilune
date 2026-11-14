@@ -60,6 +60,7 @@ public partial class SettingsPage : UserControl, IPage
             BgModeDefault.IsChecked = bgMode == "default";
             BgModeCustom.IsChecked = bgMode == "custom";
             BgModeWallpaper.IsChecked = bgMode == "wallpaper";
+            CustomBackgroundPanel.Visibility = bgMode == "custom" ? Visibility.Visible : Visibility.Collapsed;
             BgPathText.Text = bgMode switch
             {
                 "wallpaper" => "跟随 Wallpaper Engine 当前壁纸；未检测到时自动隐藏背景。",
