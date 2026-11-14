@@ -78,8 +78,30 @@
                         <TextBlock x:Name="AddressText" Text="开服后显示公网或本地地址。"
                                    FontFamily="{DynamicResource MonoFont}" FontSize="16"
                                    Foreground="{DynamicResource AccentBrush}" Margin="0,10,0,0" />
-                        <TextBlock x:Name="MappingText" Text="正在等待开服。" Style="{StaticResource MutedText}"
-                                   Margin="0,6,0,0" TextWrapping="Wrap" />
+                        <Border x:Name="MappingCallout" Visibility="Collapsed" CornerRadius="7"
+                                Padding="11" Margin="0,10,0,0" BorderThickness="1"
+                                Background="#22EB6B6B" BorderBrush="#55EB6B6B">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <Border Width="34" Height="34" CornerRadius="8" Background="#33EB6B6B"
+                                        VerticalAlignment="Top">
+                                    <Path x:Name="MappingIcon" Data="{DynamicResource IconWarning}"
+                                          Width="17" Height="17" Stretch="Uniform"
+                                          Stroke="{DynamicResource DangerBrush}" StrokeThickness="1.7"
+                                          Fill="Transparent" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                </Border>
+                                <StackPanel Grid.Column="1" Margin="10,0,0,0">
+                                    <TextBlock x:Name="MappingTitle" Text="无法从公网连接" FontSize="12"
+                                               FontWeight="SemiBold" Foreground="{DynamicResource DangerBrush}" />
+                                    <TextBlock x:Name="MappingText" Text="" FontSize="10.5"
+                                               Foreground="{DynamicResource TextSubBrush}"
+                                               Margin="0,4,0,0" TextWrapping="Wrap" />
+                                </StackPanel>
+                            </Grid>
+                        </Border>
                         <Button Style="{StaticResource ButtonBase}" Height="32" Content="复制地址"
                                 HorizontalAlignment="Left" Margin="0,10,0,0" Click="Copy_Click" />
                     </StackPanel>

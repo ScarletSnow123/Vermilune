@@ -1,5 +1,6 @@
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Media;
 using Vermilune.Core;
 using Vermilune.UI.Dialogs;
 
@@ -137,17 +138,36 @@ public partial class MultiplayerPage : UserControl, IPage
         if (!server.IsRunning)
         {
             AddressText.Text = "开服后显示公网或本地地址。";
-            MappingText.Text = "未启动服务端。";
+            MappingCallout.Visibility = Visibility.Collapsed;
             return;
         }
         AddressText.Text = string.IsNullOrWhiteSpace(address)
             ? "正在获取地址…"
             : $"{address}:{port}";
+
+        var warning = string.IsNullOrWhiteSpace(server.PublicAddress) ||
+                      (server.MappingStatus?.Contains("失败", StringComparison.OrdinalIgnoreCase) ?? false) ||
+                      (server.MappingStatus?.Contains("内网", StringComparison.OrdinalIgnoreCase) ?? false) ||
+                      (server.MappingStatus?.Contains("CGNAT", StringComparison.OrdinalIgnoreCase) ?? false) ||
+                      (server.MappingStatus?.Contains("手动", StringComparison.OrdinalIgnoreCase) ?? false);
+        MappingCallout.Visibility = Visibility.Visible;
+        MappingTitle.Text = warning ? "无法从公网连接" : "端口映射成功";
+        MappingTitle.Foreground = (Brush)FindResource(warning ? "DangerBrush" : "AccentBrush");
+        MappingIcon.Data = (Geometry)FindResource(warning ? "IconWarning" : "IconCheck");
+        MappingIcon.Stroke = (Brush)FindResource(warning ? "DangerBrush" : "AccentBrush");
+        MappingCallout.Background = new SolidColorBrush(warning
+            ? Color.FromArgb(0x22, 0xEB, 0x6B, 0x6B)
+            : Color.FromArgb(0x1A, 0x8F, 0xD6, 0xB4));
+        MappingCallout.BorderBrush = new SolidColorBrush(warning
+            ? Color.FromArgb(0x55, 0xEB, 0x6B, 0x6B)
+            : Color.FromArgb(0x40, 0x8F, 0xD6, 0xB4));
         MappingText.Text = string.Join("\n", new[]
         {
             server.FirewallStatus,
             server.MappingStatus,
-            string.IsNullOrWhiteSpace(server.PublicAddress) ? "未获取到公网地址。" : "公网地址已获取。"
+            string.IsNullOrWhiteSpace(server.PublicAddress)
+                ? "未获取到公网地址，朋友无法通过公网直连。"
+                : "公网地址已获取。"
         }.Where(x => !string.IsNullOrWhiteSpace(x)));
     }
 }
