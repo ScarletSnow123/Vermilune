@@ -159,10 +159,18 @@ public partial class MultiplayerPage : UserControl, IPage
             using var stream = new FileStream(log, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
             using var reader = new StreamReader(stream);
             var text = reader.ReadToEnd();
-            var matches = Regex.Matches(text, @"(?:Started serving on|Local game hosted on port)\s+(\d{2,5})",
-                RegexOptions.IgnoreCase);
-            if (matches.Count == 0) return;
-            var port = int.Parse(matches[^1].Groups[1].Value);
+            var patterns = new[]
+            {
+                @"(?:Started serving on|Local game hosted on port)\s+(\d{2,5})",
+                @"端口号为\s*\[?(\d{2,5})\]?",
+                @"端口号\D{0,6}(\d{2,5})"
+            };
+            var match = patterns
+                .SelectMany(p => Regex.Matches(text, p, RegexOptions.IgnoreCase).Cast<Match>())
+                .OrderBy(m => m.Index)
+                .LastOrDefault();
+            if (match is null) return;
+            var port = int.Parse(match.Groups[1].Value);
             if (port == _lanPort) return;
             _lanPort = port;
             LanHint.Text = "已检测到局域网端口 " + port + "。";
