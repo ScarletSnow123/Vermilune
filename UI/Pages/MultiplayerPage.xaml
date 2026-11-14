@@ -50,7 +50,7 @@
                         <CheckBox x:Name="ServerWhitelistCheck" Content="启用白名单（开启后需要在 whitelist.json 中添加玩家）"
                                   FontSize="10.5" Foreground="{DynamicResource TextMutedBrush}" Margin="0,6,0,0" />
 
-                        <CheckBox x:Name="UseFrpCheck" Content="通过 FRP 公共中继转发（可选，服务端仍在本机）"
+                        <CheckBox x:Name="UseFrpCheck" Content="通过 FRP 公共中继转发"
                                   FontSize="10.5" Foreground="{DynamicResource TextMutedBrush}" Margin="0,10,0,0"
                                   Checked="UseFrp_Checked" Unchecked="UseFrp_Checked" />
                         <StackPanel x:Name="FrpPanel" Visibility="Collapsed" Margin="0,8,0,0">
