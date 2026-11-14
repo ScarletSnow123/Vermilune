@@ -20,7 +20,7 @@
                 <Border Style="{StaticResource Card}">
                     <StackPanel>
                         <TextBlock Text="房间设置" Style="{StaticResource SectionTitle}" />
-                        <TextBlock Text="房主和朋友需要填写相同的房间码和密码；虚拟 IP 不能重复。"
+                        <TextBlock Text="房主和朋友填写相同的房间码和密码，虚拟 IP 会自动分配。"
                                    Style="{StaticResource MutedText}" Margin="0,6,0,0" />
 
                         <Grid Margin="0,14,0,0">
@@ -41,23 +41,15 @@
                             </StackPanel>
                         </Grid>
 
-                        <Grid Margin="0,12,0,0">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="14" />
-                                <ColumnDefinition Width="*" />
-                            </Grid.ColumnDefinitions>
-                            <StackPanel>
-                                <TextBlock Text="我的虚拟 IP" Style="{StaticResource FormLabel}" />
-                                <TextBox x:Name="IpBox" Style="{StaticResource InputBox}" Height="34"
-                                         Tag="房主 10.126.126.1，朋友 .2" />
-                            </StackPanel>
-                            <StackPanel Grid.Column="2">
+                        <Expander Header="高级设置" Margin="0,12,0,0">
+                            <StackPanel Margin="0,8,0,0">
                                 <TextBlock Text="公共节点" Style="{StaticResource FormLabel}" />
                                 <TextBox x:Name="NodeBox" Style="{StaticResource InputBox}" Height="34"
                                          Tag="tcp://easytier-us.slarker.me:11010" />
+                                <TextBlock Text="虚拟 IP 会自动分配；一般无需修改公共节点。"
+                                           Style="{StaticResource MutedText}" Margin="0,6,0,0" TextWrapping="Wrap" />
                             </StackPanel>
-                        </Grid>
+                        </Expander>
 
                         <StackPanel Orientation="Horizontal" Margin="0,16,0,0">
                             <Button x:Name="StartButton" Style="{StaticResource PrimaryButton}" Height="36"

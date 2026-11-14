@@ -68,7 +68,7 @@ public sealed class MultiplayerService : IDisposable
         }
     }
 
-    public async Task StartAsync(string roomCode, string password, string virtualIp, string publicNode,
+    public async Task StartAsync(string roomCode, string password, string publicNode,
         IProgress<DownloadProgress>? progress, CancellationToken ct)
     {
         Stop();
@@ -77,8 +77,6 @@ public sealed class MultiplayerService : IDisposable
         if (!File.Exists(core)) throw new InvalidOperationException("EasyTier 组件不存在。");
 
         var network = "Vermilune-" + roomCode.Trim();
-        var ip = virtualIp.Trim();
-        if (!ip.Contains('/')) ip += "/24";
         var node = string.IsNullOrWhiteSpace(publicNode) ? DefaultPublicNode : publicNode.Trim();
 
         var psi = new ProcessStartInfo
@@ -94,7 +92,7 @@ public sealed class MultiplayerService : IDisposable
         };
         foreach (var arg in new[]
                  {
-                     "-i", ip,
+                     "-d",
                      "--network-name", network,
                      "--network-secret", password,
                      "-p", node
@@ -126,7 +124,7 @@ public sealed class MultiplayerService : IDisposable
         };
         if (!process.Start()) throw new InvalidOperationException("无法启动联机组件。");
         _process = process;
-        VirtualIp = ip.Split('/')[0];
+        VirtualIp = null;
         process.BeginOutputReadLine();
         process.BeginErrorReadLine();
         await Task.Delay(1200, ct);
@@ -138,7 +136,7 @@ public sealed class MultiplayerService : IDisposable
                 throw new InvalidOperationException(LastError);
             }
             process.Dispose();
-            _process = StartElevated(core, ToolDirectory, ip, network, password, node);
+            _process = StartElevated(core, ToolDirectory, network, password, node);
             await Task.Delay(800, ct);
         }
         if (_process.HasExited)
@@ -148,7 +146,7 @@ public sealed class MultiplayerService : IDisposable
         }
     }
 
-    private static Process StartElevated(string core, string workdir, string ip, string network, string secret, string node)
+    private static Process StartElevated(string core, string workdir, string network, string secret, string node)
     {
         if (!IsAdministrator())
         {
@@ -160,7 +158,7 @@ public sealed class MultiplayerService : IDisposable
                 Verb = "runas",
                 WindowStyle = ProcessWindowStyle.Hidden
             };
-            foreach (var arg in new[] { "-i", ip, "--network-name", network, "--network-secret", secret, "-p", node })
+            foreach (var arg in new[] { "-d", "--network-name", network, "--network-secret", secret, "-p", node })
                 psi.ArgumentList.Add(arg);
             try
             {
@@ -179,7 +177,7 @@ public sealed class MultiplayerService : IDisposable
             UseShellExecute = false,
             CreateNoWindow = true
         };
-        foreach (var arg in new[] { "-i", ip, "--network-name", network, "--network-secret", secret, "-p", node })
+        foreach (var arg in new[] { "-d", "--network-name", network, "--network-secret", secret, "-p", node })
             direct.ArgumentList.Add(arg);
         return Process.Start(direct) ?? throw new InvalidOperationException("无法启动联机组件。");
     }
@@ -192,6 +190,44 @@ public sealed class MultiplayerService : IDisposable
             return new WindowsPrincipal(identity).IsInRole(WindowsBuiltInRole.Administrator);
         }
         catch { return false; }
+    }
+
+    public async Task<string?> RefreshVirtualIpAsync(CancellationToken ct = default)
+    {
+        if (!IsRunning) return null;
+        try
+        {
+            var cli = Path.Combine(ToolDirectory, "easytier-cli.exe");
+            if (!File.Exists(cli)) return null;
+            var psi = new ProcessStartInfo
+            {
+                FileName = cli,
+                WorkingDirectory = ToolDirectory,
+                UseShellExecute = false,
+                CreateNoWindow = true,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                StandardOutputEncoding = Encoding.UTF8,
+                StandardErrorEncoding = Encoding.UTF8
+            };
+            psi.ArgumentList.Add("node");
+            using var process = Process.Start(psi);
+            if (process is null) return null;
+            using var timeout = CancellationTokenSource.CreateLinkedTokenSource(ct);
+            timeout.CancelAfter(TimeSpan.FromSeconds(4));
+            var output = await process.StandardOutput.ReadToEndAsync(timeout.Token);
+            try { if (!process.HasExited) process.Kill(true); } catch { }
+            var match = System.Text.RegularExpressions.Regex.Match(output,
+                @"(?:Virtual IP|虚拟\s*IP)[^0-9]*(\d{1,3}(?:\.\d{1,3}){3})",
+                System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+            if (match.Success)
+            {
+                VirtualIp = match.Groups[1].Value;
+                return VirtualIp;
+            }
+        }
+        catch { }
+        return null;
     }
 
     public void Stop()

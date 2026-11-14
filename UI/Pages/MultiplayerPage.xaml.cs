@@ -28,7 +28,6 @@ public partial class MultiplayerPage : UserControl, IPage
         var s = LauncherApp.I.Settings;
         RoomBox.Text = s.MultiplayerRoom;
         SecretBox.Text = s.MultiplayerSecret;
-        IpBox.Text = s.MultiplayerIp;
         NodeBox.Text = s.MultiplayerPublicNode;
         StopButton.IsEnabled = LauncherApp.I.Multiplayer.IsRunning;
         StartButton.IsEnabled = !LauncherApp.I.Multiplayer.IsRunning;
@@ -49,7 +48,6 @@ public partial class MultiplayerPage : UserControl, IPage
         if (_starting || LauncherApp.I.Multiplayer.IsRunning) return;
         var room = RoomBox.Text.Trim();
         var secret = SecretBox.Text.Trim();
-        var ip = IpBox.Text.Trim();
         var node = NodeBox.Text.Trim();
         if (room.Length < 3)
         {
@@ -61,16 +59,9 @@ public partial class MultiplayerPage : UserControl, IPage
             MessageDialog.Show(Window.GetWindow(this), "密码太短", "房间密码至少需要 6 个字符。", "知道了", danger: true);
             return;
         }
-        if (string.IsNullOrWhiteSpace(ip))
-        {
-            MessageDialog.Show(Window.GetWindow(this), "虚拟 IP 为空", "请填写 10.126.126.1 或 10.126.126.2 这类地址。", "知道了", danger: true);
-            return;
-        }
-
         var s = LauncherApp.I.Settings;
         s.MultiplayerRoom = room;
         s.MultiplayerSecret = secret;
-        s.MultiplayerIp = ip;
         s.MultiplayerPublicNode = string.IsNullOrWhiteSpace(node) ? MultiplayerService.DefaultPublicNode : node;
         LauncherApp.I.Save();
 
@@ -91,8 +82,9 @@ public partial class MultiplayerPage : UserControl, IPage
         });
         try
         {
-            await LauncherApp.I.Multiplayer.StartAsync(room, secret, ip, node, progress, CancellationToken.None);
-            StatusText.Text = "联机组件已启动。";
+            await LauncherApp.I.Multiplayer.StartAsync(room, secret, node, progress, CancellationToken.None);
+            await LauncherApp.I.Multiplayer.RefreshVirtualIpAsync(CancellationToken.None);
+            StatusText.Text = "联机组件已启动，正在获取虚拟 IP…";
             StopButton.IsEnabled = true;
             StartButton.IsEnabled = false;
             _timer.Start();
@@ -132,7 +124,7 @@ public partial class MultiplayerPage : UserControl, IPage
 
     private void Detect_Click(object sender, RoutedEventArgs e) => DetectLanPort();
 
-    private void Tick()
+    private async void Tick()
     {
         if (!LauncherApp.I.Multiplayer.IsRunning)
         {
@@ -143,7 +135,10 @@ public partial class MultiplayerPage : UserControl, IPage
             UpdateAddress();
             return;
         }
+        if (string.IsNullOrWhiteSpace(LauncherApp.I.Multiplayer.VirtualIp))
+            await LauncherApp.I.Multiplayer.RefreshVirtualIpAsync();
         DetectLanPort();
+        UpdateAddress();
     }
 
     private void DetectLanPort()
@@ -185,9 +180,8 @@ public partial class MultiplayerPage : UserControl, IPage
     private void UpdateAddress()
     {
         var ip = LauncherApp.I.Multiplayer.VirtualIp;
-        if (string.IsNullOrWhiteSpace(ip)) ip = IpBox.Text.Trim().Split('/')[0];
         AddressText.Text = string.IsNullOrWhiteSpace(ip)
-            ? "启动联机后显示虚拟 IP。"
+            ? "正在获取虚拟 IP…"
             : (_lanPort > 0 ? $"{ip}:{_lanPort}" : $"{ip}  （开放局域网后显示端口）");
     }
 
@@ -197,7 +191,6 @@ public partial class MultiplayerPage : UserControl, IPage
         StopButton.IsEnabled = !busy && LauncherApp.I.Multiplayer.IsRunning;
         RoomBox.IsEnabled = !busy;
         SecretBox.IsEnabled = !busy;
-        IpBox.IsEnabled = !busy;
         NodeBox.IsEnabled = !busy;
     }
 }
