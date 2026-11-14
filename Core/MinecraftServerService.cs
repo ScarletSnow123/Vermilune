@@ -18,6 +18,9 @@ public sealed class MinecraftServerService : IDisposable
     public bool IsRunning => _process is { HasExited: false };
     public string? ServerDirectory { get; private set; }
     public int Port { get; private set; }
+    public string? PublicAddress { get; private set; }
+    public string? LocalAddress { get; private set; }
+    public string? MappingStatus { get; private set; }
     public string? LastError { get; private set; }
     public event Action<string>? LogReceived;
     public event Action? Ready;
@@ -92,6 +95,10 @@ public sealed class MinecraftServerService : IDisposable
         _process = process;
         process.BeginOutputReadLine();
         process.BeginErrorReadLine();
+        var mapping = await LauncherApp.I.Upnp.MapAsync(port, ct);
+        PublicAddress = mapping.PublicAddress;
+        LocalAddress = mapping.LocalAddress;
+        MappingStatus = mapping.Status;
         progress?.Report(new DownloadProgress { Stage = "服务端启动中", Detail = "Java " + java.Major + " · 端口 " + port });
     }
 
@@ -201,6 +208,8 @@ public sealed class MinecraftServerService : IDisposable
         }
         catch { }
         try { process.Dispose(); } catch { }
+        await LauncherApp.I.Upnp.UnmapAsync();
+        PublicAddress = null;
     }
 
     public void Dispose() => StopAsync().GetAwaiter().GetResult();

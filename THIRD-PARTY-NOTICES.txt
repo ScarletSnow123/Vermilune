@@ -1,5 +1,7 @@
 Vermilune third-party notices
 
-EasyTier (LGPL-3.0)
-https://github.com/EasyTier/EasyTier
-The Windows EasyTier components are downloaded on demand at runtime and are not embedded in the Vermilune executable.
+Open.NAT (MIT)
+https://github.com/lontivero/Open.NAT
+UPnP port mapping library distributed via NuGet.
+
+Minecraft server files are downloaded from Mojang / Fabric meta on demand.

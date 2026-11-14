@@ -160,10 +160,6 @@ public sealed class AppSettings
             BackgroundMode = string.IsNullOrWhiteSpace(BackgroundImage) || BackgroundImage == "none" ? "default" : "custom";
         if (BackgroundMode == "custom" && (string.IsNullOrWhiteSpace(BackgroundImage) || BackgroundImage == "none"))
             BackgroundMode = "default";
-        if (MultiplayerPublicNode.Contains("public.easytier.cn", StringComparison.OrdinalIgnoreCase))
-            MultiplayerPublicNode = "tcp://easytier-us.slarker.me:11010,tcp://225284.xyz:11010";
-        if (string.IsNullOrWhiteSpace(MultiplayerPublicNode))
-            MultiplayerPublicNode = "tcp://easytier-us.slarker.me:11010,tcp://225284.xyz:11010";
         ServerMemoryMb = Math.Clamp(ServerMemoryMb, 1024, 16384);
         ServerPort = Math.Clamp(ServerPort, 1024, 65535);
         BackgroundImageOpacity = Math.Clamp(BackgroundImageOpacity, 0.0, 1.0);
