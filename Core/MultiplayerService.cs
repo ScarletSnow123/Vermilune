@@ -11,7 +11,7 @@ namespace Vermilune.Core;
 /// </summary>
 public sealed class MultiplayerService : IDisposable
 {
-    public const string DefaultPublicNode = "tcp://public.easytier.cn:11010";
+    public const string DefaultPublicNode = "tcp://easytier-us.slarker.me:11010";
     private const string EasyTierVersion = "2.6.4";
     private Process? _process;
 
@@ -102,13 +102,25 @@ public sealed class MultiplayerService : IDisposable
             psi.ArgumentList.Add(arg);
 
         var process = new Process { StartInfo = psi, EnableRaisingEvents = true };
-        process.OutputDataReceived += (_, e) => { if (!string.IsNullOrWhiteSpace(e.Data)) LogReceived?.Invoke(e.Data); };
-        process.ErrorDataReceived += (_, e) => { if (!string.IsNullOrWhiteSpace(e.Data)) LogReceived?.Invoke(e.Data); };
+        var log = new StringBuilder();
+        process.OutputDataReceived += (_, e) =>
+        {
+            if (string.IsNullOrWhiteSpace(e.Data)) return;
+            lock (log) log.AppendLine(e.Data);
+            LogReceived?.Invoke(e.Data);
+        };
+        process.ErrorDataReceived += (_, e) =>
+        {
+            if (string.IsNullOrWhiteSpace(e.Data)) return;
+            lock (log) log.AppendLine(e.Data);
+            LogReceived?.Invoke(e.Data);
+        };
         process.Exited += (_, _) =>
         {
             if (ReferenceEquals(_process, process))
             {
-                LastError = $"联机组件已退出（代码 {process.ExitCode}）。";
+                lock (log)
+                    LastError = $"联机组件已退出（代码 {process.ExitCode}）：{Tail(log.ToString())}";
                 LogReceived?.Invoke(LastError);
             }
         };
@@ -120,6 +132,11 @@ public sealed class MultiplayerService : IDisposable
         await Task.Delay(1200, ct);
         if (process.HasExited && process.ExitCode != 0)
         {
+            if (IsAdministrator())
+            {
+                LastError = "联机组件启动失败：" + Tail(log.ToString());
+                throw new InvalidOperationException(LastError);
+            }
             process.Dispose();
             _process = StartElevated(core, ToolDirectory, ip, network, password, node);
             await Task.Delay(800, ct);
@@ -192,4 +209,6 @@ public sealed class MultiplayerService : IDisposable
     }
 
     public void Dispose() => Stop();
+
+    private static string Tail(string text) => text.Length > 1600 ? text[^1600..] : text;
 }

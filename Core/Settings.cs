@@ -80,7 +80,7 @@ public sealed class AppSettings
     public string MultiplayerRoom { get; set; } = "";
     public string MultiplayerSecret { get; set; } = "";
     public string MultiplayerIp { get; set; } = "10.126.126.1";
-    public string MultiplayerPublicNode { get; set; } = "tcp://public.easytier.cn:11010";
+    public string MultiplayerPublicNode { get; set; } = "tcp://easytier-us.slarker.me:11010";
 
     public string BackgroundMode { get; set; } = "default"; // default | custom | wallpaper
     public string BackgroundImage { get; set; } = "";
@@ -158,6 +158,10 @@ public sealed class AppSettings
             BackgroundMode = string.IsNullOrWhiteSpace(BackgroundImage) || BackgroundImage == "none" ? "default" : "custom";
         if (BackgroundMode == "custom" && (string.IsNullOrWhiteSpace(BackgroundImage) || BackgroundImage == "none"))
             BackgroundMode = "default";
+        if (MultiplayerPublicNode.Contains("public.easytier.cn", StringComparison.OrdinalIgnoreCase))
+            MultiplayerPublicNode = "tcp://easytier-us.slarker.me:11010";
+        if (string.IsNullOrWhiteSpace(MultiplayerPublicNode))
+            MultiplayerPublicNode = "tcp://easytier-us.slarker.me:11010";
         BackgroundImageOpacity = Math.Clamp(BackgroundImageOpacity, 0.0, 1.0);
         CurseForgeApiKey = (CurseForgeApiKey ?? "").Trim();
         CurseForgeProxyUrl = (CurseForgeProxyUrl ?? "").Trim().TrimEnd('/');

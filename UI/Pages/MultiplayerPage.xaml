@@ -55,7 +55,7 @@
                             <StackPanel Grid.Column="2">
                                 <TextBlock Text="公共节点" Style="{StaticResource FormLabel}" />
                                 <TextBox x:Name="NodeBox" Style="{StaticResource InputBox}" Height="34"
-                                         Tag="tcp://public.easytier.cn:11010" />
+                                         Tag="tcp://easytier-us.slarker.me:11010" />
                             </StackPanel>
                         </Grid>
 
