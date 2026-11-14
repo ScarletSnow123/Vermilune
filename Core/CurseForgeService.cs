@@ -103,14 +103,16 @@ public sealed class CurseForgeService
     }
 
     public async Task<List<ResourceFileInfo>> GetFilesAsync(ResourceProject project, string? mcVersion,
-        string? loader, CancellationToken ct)
+        string? loader, CancellationToken ct, int startIndex = 0, int maxPages = 10)
     {
         if (!int.TryParse(project.Id, out var modId)) return new();
         var result = new List<ResourceFileInfo>();
         var seen = new HashSet<int>();
         var loaderType = LoaderType(loader);
-        for (var index = 0; index < 500; index += 50)
+        for (var page = 0; page < maxPages; page++)
         {
+            var index = startIndex + page * 50;
+            if (index >= 500) break;
             var url = $"{Base}/mods/{modId}/files?pageSize=50&index={index}";
             if (!string.IsNullOrWhiteSpace(mcVersion)) url += "&gameVersion=" + Uri.EscapeDataString(mcVersion);
             if (loaderType > 0 && project.Type is ResourceType.Mod or ResourceType.Modpack) url += "&modLoaderType=" + loaderType;

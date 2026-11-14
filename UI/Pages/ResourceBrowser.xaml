@@ -178,6 +178,9 @@
                     <Border Style="{StaticResource Divider}" />
                     <TextBlock Text="版本" Style="{StaticResource FormLabel}" />
                     <ComboBox x:Name="VersionCombo" Height="34" SelectionChanged="Version_SelectionChanged" />
+                    <Button x:Name="LoadMoreVersionsButton" Style="{StaticResource LinkButton}" Content="加载更多版本"
+                            HorizontalAlignment="Left" Margin="0,5,0,0" Visibility="Collapsed"
+                            Click="LoadMoreVersions_Click" />
                     <StackPanel x:Name="TargetPanel" Margin="0,9,0,0">
                         <TextBlock Text="安装到实例" Style="{StaticResource FormLabel}" />
                         <ComboBox x:Name="TargetCombo" Height="34" DisplayMemberPath="DisplayName"
@@ -191,6 +194,9 @@
                                  Foreground="{DynamicResource AccentBrush}" Background="{DynamicResource TrackBrush}" BorderThickness="0" />
                     <TextBlock x:Name="InstallStatus" Text="" Style="{StaticResource MutedText}" Margin="0,8,0,0"
                                TextWrapping="Wrap" />
+                    <Button x:Name="CancelInstallButton" Style="{StaticResource LinkButton}" Content="取消下载"
+                            Foreground="{DynamicResource DangerBrush}" HorizontalAlignment="Left"
+                            Margin="0,6,0,0" Visibility="Collapsed" Click="CancelInstall_Click" />
                     <Button Style="{StaticResource LinkButton}" Content="打开项目主页" HorizontalAlignment="Left"
                             Margin="0,8,0,0" Click="OpenWebsite_Click" />
                 </StackPanel>

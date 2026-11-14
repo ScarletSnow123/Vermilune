@@ -8,7 +8,7 @@ namespace Vermilune.Core;
 
 public static class HttpService
 {
-    public const string UserAgent = "Vermilune/1.2";
+    public const string UserAgent = "Vermilune/1.3";
     public static readonly HttpClient Client = CreateClient();
     public static string Source { get; set; } = "auto"; // auto | official | bmclapi
 
@@ -126,28 +126,43 @@ public static class HttpService
                         continue;
                     }
                     var total = response.Content.Headers.ContentLength ?? 0;
-                    await using (var input = await response.Content.ReadAsStreamAsync(ct))
+                    using var idle = CancellationTokenSource.CreateLinkedTokenSource(ct);
+                    idle.CancelAfter(TimeSpan.FromSeconds(45));
+                    using var hasher = IncrementalHash.CreateHash(HashAlgorithmName.SHA1);
+                    await using (var input = await response.Content.ReadAsStreamAsync(idle.Token))
                     await using (var output = new FileStream(temp, FileMode.Create, FileAccess.Write, FileShare.None, 1024 * 128, true))
                     {
                         var buffer = new byte[1024 * 128];
                         long done = 0;
                         int read;
-                        while ((read = await input.ReadAsync(buffer, ct)) > 0)
+                        while ((read = await input.ReadAsync(buffer.AsMemory(), idle.Token)) > 0)
                         {
-                            await output.WriteAsync(buffer.AsMemory(0, read), ct);
+                            await output.WriteAsync(buffer.AsMemory(0, read), idle.Token);
+                            hasher.AppendData(buffer, 0, read);
+                            idle.CancelAfter(TimeSpan.FromSeconds(45));
                             done += read;
                             if (progress is not null && total > 0) progress.Report((done, total));
                         }
+                        await output.FlushAsync(idle.Token);
                     }
 
-                    if (!string.IsNullOrEmpty(expectedSha1) && !VerifySha1(temp, expectedSha1))
+                    if (!string.IsNullOrEmpty(expectedSha1))
                     {
-                        last = new InvalidDataException("文件校验失败：" + destination);
-                        try { File.Delete(temp); } catch { }
-                        continue;
+                        var actual = Convert.ToHexString(hasher.GetHashAndReset());
+                        if (!actual.Equals(expectedSha1, StringComparison.OrdinalIgnoreCase))
+                        {
+                            last = new InvalidDataException("文件校验失败：" + destination);
+                            try { File.Delete(temp); } catch { }
+                            continue;
+                        }
                     }
                     File.Move(temp, destination, true);
                     return;
+                }
+                catch (OperationCanceledException) when (!ct.IsCancellationRequested)
+                {
+                    last = new TimeoutException("下载长时间没有进度，已超时。");
+                    try { if (File.Exists(temp)) File.Delete(temp); } catch { }
                 }
                 catch (OperationCanceledException) { throw; }
                 catch (Exception ex)

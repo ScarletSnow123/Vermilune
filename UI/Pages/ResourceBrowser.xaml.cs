@@ -21,7 +21,14 @@ public partial class ResourceBrowser : UserControl
     private bool _searched;
     private int _offset;
     private CancellationTokenSource? _cts;
+    private CancellationTokenSource? _versionCts;
     private int _versionToken;
+    private bool _versionHasMore;
+    private string _snapshotQuery = "";
+    private string? _snapshotMc;
+    private string? _snapshotLoader;
+    private ResourceType _snapshotType;
+    private ResourceSource _snapshotSource;
 
     public ResourceBrowser()
     {
@@ -112,7 +119,6 @@ public partial class ResourceBrowser : UserControl
 
     private void LoadMore_Click(object sender, RoutedEventArgs e)
     {
-        _offset += 20;
         _ = SearchAsync(false);
     }
 
@@ -122,6 +128,14 @@ public partial class ResourceBrowser : UserControl
         var version = ++_searchVersion;
         try { _searchCts?.Cancel(); } catch { }
         _searchCts = new CancellationTokenSource();
+
+        var query = QueryBox.Text?.Trim() ?? "";
+        var mc = McCombo.SelectedItem as string;
+        if (mc == "全部版本") mc = null;
+        var loader = SelectedLoader();
+        if (!reset && (query != _snapshotQuery || mc != _snapshotMc || loader != _snapshotLoader ||
+                       _type != _snapshotType || _source != _snapshotSource))
+            reset = true;
 
         if (_source == ResourceSource.CurseForge && !LauncherApp.I.CurseForge.HasKey)
         {
@@ -143,6 +157,11 @@ public partial class ResourceBrowser : UserControl
             if (reset)
             {
                 _offset = 0;
+                _snapshotQuery = query;
+                _snapshotMc = mc;
+                _snapshotLoader = loader;
+                _snapshotType = _type;
+                _snapshotSource = _source;
                 _projects.Clear();
                 _selected = null;
                 DetailTitle.Text = "选择一个项目";
@@ -152,16 +171,13 @@ public partial class ResourceBrowser : UserControl
                 InstallButton.IsEnabled = false;
             }
             SearchStatus.Text = "搜索中…";
-            var query = QueryBox.Text?.Trim() ?? "";
             var searchQuery = await ChineseSearch.ResolveAsync(query, timeout.Token);
-            var mc = McCombo.SelectedItem as string;
-            if (mc == "全部版本") mc = null;
-            var loader = SelectedLoader();
             var list = _source == ResourceSource.Modrinth
                 ? await LauncherApp.I.Modrinth.SearchAsync(_type, searchQuery, mc, loader, _offset, timeout.Token)
                 : await LauncherApp.I.CurseForge.SearchAsync(_type, searchQuery, mc, loader, _offset, timeout.Token);
             if (version != _searchVersion) return;
             _projects.AddRange(list);
+            _offset = _projects.Count;
             ProjectList.ItemsSource = null;
             ProjectList.ItemsSource = _projects;
             SearchStatus.Text = query.Length > 0 && !string.Equals(query, searchQuery, StringComparison.OrdinalIgnoreCase)
@@ -208,25 +224,62 @@ public partial class ResourceBrowser : UserControl
         DetailSub.Text = $"{project.Author} · {project.DownloadsText} 次下载";
         DetailSummary.Text = project.Summary;
         _files = new List<ResourceFileInfo>();
+        _versionHasMore = false;
         VersionCombo.ItemsSource = null;
+        LoadMoreVersionsButton.Visibility = Visibility.Collapsed;
         InstallButton.IsEnabled = false;
+        await LoadVersionPageAsync(false);
+    }
+
+    private async void LoadMoreVersions_Click(object sender, RoutedEventArgs e)
+    {
+        LoadMoreVersionsButton.IsEnabled = false;
+        await LoadVersionPageAsync(true);
+    }
+
+    private async Task LoadVersionPageAsync(bool append)
+    {
+        if (_selected is null) return;
+        var project = _selected;
         var token = ++_versionToken;
-        InstallStatus.Text = "正在加载版本…";
-        using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(15));
+        try { _versionCts?.Cancel(); } catch { }
+        _versionCts?.Dispose();
+        _versionCts = new CancellationTokenSource();
+        InstallStatus.Text = append ? "正在加载更多版本…" : "正在加载版本…";
+        using var timeout = CancellationTokenSource.CreateLinkedTokenSource(_versionCts.Token);
+        timeout.CancelAfter(TimeSpan.FromSeconds(15));
         try
         {
             var mc = McCombo.SelectedItem as string;
             if (mc == "全部版本") mc = null;
             var loader = SelectedLoader();
-            var files = _source == ResourceSource.Modrinth
-                ? await LauncherApp.I.Modrinth.GetFilesAsync(project, mc, loader, timeout.Token)
-                : await LauncherApp.I.CurseForge.GetFilesAsync(project, mc, loader, timeout.Token);
+            List<ResourceFileInfo> files;
+            if (_source == ResourceSource.Modrinth)
+            {
+                files = await LauncherApp.I.Modrinth.GetFilesAsync(project, mc, loader, timeout.Token);
+            }
+            else
+            {
+                files = await LauncherApp.I.CurseForge.GetFilesAsync(project, mc, loader, timeout.Token,
+                    append ? _files.Count : 0, 1);
+            }
             if (token != _versionToken) return;
-            _files = files;
-            VersionCombo.ItemsSource = files.Select(f => f.Display).ToList();
-            VersionCombo.SelectedIndex = files.Count > 0 ? 0 : -1;
-            InstallStatus.Text = files.Count == 0 ? "没有找到与当前筛选条件兼容的版本。" : $"{files.Count} 个可用版本";
-            InstallButton.IsEnabled = files.Count > 0 && !_installing;
+
+            var selectedIndex = VersionCombo.SelectedIndex;
+            if (append) _files.AddRange(files);
+            else _files = files;
+            VersionCombo.ItemsSource = _files.Select(f => f.Display).ToList();
+            if (selectedIndex >= 0 && selectedIndex < _files.Count) VersionCombo.SelectedIndex = selectedIndex;
+            else VersionCombo.SelectedIndex = _files.Count > 0 ? 0 : -1;
+            InstallStatus.Text = _files.Count == 0 ? "没有找到与当前筛选条件兼容的版本。" : $"{_files.Count} 个可用版本";
+            InstallButton.IsEnabled = _files.Count > 0 && !_installing;
+            _versionHasMore = _source == ResourceSource.CurseForge && files.Count >= 50 && _files.Count < 500;
+            LoadMoreVersionsButton.Visibility = _versionHasMore ? Visibility.Visible : Visibility.Collapsed;
+            LoadMoreVersionsButton.IsEnabled = true;
+        }
+        catch (OperationCanceledException)
+        {
+            if (token == _versionToken) InstallStatus.Text = "读取版本超时。";
         }
         catch (Exception ex)
         {
@@ -235,6 +288,11 @@ public partial class ResourceBrowser : UserControl
                 InstallStatus.Text = "读取版本失败：" + ex.Message;
                 Log.Warn("读取资源版本失败：" + ex.Message);
             }
+        }
+        finally
+        {
+            if (token == _versionToken)
+                LoadMoreVersionsButton.IsEnabled = _versionHasMore;
         }
     }
 
@@ -341,9 +399,17 @@ public partial class ResourceBrowser : UserControl
         }
     }
 
+    private void CancelInstall_Click(object sender, RoutedEventArgs e)
+    {
+        try { _cts?.Cancel(); } catch { }
+        InstallStatus.Text = "正在取消…";
+    }
+
     private void SetInstalling(bool installing, string status)
     {
         _installing = installing;
+        if (CancelInstallButton is not null)
+            CancelInstallButton.Visibility = installing ? Visibility.Visible : Visibility.Collapsed;
         InstallProgress.Visibility = installing || status.Contains("完成") || status.Contains("失败") ? Visibility.Visible : Visibility.Collapsed;
         if (!installing) InstallProgress.IsIndeterminate = false;
         InstallStatus.Text = status;

@@ -112,10 +112,12 @@ public static class ChineseSearch
         if (!Regex.IsMatch(text, @"[\u4e00-\u9fbb]")) return text;
         if (Resolved.TryGetValue(text, out var cached)) return cached;
 
+        using var aliasTimeout = CancellationTokenSource.CreateLinkedTokenSource(ct);
+        aliasTimeout.CancelAfter(TimeSpan.FromSeconds(4));
         try
         {
             var url = "https://search.mcmod.cn/s?key=" + Uri.EscapeDataString(text);
-            var html = await HttpService.GetStringAsync(url, ct);
+            var html = await HttpService.GetStringAsync(url, aliasTimeout.Token);
             var match = Regex.Match(html,
                 @"<div class=""head"">.*?<a[^>]*href=""https://www\.mcmod\.cn/class/\d+\.html""[^>]*>(.*?)</a>",
                 RegexOptions.Singleline);
@@ -134,6 +136,10 @@ public static class ChineseSearch
                     }
                 }
             }
+        }
+        catch (OperationCanceledException) when (!ct.IsCancellationRequested)
+        {
+            Log.Warn("中文名解析超时，回退原词。");
         }
         catch (OperationCanceledException) { throw; }
         catch (Exception ex)
