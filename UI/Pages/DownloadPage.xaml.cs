@@ -60,7 +60,7 @@ public partial class DownloadPage : UserControl, IPage
             ApplyFilter();
             PopulateFabricMc();
             if (PanelForge.Visibility == Visibility.Visible) PopulateForgeMc();
-            FabricStatus.Text = "选择 Minecraft 版本后会自动加载 Loader。";
+            FabricStatus.Text = "选择 Minecraft 版本后会自动加载 Loader";
         }
         catch (Exception ex)
         {
@@ -129,8 +129,8 @@ public partial class DownloadPage : UserControl, IPage
         DetailTitle.Text = v.Id;
         DetailSub.Text = $"{v.DisplayType} · {v.ReleaseDateText}" + (v.Installed ? " · 已安装" : "");
         DetailNote.Text = v.Installed
-            ? "这个版本已经在了。重装会补齐缺失文件，并用官方 JSON 替换版本 JSON（存档和 Mods 不动）。"
-            : "安装会下载版本 JSON、客户端 jar、运行库与资源文件。已存在的文件会跳过。";
+            ? "这个版本已经在了\n重装会补齐缺失文件，并用官方 JSON 替换版本 JSON（存档和 Mods 不动）"
+            : "安装会下载版本 JSON、客户端 jar、运行库与资源文件\n已存在的文件会跳过";
         InstallButton.IsEnabled = !_installing;
         if (NewInstanceButton is not null) NewInstanceButton.IsEnabled = !_installing && _selected is not null;
         UpdateInstallButtonLabel();
@@ -249,8 +249,8 @@ public partial class DownloadPage : UserControl, IPage
             ForgeVersionCombo.IsEnabled = _forgeVersions.Count > 0;
             InstallForgeButton.IsEnabled = _forgeVersions.Count > 0 && !_installing;
             ForgeStatus.Text = _forgeVersions.Count > 0
-                ? $"共 {_forgeVersions.Count} 个版本，默认选择推荐版。"
-                : $"没找到 Forge {mc} 的版本；换个 Minecraft 版本，或者用本地 installer。";
+                ? $"共 {_forgeVersions.Count} 个版本，默认选择推荐版"
+                : $"没找到 Forge {mc} 的版本；换个 Minecraft 版本，或者用本地 installer";
         }
         catch (Exception ex)
         {
@@ -267,7 +267,7 @@ public partial class DownloadPage : UserControl, IPage
         if (ForgeVersionCombo.SelectedIndex < 0 || ForgeVersionCombo.SelectedIndex >= _forgeVersions.Count) return;
         var forge = _forgeVersions[ForgeVersionCombo.SelectedIndex].ForgeVersion;
         if (!MessageDialog.Show(Window.GetWindow(this), "一键部署 Forge",
-                $"将为 Minecraft {mc} 部署 Forge {forge}。\n安装器会写入 libraries 与 versions，可能需要几分钟。",
+                $"将为 Minecraft {mc} 部署 Forge {forge}\n\n安装器会写入 libraries 与 versions，可能需要几分钟",
                 "开始安装", "取消")) return;
 
         await LauncherApp.I.EnsureJavaAsync();
@@ -276,7 +276,7 @@ public partial class DownloadPage : UserControl, IPage
         if (java is null)
         {
             MessageDialog.Show(Window.GetWindow(this), "找不到 Java",
-                $"部署 Forge {mc} 要 Java {major} 或更高，先去「设置 → 启动」里指定 Java。",
+                $"部署 Forge {mc} 要 Java {major} 或更高，先去「设置 → 启动」里指定 Java",
                 "知道了", danger: true);
             return;
         }
@@ -291,12 +291,12 @@ public partial class DownloadPage : UserControl, IPage
             var id = await LauncherApp.I.Forge.InstallAsync(mc, forge, LauncherApp.I.MinecraftDir, java.Path, progress, _cts.Token);
             LauncherApp.I.ReloadVersions();
             SetInstalling(false, "Forge 安装完成：" + id);
-            ForgeStatus.Text = "已安装：" + id + "。可以到「版本」页选择它。";
+            ForgeStatus.Text = "已安装：" + id + "\n可以到「版本」页选择它";
             LauncherApp.I.Notify("Forge 安装完成", id);
         }
         catch (OperationCanceledException)
         {
-            SetInstalling(false, "已取消 Forge 安装。");
+            SetInstalling(false, "已取消 Forge 安装");
         }
         catch (Exception ex)
         {
@@ -311,11 +311,11 @@ public partial class DownloadPage : UserControl, IPage
         _manifest.Clear();
         _selected = null;
         DetailTitle.Text = "选择一个版本";
-        DetailSub.Text = "从左侧列表选择要安装的版本。";
+        DetailSub.Text = "从左侧列表选择要安装的版本";
         InstallButton.IsEnabled = false;
         await LoadManifestAsync(true);
         LauncherApp.I.ReloadVersions();
-        LauncherApp.I.Notify("清单已刷新", "版本列表已更新。");
+        LauncherApp.I.Notify("清单已刷新", "版本列表已更新");
     }
 
     private void OpenDownloadSettings_Click(object sender, RoutedEventArgs e) => App.Window?.NavigateTo("settings");
@@ -338,21 +338,21 @@ public partial class DownloadPage : UserControl, IPage
         {
             if (!VersionService.IsValidName(customName))
             {
-                MessageDialog.Show(Window.GetWindow(this), "实例名称无效", "名称包含非法字符，或为空。", "知道了", danger: true);
+                MessageDialog.Show(Window.GetWindow(this), "实例名称无效", "名称包含非法字符，或为空", "知道了", danger: true);
                 return;
             }
             if (LauncherApp.I.Versions.VersionExists(customName))
             {
-                MessageDialog.Show(Window.GetWindow(this), "实例已存在", $"已经有叫「{customName}」的版本了，换个名字。", "知道了", danger: true);
+                MessageDialog.Show(Window.GetWindow(this), "实例已存在", $"已经有叫「{customName}」的版本了，换个名字", "知道了", danger: true);
                 return;
             }
         }
         var nameTail = customName.Length > 0 ? $"\n实例名称：{customName}" : "";
-        var tail = string.IsNullOrEmpty(loaderName) ? nameTail : $"\n同时会继续安装 {loaderName}。{nameTail}";
+        var tail = string.IsNullOrEmpty(loaderName) ? nameTail : $"\n同时会继续安装 {loaderName}\n{nameTail}";
         if (!MessageDialog.Show(Window.GetWindow(this), version.Installed ? "重新安装" : "安装版本",
                 (version.Installed
-                    ? $"{version.Id} 已存在。重新安装会补齐缺失文件并替换 JSON，确定继续吗？"
-                    : $"将安装 Minecraft {version.Id}。需要下载客户端、运行库与资源，可能需要几分钟。") + tail,
+                    ? $"{version.Id} 已存在\n重新安装会补齐缺失文件并替换 JSON，确定继续吗？"
+                    : $"将安装 Minecraft {version.Id}\n需要下载客户端、运行库与资源，可能需要几分钟") + tail,
                 "开始安装", "取消"))
             return;
 
@@ -380,7 +380,7 @@ public partial class DownloadPage : UserControl, IPage
                         LauncherApp.I.Settings.VersionIsolation);
                     var api = await LauncherApp.I.Modrinth.InstallFabricApiAsync(version.Id, gameDir, progress, _cts.Token);
                     FabricDetailStatus.Text = api is null
-                        ? "未找到匹配的 Fabric API，可稍后在资源页手动安装。"
+                        ? "未找到匹配的 Fabric API，可稍后在资源页手动安装"
                         : "已自动安装匹配的 Fabric API：" + api;
                 }
             }
@@ -391,10 +391,10 @@ public partial class DownloadPage : UserControl, IPage
                 var versions = await LauncherApp.I.Forge.GetVersionsAsync(version.Id, _cts.Token);
                 var forge = versions.FirstOrDefault(x => x.ForgeVersion == chosen)
                             ?? versions.FirstOrDefault()
-                            ?? throw new InvalidOperationException("没找到这个 Minecraft 版本的 Forge。");
+                            ?? throw new InvalidOperationException("没找到这个 Minecraft 版本的 Forge");
                 await LauncherApp.I.EnsureJavaAsync();
                 var java = LauncherApp.I.Java.Pick(VersionResolver.InferJavaMajor(version.Id, ""), LauncherApp.I.Settings.JavaPath)
-                           ?? throw new InvalidOperationException("部署 Forge 要对应版本的 Java，先去设置里指定。");
+                           ?? throw new InvalidOperationException("部署 Forge 要对应版本的 Java，先去设置里指定");
                 installedLoader = await LauncherApp.I.Forge.InstallAsync(version.Id, forge.ForgeVersion, LauncherApp.I.MinecraftDir, java.Path, progress, _cts.Token);
             }
             else if (loader == "neoforge")
@@ -404,10 +404,10 @@ public partial class DownloadPage : UserControl, IPage
                 var versions = await LauncherApp.I.Forge.GetNeoForgeVersionsAsync(version.Id, _cts.Token);
                 var neo = versions.FirstOrDefault(x => x.ForgeVersion == chosen)
                           ?? versions.FirstOrDefault()
-                          ?? throw new InvalidOperationException("没找到这个 Minecraft 版本的 NeoForge。");
+                          ?? throw new InvalidOperationException("没找到这个 Minecraft 版本的 NeoForge");
                 await LauncherApp.I.EnsureJavaAsync();
                 var java = LauncherApp.I.Java.Pick(VersionResolver.InferJavaMajor(version.Id, ""), LauncherApp.I.Settings.JavaPath)
-                           ?? throw new InvalidOperationException("部署 NeoForge 要对应版本的 Java，先去设置里指定。");
+                           ?? throw new InvalidOperationException("部署 NeoForge 要对应版本的 Java，先去设置里指定");
                 installedLoader = await LauncherApp.I.Forge.InstallNeoForgeAsync(version.Id, neo.ForgeVersion, LauncherApp.I.MinecraftDir, java.Path, progress, _cts.Token);
             }
             else if (loader == "quilt")
@@ -417,10 +417,10 @@ public partial class DownloadPage : UserControl, IPage
                 var versions = await LauncherApp.I.Quilt.GetVersionsAsync(version.Id, _cts.Token);
                 var quilt = versions.FirstOrDefault(x => x.ForgeVersion == chosen)
                             ?? versions.FirstOrDefault()
-                            ?? throw new InvalidOperationException("没找到这个 Minecraft 版本的 Quilt。");
+                            ?? throw new InvalidOperationException("没找到这个 Minecraft 版本的 Quilt");
                 await LauncherApp.I.EnsureJavaAsync();
                 var java = LauncherApp.I.Java.Pick(VersionResolver.InferJavaMajor(version.Id, ""), LauncherApp.I.Settings.JavaPath)
-                           ?? throw new InvalidOperationException("部署 Quilt 要对应版本的 Java，先去设置里指定。");
+                           ?? throw new InvalidOperationException("部署 Quilt 要对应版本的 Java，先去设置里指定");
                 installedLoader = await LauncherApp.I.Quilt.InstallAsync(version.Id, quilt.ForgeVersion, LauncherApp.I.MinecraftDir, java.Path, progress, _cts.Token);
             }
 
@@ -446,11 +446,11 @@ public partial class DownloadPage : UserControl, IPage
             ShowDetail(version);
             SetInstalling(false, "安装完成：" + finalId);
             LauncherApp.I.Notify("安装完成", finalId);
-            DetailNote.Text = "安装完成：" + finalId + "。可以到「启动」页选择并启动。";
+            DetailNote.Text = "安装完成：" + finalId + "\n可以到「启动」页选择并启动";
         }
         catch (OperationCanceledException)
         {
-            SetInstalling(false, "已取消安装。");
+            SetInstalling(false, "已取消安装");
         }
         catch (Exception ex)
         {
@@ -494,13 +494,13 @@ public partial class DownloadPage : UserControl, IPage
             ForgeDetailCombo.ItemsSource = list;
             ForgeDetailCombo.SelectedItem = list.FirstOrDefault(x => x.Recommended) ?? list.FirstOrDefault();
             ForgeDetailStatus.Text = list.Count == 0
-                ? "没找到这个 Minecraft 版本的 Forge。"
-                : $"{list.Count} 个版本；推荐 / 最新已标注，可自行选择。";
+                ? "没找到这个 Minecraft 版本的 Forge"
+                : $"{list.Count} 个版本；推荐 / 最新已标注，可自行选择";
         }
         catch (OperationCanceledException)
         {
             _detailForgeMc = "";
-            ForgeDetailStatus.Text = "Forge 版本列表加载超时。";
+            ForgeDetailStatus.Text = "Forge 版本列表加载超时";
         }
         catch (Exception ex)
         {
@@ -523,13 +523,13 @@ public partial class DownloadPage : UserControl, IPage
             NeoForgeDetailCombo.ItemsSource = list;
             NeoForgeDetailCombo.SelectedItem = list.FirstOrDefault();
             NeoForgeDetailStatus.Text = list.Count == 0
-                ? "没找到这个 Minecraft 版本的 NeoForge。"
-                : $"{list.Count} 个版本，默认选择最新版。";
+                ? "没找到这个 Minecraft 版本的 NeoForge"
+                : $"{list.Count} 个版本，默认选择最新版";
         }
         catch (OperationCanceledException)
         {
             _detailNeoForgeMc = "";
-            NeoForgeDetailStatus.Text = "NeoForge 版本列表加载超时。";
+            NeoForgeDetailStatus.Text = "NeoForge 版本列表加载超时";
         }
         catch (Exception ex)
         {
@@ -552,13 +552,13 @@ public partial class DownloadPage : UserControl, IPage
             QuiltDetailCombo.ItemsSource = list;
             QuiltDetailCombo.SelectedItem = list.FirstOrDefault();
             QuiltDetailStatus.Text = list.Count == 0
-                ? "没找到这个 Minecraft 版本的 Quilt。"
-                : $"{list.Count} 个版本，默认选择最新稳定版。";
+                ? "没找到这个 Minecraft 版本的 Quilt"
+                : $"{list.Count} 个版本，默认选择最新稳定版";
         }
         catch (OperationCanceledException)
         {
             _detailQuiltMc = "";
-            QuiltDetailStatus.Text = "Quilt 版本列表加载超时。";
+            QuiltDetailStatus.Text = "Quilt 版本列表加载超时";
         }
         catch (Exception ex)
         {
@@ -581,13 +581,13 @@ public partial class DownloadPage : UserControl, IPage
             FabricDetailLoaderCombo.ItemsSource = list;
             FabricDetailLoaderCombo.SelectedItem = list.FirstOrDefault(x => x.Stable) ?? list.FirstOrDefault();
             FabricDetailStatus.Text = list.Count == 0
-                ? "没有找到 Loader；仍会尝试自动选择稳定版。"
-                : $"{list.Count} 个 Loader；默认推荐稳定版。";
+                ? "没有找到 Loader；仍会尝试自动选择稳定版"
+                : $"{list.Count} 个 Loader；默认推荐稳定版";
         }
         catch (OperationCanceledException)
         {
             _detailFabricMc = "";
-            FabricDetailStatus.Text = "Loader 列表加载超时，可重试或直接安装（自动选择稳定版）。";
+            FabricDetailStatus.Text = "Loader 列表加载超时，可重试或直接安装（自动选择稳定版）";
         }
         catch (Exception ex)
         {
@@ -670,8 +670,8 @@ public partial class DownloadPage : UserControl, IPage
             FabricLoaderCombo.IsEnabled = items.Count > 0;
             InstallFabricButton.IsEnabled = items.Count > 0 && !_installing;
             FabricStatus.Text = items.Count > 0
-                ? $"共 {items.Count} 个 Loader；默认选择稳定版。"
-                : "没有可用的 Fabric Loader，检查一下网络。";
+                ? $"共 {items.Count} 个 Loader；默认选择稳定版"
+                : "没有可用的 Fabric Loader，检查一下网络";
         }
         catch (Exception ex)
         {
@@ -689,7 +689,7 @@ public partial class DownloadPage : UserControl, IPage
         var loaderText = FabricLoaderCombo.SelectedItem as string ?? "";
         var loader = loaderText.Replace("稳定版 · ", "").Trim();
         if (!MessageDialog.Show(Window.GetWindow(this), "部署 Fabric",
-                $"将为 Minecraft {mc} 部署 Fabric Loader {loader}。\n如果基础版本不存在，会先自动安装原版。",
+                $"将为 Minecraft {mc} 部署 Fabric Loader {loader}\n\n如果基础版本不存在，会先自动安装原版",
                 "开始安装", "取消")) return;
 
         _cts?.Dispose();
@@ -708,12 +708,12 @@ public partial class DownloadPage : UserControl, IPage
             }
             LauncherApp.I.ReloadVersions();
             SetInstalling(false, "安装完成：" + id);
-            FabricStatus.Text = "已安装：" + id + apiInfo + "。可以到「启动」页选择。";
+            FabricStatus.Text = "已安装：" + id + apiInfo + "\n可以到「启动」页选择";
             LauncherApp.I.Notify("Fabric 安装完成", id);
         }
         catch (OperationCanceledException)
         {
-            SetInstalling(false, "已取消 Fabric 安装。");
+            SetInstalling(false, "已取消 Fabric 安装");
         }
         catch (Exception ex)
         {
@@ -734,12 +734,12 @@ public partial class DownloadPage : UserControl, IPage
         var java = LauncherApp.I.Java.All.OrderByDescending(j => j.Major).FirstOrDefault();
         if (java is null)
         {
-            MessageDialog.Show(Window.GetWindow(this), "找不到 Java", "先去「设置」里扫描或指定 Java。", "知道了", danger: true);
+            MessageDialog.Show(Window.GetWindow(this), "找不到 Java", "先去「设置」里扫描或指定 Java", "知道了", danger: true);
             return;
         }
         try
         {
-            ForgeStatus.Text = "安装器起来了。按提示装完，再点「刷新版本」。";
+            ForgeStatus.Text = "安装器起来了\n按提示装完，再点「刷新版本」";
             var psi = new System.Diagnostics.ProcessStartInfo
             {
                 FileName = java.Path,
@@ -764,6 +764,6 @@ public partial class DownloadPage : UserControl, IPage
         var installed = LauncherApp.I.Versions.Versions.Select(v => v.Id).ToHashSet(StringComparer.OrdinalIgnoreCase);
         foreach (var v in _manifest) v.Installed = installed.Contains(v.Id);
         VersionList.Items.Refresh();
-        LauncherApp.I.Notify("版本已刷新", "检测到 " + LauncherApp.I.Versions.Versions.Count + " 个版本。");
+        LauncherApp.I.Notify("版本已刷新", "检测到 " + LauncherApp.I.Versions.Versions.Count + " 个版本");
     }
 }

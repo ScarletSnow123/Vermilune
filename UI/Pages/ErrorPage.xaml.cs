@@ -44,7 +44,7 @@ public partial class ErrorPage : UserControl, IPage
         if (_selected is null)
         {
             SummaryTitle.Text = "没有可分析的版本";
-            SummarySub.Text = "先安装一个版本，或在设置里检查 Minecraft 目录。";
+            SummarySub.Text = "先安装一个版本，或在设置里检查 Minecraft 目录";
             FindingList.ItemsSource = null;
             return;
         }
@@ -135,7 +135,7 @@ public partial class ErrorPage : UserControl, IPage
         ModEnabled.Text = (analysis.Mods?.EnabledCount ?? 0).ToString();
         ModIssues.Text = (analysis.Mods?.CriticalCount ?? 0).ToString();
         ModSummaryText.Text = analysis.Mods is null
-            ? "未扫描 Mods。"
+            ? "未扫描 Mods"
             : $"启用 {analysis.Mods.EnabledCount} · 禁用 {analysis.Mods.DisabledCount} · 目录 {analysis.Mods.ModsDir}";
 
         var rows = analysis.Findings.Select(f => new FindingRow
@@ -209,7 +209,7 @@ public partial class ErrorPage : UserControl, IPage
         try
         {
             Clipboard.SetText(sb.ToString());
-            LauncherApp.I.Notify("报告已复制", "可以粘贴到求助帖中。");
+            LauncherApp.I.Notify("报告已复制", "可以粘贴到求助帖中");
         }
         catch { }
     }

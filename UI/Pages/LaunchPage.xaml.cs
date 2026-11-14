@@ -172,10 +172,10 @@ public partial class LaunchPage : UserControl, IPage, INotifyPropertyChanged
             _ = RefreshSkinAsync();
             StatusLabel.Text = _state switch
             {
-                LaunchState.Running => "游戏正在运行。关闭游戏后，这里会记录退出状态。",
+                LaunchState.Running => "游戏正在运行\n关闭游戏后，这里会记录退出状态",
                 LaunchState.Preparing or LaunchState.Downloading or LaunchState.Starting => "正在准备启动…",
-                LaunchState.Failed => "启动失败。查看日志，或到报错页进行分析。",
-                _ => "就绪。选择一个版本，然后按下启动。"
+                LaunchState.Failed => "启动失败\n查看日志，或到报错页进行分析",
+                _ => "就绪\n选择一个版本，然后按下启动"
             };
         }
         catch (Exception ex)
@@ -330,13 +330,13 @@ public partial class LaunchPage : UserControl, IPage, INotifyPropertyChanged
         {
             if (!await LauncherApp.I.EnsureAccountReadyAsync())
             {
-                MessageDialog.Show(Window.GetWindow(this), "登录已失效", "先重新登录 Microsoft 账号，再传皮肤。", "知道了", danger: true);
+                MessageDialog.Show(Window.GetWindow(this), "登录已失效", "先重新登录 Microsoft 账号，再传皮肤", "知道了", danger: true);
                 return;
             }
             try
             {
                 await LauncherApp.I.Auth.UploadSkinAsync(path, LauncherApp.I.Skins.IsSlim, CancellationToken.None);
-                LauncherApp.I.Notify("皮肤已上传", "已应用到 Microsoft 账号。");
+                LauncherApp.I.Notify("皮肤已上传", "已应用到 Microsoft 账号");
             }
             catch (Exception ex)
             {
@@ -365,12 +365,12 @@ public partial class LaunchPage : UserControl, IPage, INotifyPropertyChanged
     {
         if (!LauncherApp.I.Settings.Account.IsMicrosoft)
         {
-            MessageDialog.Show(Window.GetWindow(this), "披风", "披风只支持 Microsoft 正版账号；离线账号没有可切换的披风。", "知道了");
+            MessageDialog.Show(Window.GetWindow(this), "披风", "披风只支持 Microsoft 正版账号；离线账号没有可切换的披风", "知道了");
             return;
         }
         if (!await LauncherApp.I.EnsureAccountReadyAsync())
         {
-            MessageDialog.Show(Window.GetWindow(this), "登录已失效", "先重新登录 Microsoft 账号。", "知道了", danger: true);
+            MessageDialog.Show(Window.GetWindow(this), "登录已失效", "先重新登录 Microsoft 账号", "知道了", danger: true);
             return;
         }
         if (CapePickerDialog.Show(Window.GetWindow(this)))
@@ -394,7 +394,7 @@ public partial class LaunchPage : UserControl, IPage, INotifyPropertyChanged
         }
         await RefreshSkinAsync();
         RefreshAccountHeader();
-        LauncherApp.I.Notify("已刷新皮肤", hasLocal ? "已重新读取本地皮肤。" : "已重新读取账号皮肤与披风。");
+        LauncherApp.I.Notify("已刷新皮肤", hasLocal ? "已重新读取本地皮肤" : "已重新读取账号皮肤与披风");
     }
 
     private async void UseAccountSkinOriginal_Click(object sender, RoutedEventArgs e)
@@ -406,7 +406,7 @@ public partial class LaunchPage : UserControl, IPage, INotifyPropertyChanged
             await LauncherApp.I.RefreshAccountAsync();
         await RefreshSkinAsync();
         RefreshAccountHeader();
-        LauncherApp.I.Notify("已使用账号皮肤", "已清除本地皮肤覆盖。");
+        LauncherApp.I.Notify("已使用账号皮肤", "已清除本地皮肤覆盖");
     }
 
     private void RefreshAccountHeader()
@@ -462,7 +462,7 @@ public partial class LaunchPage : UserControl, IPage, INotifyPropertyChanged
         var v = SelectedVersion;
         if (v is null)
         {
-            VersionMeta = "还没有可用的版本。先到「下载」安装一个，或把 .minecraft 放到启动器旁边。";
+            VersionMeta = "还没有可用的版本\n先到「下载」安装一个，或把 .minecraft 放到启动器旁边";
             LaunchSub = "未选择版本";
             return;
         }
@@ -588,7 +588,7 @@ public partial class LaunchPage : UserControl, IPage, INotifyPropertyChanged
     {
         if (_state == LaunchState.Running)
         {
-            if (MessageDialog.Show(Window.GetWindow(this), "结束游戏", "要结束现在的 Minecraft 吗？没保存的进度会丢。",
+            if (MessageDialog.Show(Window.GetWindow(this), "结束游戏", "要结束现在的 Minecraft 吗？没保存的进度会丢",
                     "结束游戏", "取消", danger: true))
                 LauncherApp.I.Launch.Cancel();
             return;
@@ -628,7 +628,7 @@ public partial class LaunchPage : UserControl, IPage, INotifyPropertyChanged
         if (version is null)
         {
             MessageDialog.Show(Window.GetWindow(this), "没有可启动的版本",
-                "没检测到 Minecraft 版本。\n先去「下载」装个原版或 Fabric，或者检查 Minecraft 目录设置。",
+                "没检测到 Minecraft 版本\n\n先去「下载」装个原版或 Fabric，或者检查 Minecraft 目录设置",
                 "去下载", "关闭");
             App.Window?.NavigateTo("download");
             return;
@@ -637,7 +637,7 @@ public partial class LaunchPage : UserControl, IPage, INotifyPropertyChanged
         var resolved = app.Versions.Resolve(version.Id);
         if (resolved is null)
         {
-            MessageDialog.Show(Window.GetWindow(this), "版本损坏", "这个版本的 JSON 读不了，重装一下吧。", "知道了", danger: true);
+            MessageDialog.Show(Window.GetWindow(this), "版本损坏", "这个版本的 JSON 读不了，重装一下吧", "知道了", danger: true);
             return;
         }
 
@@ -649,8 +649,8 @@ public partial class LaunchPage : UserControl, IPage, INotifyPropertyChanged
             if (!ready)
             {
                 var message = account.IsYggdrasil
-                    ? "外置登录令牌已失效，需要重新登录后才能启动。\n也可以先切换到离线账号。"
-                    : "Microsoft 登录令牌已失效，需要重新登录后才能启动正版账号。\n也可以先切换到离线账号。";
+                    ? "外置登录令牌已失效，需要重新登录后才能启动\n\n也可以先切换到离线账号"
+                    : "Microsoft 登录令牌已失效，需要重新登录后才能启动正版账号\n\n也可以先切换到离线账号";
                 if (MessageDialog.Show(Window.GetWindow(this), "登录已失效", message,
                         "重新登录", "取消", danger: true))
                 {
@@ -659,7 +659,7 @@ public partial class LaunchPage : UserControl, IPage, INotifyPropertyChanged
                 }
                 if (account.IsOnline && !await app.EnsureAccountReadyAsync())
                 {
-                    SetStatus("账号未就绪，启动已取消。", LaunchState.Idle);
+                    SetStatus("账号未就绪，启动已取消", LaunchState.Idle);
                     return;
                 }
             }
@@ -672,8 +672,8 @@ public partial class LaunchPage : UserControl, IPage, INotifyPropertyChanged
         if (java is null)
         {
             MessageDialog.Show(Window.GetWindow(this), "找不到 Java",
-                $"这个版本需要 Java {resolved.JavaMajor}，但没有在系统里找到可用的 64 位 Java。\n" +
-                "装个对应的 Java，或者在「设置 → 启动」里手动指定 java.exe。",
+                $"这个版本需要 Java {resolved.JavaMajor}，但没有在系统里找到可用的 64 位 Java\n\n" +
+                "装个对应的 Java，或者在「设置 → 启动」里手动指定 java.exe",
                 "去设置", "关闭", danger: true);
             App.Window?.NavigateTo("settings");
             return;
@@ -681,8 +681,8 @@ public partial class LaunchPage : UserControl, IPage, INotifyPropertyChanged
         if (java.Major < resolved.JavaMajor)
         {
             MessageDialog.Show(Window.GetWindow(this), "Java 主版本过低",
-                $"这个版本需要 Java {resolved.JavaMajor} 或更高，当前只有 Java {java.Major}。\n" +
-                "装个新 Java，或者在这个版本的「修改」页里指定。",
+                $"这个版本需要 Java {resolved.JavaMajor} 或更高，当前只有 Java {java.Major}\n\n" +
+                "装个新 Java，或者在这个版本的「修改」页里指定",
                 "知道了", danger: true);
             return;
         }
@@ -691,7 +691,7 @@ public partial class LaunchPage : UserControl, IPage, INotifyPropertyChanged
         if (memory > app.TotalMemoryMb && app.TotalMemoryMb > 0)
         {
             if (!MessageDialog.Show(Window.GetWindow(this), "内存设置过大",
-                    $"分配内存 {memory} MB 已超过物理内存 {app.TotalMemoryMb} MB。\n继续可能导致系统卡死，建议降低内存。",
+                    $"分配内存 {memory} MB 已超过物理内存 {app.TotalMemoryMb} MB\n\n继续可能导致系统卡死，建议降低内存",
                     "仍然启动", "返回修改", danger: true))
             {
                 App.Window?.NavigateToVersions(version.Id);
@@ -768,7 +768,7 @@ public partial class LaunchPage : UserControl, IPage, INotifyPropertyChanged
         }
         catch (OperationCanceledException)
         {
-            SetStatus("启动已取消。", LaunchState.Idle);
+            SetStatus("启动已取消", LaunchState.Idle);
         }
         catch (Exception ex)
         {
@@ -845,7 +845,7 @@ public partial class LaunchPage : UserControl, IPage, INotifyPropertyChanged
         await Dispatcher.InvokeAsync(() =>
         {
             _state = code == 0 ? LaunchState.Exited : LaunchState.Failed;
-            SetStatus(code == 0 ? "游戏已正常退出。" : $"游戏异常退出（退出码 {code}）。", _state);
+            SetStatus(code == 0 ? "游戏已正常退出" : $"游戏异常退出（退出码 {code}）", _state);
         });
 
         if (code == 0) return;
@@ -873,7 +873,7 @@ public partial class LaunchPage : UserControl, IPage, INotifyPropertyChanged
         {
             var first = analysis?.Findings.FirstOrDefault();
             var message = first is null
-                ? "游戏异常退出。可以打开日志查看原因，或到「报错」页做一次完整分析。"
+                ? "游戏异常退出\n可以打开日志查看原因，或到「报错」页做一次完整分析"
                 : $"{first.Title}\n{first.Suggestion}";
             if (MessageDialog.Show(Window.GetWindow(this), "游戏异常退出", message,
                     "打开报错分析", "关闭", danger: true))
@@ -1297,7 +1297,7 @@ public partial class LaunchPage : UserControl, IPage, INotifyPropertyChanged
         LauncherApp.I.Save();
         BuildHomeWidgets();
         ApplyHomeLayout();
-        LauncherApp.I.Notify("已恢复初始界面", "卡片位置、样式和自定义卡片已重置。");
+        LauncherApp.I.Notify("已恢复初始界面", "卡片位置、样式和自定义卡片已重置");
     }
 
     private void EditHome_Click(object sender, RoutedEventArgs e)
@@ -1584,14 +1584,14 @@ public partial class LaunchPage : UserControl, IPage, INotifyPropertyChanged
             var json = await HttpService.GetStringAsync("https://launchercontent.mojang.com/news.json", CancellationToken.None);
             var root = JsonNode.Parse(json) as JsonObject;
             var entries = root?["entries"] as JsonArray;
-            if (entries is null) { target.Text = "暂时无法获取新闻。"; return; }
+            if (entries is null) { target.Text = "暂时无法获取新闻"; return; }
             var lines = new List<string>();
             foreach (var entry in entries.Take(4))
             {
                 var title = entry?["title"]?.GetValue<string>();
                 if (!string.IsNullOrWhiteSpace(title)) lines.Add("• " + title);
             }
-            target.Text = lines.Count == 0 ? "暂时没有新闻。" : string.Join(Environment.NewLine, lines);
+            target.Text = lines.Count == 0 ? "暂时没有新闻" : string.Join(Environment.NewLine, lines);
         }
         catch (Exception ex)
         {
@@ -1763,7 +1763,7 @@ public partial class LaunchPage : UserControl, IPage, INotifyPropertyChanged
         LauncherApp.I.Save();
         ApplyHomeLayout();
         BuildHomeWidgets();
-        LauncherApp.I.Notify("主页已更新", "卡片显示设置已保存。");
+        LauncherApp.I.Notify("主页已更新", "卡片显示设置已保存");
     }
 
     private void OpenSettings_Click(object sender, RoutedEventArgs e) => App.Window?.NavigateTo("settings");
@@ -1789,7 +1789,7 @@ public partial class LaunchPage : UserControl, IPage, INotifyPropertyChanged
         var id = SelectedVersion?.Id ?? LauncherApp.I.CurrentVersion?.Id;
         if (string.IsNullOrWhiteSpace(id))
         {
-            MessageDialog.Show(Window.GetWindow(this), "没有可用版本", "先去「版本」页装一个。", "知道了");
+            MessageDialog.Show(Window.GetWindow(this), "没有可用版本", "先去「版本」页装一个", "知道了");
             return;
         }
         try
@@ -1820,7 +1820,7 @@ public partial class LaunchPage : UserControl, IPage, INotifyPropertyChanged
         _logBuffer.Clear();
         LogText = "等待游戏输出…";
         HasLog = false;
-        StatusLabel.Text = "日志显示已清空。";
+        StatusLabel.Text = "日志显示已清空";
     }
 
     private void OpenLog_Click(object sender, RoutedEventArgs e)
@@ -1835,7 +1835,7 @@ public partial class LaunchPage : UserControl, IPage, INotifyPropertyChanged
         _statsCacheKey = "";
         LauncherApp.I.ReloadVersions();
         RefreshState();
-        LauncherApp.I.Notify("主页已刷新", "版本列表与最近游玩已更新。");
+        LauncherApp.I.Notify("主页已刷新", "版本列表与最近游玩已更新");
     }
 
     private void ToggleLog_Click(object sender, RoutedEventArgs e)

@@ -657,7 +657,7 @@ public partial class MainWindow : Window
         var app = LauncherApp.I;
         if (app.Launch.State is LaunchState.Preparing or LaunchState.Downloading or LaunchState.Starting)
         {
-            if (!MessageDialog.Show(this, "正在启动", "游戏仍在准备启动，现在退出会中断启动。确定要退出吗？",
+            if (!MessageDialog.Show(this, "正在启动", "游戏仍在准备启动，现在退出会中断启动\n确定要退出吗？",
                     "退出", "继续等待", danger: true))
             {
                 e.Cancel = true;
@@ -667,7 +667,7 @@ public partial class MainWindow : Window
         }
         else if (app.Launch.IsRunning)
         {
-            if (!MessageDialog.Show(this, "游戏正在运行", "关闭启动器不会结束 Minecraft 进程，游戏会继续运行。确定关闭启动器吗？",
+            if (!MessageDialog.Show(this, "游戏正在运行", "关闭启动器不会结束 Minecraft 进程，游戏会继续运行\n确定关闭启动器吗？",
                     "关闭启动器", "取消"))
             {
                 e.Cancel = true;
@@ -728,8 +728,8 @@ public partial class MainWindow : Window
 
         if (!MessageDialog.Show(this, "安装整合包",
                 $"检测到整合包：\n{Path.GetFileName(archive)}\n\n" +
-                "启动器会自动识别 CurseForge / Modrinth 格式，安装对应加载器并下载文件。\n" +
-                "CurseForge 整合包需要配置 API Key。\n\n继续吗？",
+                "启动器会自动识别 CurseForge / Modrinth 格式，安装对应加载器并下载文件\n\n" +
+                "CurseForge 整合包需要配置 API Key\n\n\n继续吗？",
                 "开始安装", "取消"))
             return;
 
@@ -762,11 +762,11 @@ public partial class MainWindow : Window
             LauncherApp.I.ReloadVersions();
             NavigateToVersions(result.Id);
             MessageDialog.Show(this, "整合包安装完成",
-                $"「{result.Name}」已安装。\n共处理 {result.Files} 个文件，版本已自动创建。", "知道了");
+                $"「{result.Name}」已安装\n\n共处理 {result.Files} 个文件，版本已自动创建", "知道了");
         }
         catch (OperationCanceledException)
         {
-            MessageDialog.Show(this, "已取消", "整合包安装已取消，已下载的文件会保留。", "知道了");
+            MessageDialog.Show(this, "已取消", "整合包安装已取消，已下载的文件会保留", "知道了");
         }
         catch (Exception ex)
         {
@@ -790,7 +790,7 @@ public partial class MainWindow : Window
         target ??= LauncherApp.I.CurrentVersion;
         if (target is null)
         {
-            MessageDialog.Show(this, "安装 Mod", "现在没有可用版本，先装个 Minecraft。", "知道了");
+            MessageDialog.Show(this, "安装 Mod", "现在没有可用版本，先装个 Minecraft", "知道了");
             return;
         }
 
@@ -798,8 +798,8 @@ public partial class MainWindow : Window
             LauncherApp.I.Settings.VersionIsolation);
         Directory.CreateDirectory(dir);
         var conflicts = mods.Where(f => File.Exists(Path.Combine(dir, Path.GetFileName(f)))).ToList();
-        var message = $"将把 {mods.Count} 个 Mod 安装到实例「{target.DisplayName}」。";
-        if (conflicts.Count > 0) message += $"\n\n其中 {conflicts.Count} 个文件已存在，将继续并覆盖。";
+        var message = $"将把 {mods.Count} 个 Mod 安装到实例「{target.DisplayName}」";
+        if (conflicts.Count > 0) message += $"\n\n其中 {conflicts.Count} 个文件已存在，将继续并覆盖";
         if (!MessageDialog.Show(this, "安装 Mod", message + "\n\n继续吗？", "安装", "取消")) return;
 
         try

@@ -20,7 +20,7 @@
             </Grid.ColumnDefinitions>
             <StackPanel>
                 <TextBlock Text="下载" Style="{StaticResource PageTitle}" />
-                <TextBlock Text="装原版、Fabric、Forge、NeoForge，或者搜整合包和资源。装之前先确认下载源能用。" Style="{StaticResource PageSubtitle}" />
+                <TextBlock Text="装原版、Fabric、Forge、NeoForge，或者搜整合包和资源&#10;装之前先确认下载源能用" Style="{StaticResource PageSubtitle}" />
             </StackPanel>
             <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
                 <TextBlock x:Name="SourceText" Text="下载源：自动" Style="{StaticResource MutedText}"
@@ -114,7 +114,7 @@
                             </DataTemplate>
                         </ListBox.ItemTemplate>
                     </ListBox>
-                    <TextBlock x:Name="VersionEmpty" Text="没有匹配的版本。" Style="{StaticResource MutedText}"
+                    <TextBlock x:Name="VersionEmpty" Text="没有匹配的版本" Style="{StaticResource MutedText}"
                                HorizontalAlignment="Center" VerticalAlignment="Center" Visibility="Collapsed" />
                     <ProgressBar x:Name="ManifestLoading" IsIndeterminate="True" Height="3" VerticalAlignment="Top"
                                  Foreground="{DynamicResource AccentBrush}" Background="{DynamicResource TrackBrush}" BorderThickness="0"
@@ -127,9 +127,9 @@
                     <TextBlock Text="安装游戏版本" Style="{StaticResource SectionTitle}" />
                     <TextBlock x:Name="DetailTitle" Text="选择一个版本" FontFamily="{DynamicResource DisplayFont}"
                                FontSize="18" FontWeight="SemiBold" Margin="0,12,0,0" TextWrapping="Wrap" />
-                    <TextBlock x:Name="DetailSub" Text="从左侧列表选择要安装的版本。" Style="{StaticResource MutedText}" Margin="0,6,0,0" />
+                    <TextBlock x:Name="DetailSub" Text="从左侧列表选择要安装的版本" Style="{StaticResource MutedText}" Margin="0,6,0,0" />
                     <Border Style="{StaticResource Divider}" />
-                    <TextBlock x:Name="DetailNote" Text="安装会下载版本 JSON、客户端 jar、运行库与资源文件。已存在的文件会跳过。"
+                    <TextBlock x:Name="DetailNote" Text="安装会下载版本 JSON、客户端 jar、运行库与资源文件&#10;已存在的文件会跳过"
                                Style="{StaticResource MutedText}" LineHeight="18" />
                     <TextBlock Text="同时安装加载器（可选）" Style="{StaticResource FormLabel}" Margin="0,14,0,0" />
                     <ComboBox x:Name="VanillaLoaderCombo" Height="34" SelectionChanged="VanillaLoader_SelectionChanged">
@@ -139,7 +139,7 @@
                         <ComboBoxItem Content="NeoForge · 选择 NeoForge 版本" Tag="neoforge" />
                         <ComboBoxItem Content="Quilt · 选择 Quilt 版本" Tag="quilt" />
                     </ComboBox>
-                    <TextBlock Text="选择 Fabric / Forge / NeoForge / Quilt 后，会先下载游戏本体，再自动继续安装加载器。" Style="{StaticResource MutedText}"
+                    <TextBlock Text="选择 Fabric / Forge / NeoForge / Quilt 后，会先下载游戏本体，再自动继续安装加载器" Style="{StaticResource MutedText}"
                                Margin="0,7,0,0" TextWrapping="Wrap" />
                     <StackPanel x:Name="FabricOptions" Visibility="Collapsed" Margin="0,10,0,0">
                         <TextBlock Text="Fabric Loader 版本" Style="{StaticResource FormLabel}" />
@@ -174,7 +174,7 @@
                     <TextBlock Text="实例名称（可选）" Style="{StaticResource FormLabel}" Margin="0,12,0,0" />
                     <TextBox x:Name="InstallNameBox" Style="{StaticResource InputBox}" Height="32"
                              Tag="留空使用自动名称" TextChanged="InstallName_Changed" />
-                    <TextBlock Text="同一个游戏版本可以安装多份，用不同实例名区分。"
+                    <TextBlock Text="同一个游戏版本可以安装多份，用不同实例名区分"
                                Style="{StaticResource MutedText}" Margin="0,5,0,0" TextWrapping="Wrap" />
                     <Button x:Name="NewInstanceButton" Style="{StaticResource SoftButton}" Height="38" Margin="0,14,0,0"
                             FontSize="11.5" FontWeight="SemiBold" HorizontalAlignment="Stretch"
@@ -190,7 +190,7 @@
                     </Button>
                     <Button x:Name="InstallButton" Style="{StaticResource PrimaryButton}" Height="40" Margin="0,8,0,0"
                             Content="装这个版本" IsEnabled="False" Click="InstallVanilla_Click" />
-                    <TextBlock x:Name="InstallHint" Text="需要联网下载；可以在设置中切换镜像源。" Style="{StaticResource MutedText}"
+                    <TextBlock x:Name="InstallHint" Text="需要联网下载；可以在设置中切换镜像源" Style="{StaticResource MutedText}"
                                Margin="0,9,0,0" />
                 </StackPanel>
             </Border>
@@ -207,7 +207,7 @@
             <Border Style="{StaticResource Card}">
                 <StackPanel>
                     <TextBlock Text="部署 Fabric" Style="{StaticResource SectionTitle}" />
-                    <TextBlock Text="Fabric 适合轻量整合包与大多数客户端 Mod。安装前会先确保对应原版版本存在。"
+                    <TextBlock Text="Fabric 适合轻量整合包与大多数客户端 Mod&#10;安装前会先确保对应原版版本存在"
                                Style="{StaticResource MutedText}" Margin="0,7,0,0" />
                     <Grid Margin="0,18,0,0">
                         <Grid.ColumnDefinitions>
@@ -230,25 +230,25 @@
                         <CheckBox x:Name="FabricApiCheck" Style="{StaticResource Switch}" IsChecked="True"
                                   HorizontalAlignment="Right" VerticalAlignment="Center" />
                     </Grid>
-                    <TextBlock Text="会按 游戏版本从 Modrinth 选择最新的兼容 Fabric API。" Style="{StaticResource MutedText}" Margin="0,5,0,0" />
+                    <TextBlock Text="会按 游戏版本从 Modrinth 选择最新的兼容 Fabric API" Style="{StaticResource MutedText}" Margin="0,5,0,0" />
                     <Button x:Name="InstallFabricButton" Style="{StaticResource PrimaryButton}" Height="40" Margin="0,14,0,0"
                             Content="部署 Fabric" IsEnabled="False" Click="InstallFabric_Click" />
                     <TextBlock x:Name="FabricStatus" Text="正在加载可用的 游戏版本…" Style="{StaticResource MutedText}" Margin="0,9,0,0" />
                     <Border Style="{StaticResource Divider}" />
-                    <TextBlock Text="安装完成后会生成 fabric-loader-&lt;loader&gt;-&lt;mc&gt; 版本，并出现在「版本」列表中。"
+                    <TextBlock Text="安装完成后会生成 fabric-loader-&lt;loader&gt;-&lt;mc&gt; 版本，并出现在「版本」列表中"
                                Style="{StaticResource MutedText}" TextWrapping="Wrap" />
                 </StackPanel>
             </Border>
             <Border Grid.Column="2" Style="{StaticResource Card}">
                 <StackPanel>
                     <TextBlock Text="版本要求" Style="{StaticResource SectionTitle}" />
-                    <TextBlock Text="Fabric 跟着原版版本走；先确认游戏版本装好了，或者允许自动安装。" Style="{StaticResource MutedText}" Margin="0,9,0,0" />
+                    <TextBlock Text="Fabric 跟着原版版本走；先确认游戏版本装好了，或者允许自动安装" Style="{StaticResource MutedText}" Margin="0,9,0,0" />
                     <Border Style="{StaticResource Divider}" />
                     <TextBlock Text="镜像" Style="{StaticResource Label}" />
-                    <TextBlock Text="Fabric 元数据来自 meta.fabricmc.net；下载源设置只影响 Mojang 文件。" Style="{StaticResource MutedText}" Margin="0,6,0,0" />
+                    <TextBlock Text="Fabric 元数据来自 meta.fabricmc.net；下载源设置只影响 Mojang 文件" Style="{StaticResource MutedText}" Margin="0,6,0,0" />
                     <Border Style="{StaticResource Divider}" />
                     <TextBlock Text="常见问题" Style="{StaticResource Label}" />
-                    <TextBlock Text="Loader 列表空的话，换个下载源再试。" Style="{StaticResource MutedText}" Margin="0,6,0,0" />
+                    <TextBlock Text="Loader 列表空的话，换个下载源再试" Style="{StaticResource MutedText}" Margin="0,6,0,0" />
                 </StackPanel>
             </Border>
         </Grid>
@@ -264,7 +264,7 @@
             <Border Style="{StaticResource Card}">
                 <StackPanel>
                     <TextBlock Text="部署 Forge" Style="{StaticResource SectionTitle}" />
-                    <TextBlock Text="自动下载官方 installer，并以 --installClient 模式在后台完成 libraries、版本 JSON 与本体的安装。"
+                    <TextBlock Text="自动下载官方 installer，并以 --installClient 模式在后台完成 libraries、版本 JSON 与本体的安装"
                                Style="{StaticResource MutedText}" TextWrapping="Wrap" Margin="0,7,0,0" />
                     <Grid Margin="0,16,0,0">
                         <Grid.ColumnDefinitions>
@@ -283,7 +283,7 @@
                     </Grid>
                     <Button x:Name="InstallForgeButton" Style="{StaticResource PrimaryButton}" Height="40" Margin="0,18,0,0"
                             Content="一键部署 Forge" IsEnabled="False" Click="InstallForge_Click" />
-                    <TextBlock x:Name="ForgeStatus" Text="选择 游戏版本后会加载可用的 Forge 加载器版本。" Style="{StaticResource MutedText}"
+                    <TextBlock x:Name="ForgeStatus" Text="选择 游戏版本后会加载可用的 Forge 加载器版本" Style="{StaticResource MutedText}"
                                Margin="0,9,0,0" TextWrapping="Wrap" />
                     <Border Style="{StaticResource Divider}" />
                     <TextBlock Text="官方 installer 在后台跑不起来的话，还能用本地安装器："
@@ -300,14 +300,14 @@
             <Border Grid.Column="2" Style="{StaticResource Card}">
                 <StackPanel>
                     <TextBlock Text="安装说明" Style="{StaticResource SectionTitle}" />
-                    <TextBlock Text="Forge 会写入 .minecraft/libraries 并生成 versions 下的版本目录。"
+                    <TextBlock Text="Forge 会写入 .minecraft/libraries 并生成 versions 下的版本目录"
                                Style="{StaticResource MutedText}" Margin="0,9,0,0" />
-                    <TextBlock Text="1. 选择与整合包一致的 游戏版本。" Style="{StaticResource MutedText}" Margin="0,6,0,0" />
-                    <TextBlock Text="2. 优先使用推荐版 Forge；旧整合包挑对应版本。" Style="{StaticResource MutedText}" Margin="0,6,0,0" />
-                    <TextBlock Text="3. 安装完成后到「版本」页选择 Forge 实例，再把 Mod 放进 mods。" Style="{StaticResource MutedText}" Margin="0,6,0,0" />
+                    <TextBlock Text="1. 选择与整合包一致的 游戏版本" Style="{StaticResource MutedText}" Margin="0,6,0,0" />
+                    <TextBlock Text="2. 优先使用推荐版 Forge；旧整合包挑对应版本" Style="{StaticResource MutedText}" Margin="0,6,0,0" />
+                    <TextBlock Text="3. 安装完成后到「版本」页选择 Forge 实例，再把 Mod 放进 mods" Style="{StaticResource MutedText}" Margin="0,6,0,0" />
                     <Border Style="{StaticResource Divider}" />
                     <TextBlock Text="NeoForge" Style="{StaticResource Label}" />
-                    <TextBlock Text="NeoForge 使用官方 maven 部署器，版本会按 Minecraft 版本筛。" Style="{StaticResource MutedText}" Margin="0,6,0,0" />
+                    <TextBlock Text="NeoForge 使用官方 maven 部署器，版本会按 Minecraft 版本筛" Style="{StaticResource MutedText}" Margin="0,6,0,0" />
                 </StackPanel>
             </Border>
         </Grid>

@@ -26,7 +26,7 @@
             </Grid.ColumnDefinitions>
             <StackPanel>
                 <TextBlock Text="报错分析" Style="{StaticResource PageTitle}" />
-                <TextBlock Text="解析 latest.log、crash-reports 与 mods 目录，定位缺失前置、冲突与 Java 问题。" Style="{StaticResource PageSubtitle}" />
+                <TextBlock Text="解析 latest.log、crash-reports 与 mods 目录，定位缺失前置、冲突与 Java 问题" Style="{StaticResource PageSubtitle}" />
             </StackPanel>
             <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
                 <ComboBox x:Name="VersionCombo" Width="250" Height="34" SelectionChanged="VersionCombo_SelectionChanged" />
@@ -51,7 +51,7 @@
                 <StackPanel Grid.Column="1" Margin="14,0,0,0" VerticalAlignment="Center">
                     <TextBlock x:Name="SummaryTitle" Text="还没有分析记录" FontFamily="{DynamicResource DisplayFont}"
                                FontSize="17" FontWeight="SemiBold" />
-                    <TextBlock x:Name="SummarySub" Text="选择一个版本，然后点击「重新分析」。" Style="{StaticResource MutedText}" Margin="0,5,0,0" />
+                    <TextBlock x:Name="SummarySub" Text="选择一个版本，然后点击「重新分析」" Style="{StaticResource MutedText}" Margin="0,5,0,0" />
                 </StackPanel>
                 <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
                     <Button Style="{StaticResource ButtonBase}" Height="32" Content="打开日志" Click="OpenLog_Click" Margin="0,0,7,0" />
@@ -116,7 +116,7 @@
                             </DataTemplate>
                         </ListBox.ItemTemplate>
                     </ListBox>
-                    <TextBlock x:Name="NoFindings" Text="没有发现明确的错误。可以打开日志进一步检查。" Style="{StaticResource MutedText}"
+                    <TextBlock x:Name="NoFindings" Text="没有发现明确的错误&#10;可以打开日志进一步检查" Style="{StaticResource MutedText}"
                                HorizontalAlignment="Center" VerticalAlignment="Center" Visibility="Collapsed" />
                 </Grid>
             </Grid>
@@ -142,7 +142,7 @@
                                            Foreground="{DynamicResource DangerBrush}" />
                             </StackPanel>
                         </Grid>
-                        <TextBlock x:Name="ModSummaryText" Text="分析后会在这里显示 Mod 统计。" Style="{StaticResource MutedText}" Margin="0,10,0,0" />
+                        <TextBlock x:Name="ModSummaryText" Text="分析后会在这里显示 Mod 统计" Style="{StaticResource MutedText}" Margin="0,10,0,0" />
                         <Button Style="{StaticResource ButtonBase}" Height="32" Content="打开 Mods 文件夹"
                                 HorizontalAlignment="Left" Margin="0,12,0,0" Click="OpenModsFolder_Click" />
                     </StackPanel>
@@ -161,9 +161,9 @@
                 <Border Style="{StaticResource Card}" Margin="0,12,0,0">
                     <StackPanel>
                         <TextBlock Text="怎么修" Style="{StaticResource SectionTitle}" />
-                        <TextBlock Text="1. 先处理「严重」级别的问题，再启动游戏。" Style="{StaticResource MutedText}" Margin="0,9,0,0" />
-                        <TextBlock Text="2. 缺前置时只安装对应版本，不要混用不同加载器的 Mod。" Style="{StaticResource MutedText}" Margin="0,5,0,0" />
-                        <TextBlock Text="3. 报错页读取的是当前实例的 logs 与 crash-reports。" Style="{StaticResource MutedText}" Margin="0,5,0,0" />
+                        <TextBlock Text="1. 先处理「严重」级别的问题，再启动游戏" Style="{StaticResource MutedText}" Margin="0,9,0,0" />
+                        <TextBlock Text="2. 缺前置时只安装对应版本，不要混用不同加载器的 Mod" Style="{StaticResource MutedText}" Margin="0,5,0,0" />
+                        <TextBlock Text="3. 报错页读取的是当前实例的 logs 与 crash-reports" Style="{StaticResource MutedText}" Margin="0,5,0,0" />
                     </StackPanel>
                 </Border>
             </StackPanel>

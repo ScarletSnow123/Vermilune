@@ -21,7 +21,7 @@
         </Style>
     </Window.Resources>
     <Grid x:Name="RootGrid">
-        <!-- 不透明底色在上，背景图叠在底色之上；100% 时不会透出桌面。 -->
+        <!-- 不透明底色在上，背景图叠在底色之上；100% 时不会透出桌面&#10; -->
         <Border x:Name="BgTint" CornerRadius="10" Background="{DynamicResource WindowBgBrush}" />
         <Border x:Name="BgImageBorder" CornerRadius="10" Visibility="Collapsed">
             <Border.Background>
@@ -217,7 +217,7 @@
                     <TextBlock Text="背景图不透明度" Style="{StaticResource Label}" Margin="0,14,0,0" />
                     <Slider x:Name="BgOpacitySlider" Minimum="0" Maximum="100" Value="34" Margin="0,6,0,0"
                             ValueChanged="BgOpacitySlider_ValueChanged" />
-                    <TextBlock Text="透明度只影响背景与面板，文字始终保持清晰。"
+                    <TextBlock Text="透明度只影响背景与面板，文字始终保持清晰"
                                Style="{StaticResource MutedText}" Margin="0,10,0,0" />
                 </StackPanel>
             </Border>

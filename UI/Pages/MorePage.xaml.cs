@@ -40,7 +40,7 @@ public partial class MorePage : UserControl, IPage
         try
         {
             Clipboard.SetText(EnvText.Text);
-            LauncherApp.I.Notify("环境信息已复制", "可以粘贴到求助帖中。");
+            LauncherApp.I.Notify("环境信息已复制", "可以粘贴到求助帖中");
         }
         catch { }
     }

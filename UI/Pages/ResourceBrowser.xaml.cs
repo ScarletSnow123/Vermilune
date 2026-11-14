@@ -74,7 +74,7 @@ public partial class ResourceBrowser : UserControl
                                        string.Equals(v.Id, selectedId, StringComparison.OrdinalIgnoreCase))
                                    ?? versions.FirstOrDefault();
         TargetHint.Text = versions.Count == 0
-            ? "没有扫描到版本实例，先去「版本」页装一个，或者刷新一下。"
+            ? "没有扫描到版本实例，先去「版本」页装一个，或者刷新一下"
             : "";
         TargetHint.Visibility = versions.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
     }
@@ -184,7 +184,7 @@ public partial class ResourceBrowser : UserControl
                 ? $"中文别名：{searchQuery} · {_projects.Count} 个结果"
                 : $"{_projects.Count} 个结果";
             EmptyText.Visibility = _projects.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
-            EmptyText.Text = "没有找到匹配的项目。";
+            EmptyText.Text = "没有找到匹配的项目";
             LoadMoreButton.Visibility = list.Count >= 20 ? Visibility.Visible : Visibility.Collapsed;
             if (reset && _projects.Count > 0) ProjectList.SelectedIndex = 0;
             _searched = true;
@@ -193,7 +193,7 @@ public partial class ResourceBrowser : UserControl
         {
             if (version != _searchVersion) return;
             SearchStatus.Text = "搜索超时";
-            EmptyText.Text = "网络连接超时，点「搜索」再试一次。";
+            EmptyText.Text = "网络连接超时，点「搜索」再试一次";
             EmptyText.Visibility = Visibility.Visible;
         }
         catch (Exception ex)
@@ -271,7 +271,7 @@ public partial class ResourceBrowser : UserControl
             VersionCombo.ItemsSource = _files.Select(f => f.Display).ToList();
             if (selectedIndex >= 0 && selectedIndex < _files.Count) VersionCombo.SelectedIndex = selectedIndex;
             else VersionCombo.SelectedIndex = _files.Count > 0 ? 0 : -1;
-            InstallStatus.Text = _files.Count == 0 ? "没有找到与当前筛选条件兼容的版本。" : $"{_files.Count} 个可用版本";
+            InstallStatus.Text = _files.Count == 0 ? "没有找到与当前筛选条件兼容的版本" : $"{_files.Count} 个可用版本";
             InstallButton.IsEnabled = _files.Count > 0 && !_installing;
             _versionHasMore = _source == ResourceSource.CurseForge && files.Count >= 50 && _files.Count < 500;
             LoadMoreVersionsButton.Visibility = _versionHasMore ? Visibility.Visible : Visibility.Collapsed;
@@ -279,7 +279,7 @@ public partial class ResourceBrowser : UserControl
         }
         catch (OperationCanceledException)
         {
-            if (token == _versionToken) InstallStatus.Text = "读取版本超时。";
+            if (token == _versionToken) InstallStatus.Text = "读取版本超时";
         }
         catch (Exception ex)
         {
@@ -317,13 +317,13 @@ public partial class ResourceBrowser : UserControl
         var file = _files[VersionCombo.SelectedIndex];
         if (string.IsNullOrWhiteSpace(file.Url))
         {
-            MessageDialog.Show(Window.GetWindow(this), "装不了", "这个文件没有下载地址。", "知道了", danger: true);
+            MessageDialog.Show(Window.GetWindow(this), "装不了", "这个文件没有下载地址", "知道了", danger: true);
             return;
         }
         if (_type == ResourceType.Modpack)
         {
             if (!MessageDialog.Show(Window.GetWindow(this), "安装整合包",
-                    $"将安装「{_selected.Title}」的 {file.VersionNumber}。\n会先安装对应的加载器，再下载整合包文件，耗时可能较长。",
+                    $"将安装「{_selected.Title}」的 {file.VersionNumber}\n\n会先安装对应的加载器，再下载整合包文件，耗时可能较长",
                     "开始安装", "取消")) return;
             _cts?.Dispose();
             _cts = new CancellationTokenSource();
@@ -339,10 +339,10 @@ public partial class ResourceBrowser : UserControl
                 SetInstalling(false, $"整合包安装完成：{result.Name}（{result.Files} 个文件）");
                 LauncherApp.I.Notify("整合包安装完成", result.Name);
                 if (MessageDialog.Show(Window.GetWindow(this), "安装完成",
-                        $"已创建版本「{result.Name}」。现在打开版本页吗？", "打开版本页", "留在这里"))
+                        $"已创建版本「{result.Name}」\n现在打开版本页吗？", "打开版本页", "留在这里"))
                     App.Window?.NavigateToVersions(result.Id);
             }
-            catch (OperationCanceledException) { SetInstalling(false, "已取消安装。"); }
+            catch (OperationCanceledException) { SetInstalling(false, "已取消安装"); }
             catch (Exception ex)
             {
                 Log.Error(ex, "整合包安装失败");
@@ -354,11 +354,11 @@ public partial class ResourceBrowser : UserControl
 
         if (TargetCombo.SelectedItem is not VersionInfo target)
         {
-            MessageDialog.Show(Window.GetWindow(this), "选择实例", "选个要装进去的实例。", "知道了", danger: true);
+            MessageDialog.Show(Window.GetWindow(this), "选择实例", "选个要装进去的实例", "知道了", danger: true);
             return;
         }
         if (!MessageDialog.Show(Window.GetWindow(this), "安装资源",
-                $"将把「{_selected.Title}」安装到实例「{target.DisplayName}」。\n文件：{file.FileName}",
+                $"将把「{_selected.Title}」安装到实例「{target.DisplayName}」\n\n文件：{file.FileName}",
                 "开始安装", "取消")) return;
         _cts?.Dispose();
         _cts = new CancellationTokenSource();
@@ -376,7 +376,7 @@ public partial class ResourceBrowser : UserControl
             SetInstalling(false, $"安装完成：{result.Name}");
             LauncherApp.I.Notify("安装完成", result.Name);
         }
-        catch (OperationCanceledException) { SetInstalling(false, "已取消下载。"); }
+        catch (OperationCanceledException) { SetInstalling(false, "已取消下载"); }
         catch (Exception ex)
         {
             Log.Error(ex, "资源安装失败");
@@ -419,8 +419,8 @@ public partial class ResourceBrowser : UserControl
     private void SetKey_Click(object sender, RoutedEventArgs e)
     {
         var key = PromptDialog.Show(Window.GetWindow(this), "CurseForge API Key",
-            "粘贴 CurseForge API Key（在 CurseForge 开发者控制台创建）。\n只保存在本机 launcher.json 中。",
-            LauncherApp.I.Settings.CurseForgeApiKey, "Key…", value => value.Length < 10 ? "Key 太短。" : null);
+            "粘贴 CurseForge API Key（在 CurseForge 开发者控制台创建）\n\n只保存在本机 launcher.json 中",
+            LauncherApp.I.Settings.CurseForgeApiKey, "Key…", value => value.Length < 10 ? "Key 太短" : null);
         if (key is null) return;
         LauncherApp.I.Settings.CurseForgeApiKey = key;
         LauncherApp.I.Save();

@@ -61,7 +61,7 @@
             <Border x:Name="InternalBanner" Visibility="Collapsed"
                     Background="#33FF5A5A" BorderBrush="#77FF5A5A" BorderThickness="1"
                     CornerRadius="8" Padding="12,7" Margin="0,0,0,6">
-                <TextBlock Text="内部版本：CurseForge 搜索能用，别外传。"
+                <TextBlock Text="内部版本：CurseForge 搜索能用，别外传"
                            Foreground="#FFFF7070" FontSize="10.5" FontWeight="SemiBold" />
             </Border>
             <Border Background="#22E5B567" BorderBrush="#66E5B567" BorderThickness="1"
@@ -161,7 +161,7 @@
                         </DataTemplate>
                     </ListBox.ItemTemplate>
                 </ListBox>
-                <TextBlock x:Name="EmptyText" Grid.Row="1" Text="输入关键词开始搜索。" Style="{StaticResource MutedText}"
+                <TextBlock x:Name="EmptyText" Grid.Row="1" Text="输入关键词开始搜索" Style="{StaticResource MutedText}"
                            HorizontalAlignment="Center" VerticalAlignment="Center" Visibility="Collapsed" />
                 <Button x:Name="LoadMoreButton" Grid.Row="2" Style="{StaticResource GhostButton}" Height="30"
                         HorizontalAlignment="Center" Content="加载更多" Visibility="Collapsed" Click="LoadMore_Click" />

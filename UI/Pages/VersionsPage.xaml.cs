@@ -123,7 +123,7 @@ public partial class VersionsPage : UserControl, IPage
     {
         LauncherApp.I.ReloadVersions();
         ReloadVersions();
-        LauncherApp.I.Notify("版本列表已刷新", "已重新扫描 versions 目录。");
+        LauncherApp.I.Notify("版本列表已刷新", "已重新扫描 versions 目录");
     }
 
     private void VersionList_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -327,7 +327,7 @@ public partial class VersionsPage : UserControl, IPage
     {
         if (string.IsNullOrWhiteSpace(text)) return 0;
         if (!int.TryParse(text.Trim(), out var value) || value < min || value > max)
-            throw new InvalidOperationException($"{name}必须是 {min}-{max} 之间的整数，或留空。");
+            throw new InvalidOperationException($"{name}必须是 {min}-{max} 之间的整数，或留空");
         return value;
     }
 
@@ -335,7 +335,7 @@ public partial class VersionsPage : UserControl, IPage
     {
         if (_selected is null) return;
         if (!MessageDialog.Show(Window.GetWindow(this), "恢复默认",
-                "将清除此实例的内存、Java、窗口、隔离与高级参数设置，改用全局设置。确定继续吗？",
+                "将清除此实例的内存、Java、窗口、隔离与高级参数设置，改用全局设置\n确定继续吗？",
                 "恢复默认", "取消", danger: true)) return;
         _instance = new InstanceSettings();
         InstanceStore.Save(_selected.Id, _instance);
@@ -357,8 +357,8 @@ public partial class VersionsPage : UserControl, IPage
             _modRows = report.Mods.Where(m => !m.Bundled).Select(m => new ModRow { Info = m }).ToList();
             ModSummary.Text = $"{report.EnabledCount} 个启用 · {report.DisabledCount} 个禁用 · {report.ModsDir}";
             ModHint.Text = report.Issues.Count > 0
-                ? $"检测到 {report.Issues.Count} 个问题，可点击「分析冲突」查看。"
-                : "开启/关闭会重命名 .jar 文件；不会删除内容。";
+                ? $"检测到 {report.Issues.Count} 个问题，可点击「分析冲突」查看"
+                : "开启/关闭会重命名 .jar 文件；不会删除内容";
             ApplyModFilter();
         }
         catch (Exception ex)
@@ -447,7 +447,7 @@ public partial class VersionsPage : UserControl, IPage
             LogPathText.Text = latest;
             if (!File.Exists(latest))
             {
-                LogBox.Text = "没有找到 latest.log。先启动一次游戏，日志会出现在这里。";
+                LogBox.Text = "没有找到 latest.log\n先启动一次游戏，日志会出现在这里";
                 return;
             }
             using var fs = new FileStream(latest, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
@@ -502,11 +502,11 @@ public partial class VersionsPage : UserControl, IPage
         var old = _selected.Id;
         var suggested = old + " 副本";
         var newName = PromptDialog.Show(Window.GetWindow(this), "复制版本",
-            "这会复制整个版本目录，生成一个同版本、独立的实例。\n输入新实例名称：", suggested,
+            "这会复制整个版本目录，生成一个同版本、独立的实例\n\n输入新实例名称：", suggested,
             "例如：My Pack 副本", name =>
             {
-                if (!VersionService.IsValidName(name)) return "名称包含非法字符，或为空。";
-                if (LauncherApp.I.Versions.VersionExists(name)) return "已存在同名版本。";
+                if (!VersionService.IsValidName(name)) return "名称包含非法字符，或为空";
+                if (LauncherApp.I.Versions.VersionExists(name)) return "已存在同名版本";
                 return null;
             });
         if (newName is null) return;
@@ -537,16 +537,16 @@ public partial class VersionsPage : UserControl, IPage
         if (_selected is null) return;
         if (LauncherApp.I.Launch.IsRunning && string.Equals(LauncherApp.I.Launch.CurrentVersionId, _selected.Id, StringComparison.OrdinalIgnoreCase))
         {
-            MessageDialog.Show(Window.GetWindow(this), "游戏正在运行", "先把游戏关了，再重命名这个版本。", "知道了", danger: true);
+            MessageDialog.Show(Window.GetWindow(this), "游戏正在运行", "先把游戏关了，再重命名这个版本", "知道了", danger: true);
             return;
         }
         var old = _selected.Id;
         var newName = PromptDialog.Show(Window.GetWindow(this), "重命名版本", "输入新的版本文件夹名称：", old,
             "例如：My Pack 1.21.8", name =>
             {
-                if (!VersionService.IsValidName(name)) return "名称包含非法字符，或为空。";
+                if (!VersionService.IsValidName(name)) return "名称包含非法字符，或为空";
                 if (!string.Equals(name, old, StringComparison.Ordinal) && LauncherApp.I.Versions.VersionExists(name))
-                    return "已存在同名版本。";
+                    return "已存在同名版本";
                 return null;
             });
         if (newName is null || newName == old) return;
@@ -572,11 +572,11 @@ public partial class VersionsPage : UserControl, IPage
         var v = _selected;
         if (LauncherApp.I.Launch.IsRunning && string.Equals(LauncherApp.I.Launch.CurrentVersionId, v.Id, StringComparison.OrdinalIgnoreCase))
         {
-            MessageDialog.Show(Window.GetWindow(this), "游戏正在运行", "先把游戏关了，再删这个版本。", "知道了", danger: true);
+            MessageDialog.Show(Window.GetWindow(this), "游戏正在运行", "先把游戏关了，再删这个版本", "知道了", danger: true);
             return;
         }
         if (!MessageDialog.Show(Window.GetWindow(this), "删除版本",
-                $"将版本「{v.DisplayName}」整个文件夹移到回收站？\n存档与 Mods 都会一并删除。",
+                $"将版本「{v.DisplayName}」整个文件夹移到回收站？\n存档与 Mods 都会一并删除",
                 "除到回收站", "取消", danger: true)) return;
         var (ok, error) = LauncherApp.I.Versions.Delete(v.Id);
         if (!ok)

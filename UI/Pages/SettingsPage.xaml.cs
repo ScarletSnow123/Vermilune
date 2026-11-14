@@ -63,11 +63,11 @@ public partial class SettingsPage : UserControl, IPage
             CustomBackgroundPanel.Visibility = bgMode == "custom" ? Visibility.Visible : Visibility.Collapsed;
             BgPathText.Text = bgMode switch
             {
-                "wallpaper" => "跟随 Wallpaper Engine 当前壁纸；未检测到时自动隐藏背景。",
+                "wallpaper" => "跟随 Wallpaper Engine 当前壁纸；未检测到时自动隐藏背景",
                 "custom" when !string.IsNullOrWhiteSpace(s.BackgroundImage) && s.BackgroundImage != "none" &&
                                File.Exists(s.BackgroundImage) => "当前：" + s.BackgroundImage,
-                "custom" => "选择图片或视频文件，支持 png / jpg / gif / mp4 / webm。",
-                _ => "使用纯色背景。"
+                "custom" => "选择图片或视频文件，支持 png / jpg / gif / mp4 / webm",
+                _ => "使用纯色背景"
             };
             LightModeCheck.IsChecked = string.Equals(s.UiThemeMode, "light", StringComparison.OrdinalIgnoreCase);
             var motion = s.AnimationMode is "off" or "fancy" ? s.AnimationMode : "smooth";
@@ -147,7 +147,7 @@ public partial class SettingsPage : UserControl, IPage
         var hex = AccentHexBox.Text.Trim();
         if (!IsHex(hex))
         {
-            MessageDialog.Show(Window.GetWindow(this), "颜色格式不正确", "填 #RRGGBB，比如 #E5B567。", "知道了", danger: true);
+            MessageDialog.Show(Window.GetWindow(this), "颜色格式不正确", "填 #RRGGBB，比如 #E5B567", "知道了", danger: true);
             return;
         }
         ApplyAccent(hex.StartsWith('#') ? hex : "#" + hex);
@@ -245,7 +245,7 @@ public partial class SettingsPage : UserControl, IPage
     {
         BackgroundService.EnsureFolder();
         Shell.OpenFolder(BackgroundService.Folder);
-        LauncherApp.I.Notify("背景文件夹已打开", "把图片或视频放进去后点「刷新」即可使用。");
+        LauncherApp.I.Notify("背景文件夹已打开", "把图片或视频放进去后点「刷新」即可使用");
     }
 
     private void RefreshBackground_Click(object sender, RoutedEventArgs e)
@@ -254,7 +254,7 @@ public partial class SettingsPage : UserControl, IPage
         if (string.IsNullOrWhiteSpace(picked))
         {
             MessageDialog.Show(Window.GetWindow(this), "没有找到背景图片",
-                "把 png / jpg / gif / mp4 / webm 放进背景文件夹，再点刷新。",
+                "把 png / jpg / gif / mp4 / webm 放进背景文件夹，再点刷新",
                 "知道了", danger: true);
             return;
         }
@@ -434,7 +434,7 @@ public partial class SettingsPage : UserControl, IPage
     {
         await LauncherApp.I.ScanJavaAsync();
         FillJava();
-        LauncherApp.I.Notify("Java 扫描完成", $"发现 {_java.Count} 个 Java。");
+        LauncherApp.I.Notify("Java 扫描完成", $"发现 {_java.Count} 个 Java");
     }
 
     private void JavaCombo_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -489,7 +489,7 @@ public partial class SettingsPage : UserControl, IPage
 
     private void ClearCache_Click(object sender, RoutedEventArgs e)
     {
-        if (!MessageDialog.Show(Window.GetWindow(this), "清空缓存", "将删除头像、接口与下载缓存。不会删除游戏或 Mods。确定吗？",
+        if (!MessageDialog.Show(Window.GetWindow(this), "清空缓存", "将删除头像、接口与下载缓存\n不会删除游戏或 Mods\n确定吗？",
                 "清空", "取消", danger: true)) return;
         try
         {
@@ -520,7 +520,7 @@ public partial class SettingsPage : UserControl, IPage
         if (!Directory.Exists(Path.Combine(dir, "versions")) && !Directory.Exists(Path.Combine(dir, ".minecraft")))
         {
             if (!MessageDialog.Show(Window.GetWindow(this), "目录可能不正确",
-                    "这个目录里没有 versions 文件夹。仍然要把它作为 Minecraft 目录吗？",
+                    "这个目录里没有 versions 文件夹\n仍然要把它作为 Minecraft 目录吗？",
                     "仍然使用", "取消", danger: true)) return;
         }
         LauncherApp.I.SetMinecraftDir(dir);
@@ -532,6 +532,6 @@ public partial class SettingsPage : UserControl, IPage
     private void RescanVersions_Click(object sender, RoutedEventArgs e)
     {
         LauncherApp.I.ReloadVersions();
-        LauncherApp.I.Notify("版本已重新扫描", $"当前 {LauncherApp.I.Versions.Versions.Count} 个版本。");
+        LauncherApp.I.Notify("版本已重新扫描", $"当前 {LauncherApp.I.Versions.Versions.Count} 个版本");
     }
 }
