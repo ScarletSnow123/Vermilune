@@ -3,6 +3,7 @@ using System.IO;
 using System.Text;
 using System.Text.Json.Nodes;
 using System.Text.RegularExpressions;
+using System.Management;
 
 namespace Vermilune.Core;
 
@@ -60,6 +61,7 @@ public sealed class MinecraftServerService : IDisposable
 
         var jar = await EnsureServerJarAsync(version, serverDir, progress, ct);
         CopyInstanceMods(version, serverDir);
+        StopStaleServerProcesses(serverDir);
         var java = LauncherApp.I.Java.Pick(version.JavaMajor, LauncherApp.I.Settings.JavaPath)
                    ?? throw new InvalidOperationException($"启动服务端需要 Java {version.JavaMajor} 或更高。");
 
@@ -94,6 +96,7 @@ public sealed class MinecraftServerService : IDisposable
         };
         if (!process.Start()) throw new InvalidOperationException("无法启动 Minecraft 服务端。");
         _process = process;
+        try { File.WriteAllText(Path.Combine(serverDir, ".server.pid"), process.Id.ToString()); } catch { }
         process.BeginOutputReadLine();
         process.BeginErrorReadLine();
         FirewallStatus = await FirewallService.EnsureTcpRuleAsync(port, ct);
@@ -208,6 +211,41 @@ public sealed class MinecraftServerService : IDisposable
         catch { return false; }
     }
 
+    private static void StopStaleServerProcesses(string serverDir)
+    {
+        try
+        {
+            var pidFile = Path.Combine(serverDir, ".server.pid");
+            if (File.Exists(pidFile) && int.TryParse(File.ReadAllText(pidFile).Trim(), out var savedPid))
+            {
+                try { Process.GetProcessById(savedPid).Kill(true); } catch { }
+                try { File.Delete(pidFile); } catch { }
+                Thread.Sleep(500);
+            }
+        }
+        catch { }
+
+        try
+        {
+            using var searcher = new ManagementObjectSearcher(
+                "SELECT ProcessId, CommandLine FROM Win32_Process WHERE Name='java.exe'");
+            foreach (var item in searcher.Get().Cast<ManagementObject>())
+            {
+                var command = item["CommandLine"]?.ToString() ?? "";
+                if (!command.Contains(serverDir, StringComparison.OrdinalIgnoreCase)) continue;
+                if (int.TryParse(item["ProcessId"]?.ToString(), out var pid))
+                {
+                    try { Process.GetProcessById(pid).Kill(true); } catch { }
+                }
+            }
+            Thread.Sleep(500);
+        }
+        catch (Exception ex)
+        {
+            Log.Warn("清理残留服务端失败：" + ex.Message);
+        }
+    }
+
     public async Task StopAsync()
     {
         var process = _process;
@@ -224,6 +262,8 @@ public sealed class MinecraftServerService : IDisposable
         }
         catch { }
         try { process.Dispose(); } catch { }
+        if (ServerDirectory is not null)
+            try { File.Delete(Path.Combine(ServerDirectory, ".server.pid")); } catch { }
         await LauncherApp.I.Upnp.UnmapAsync();
         PublicAddress = null;
     }
