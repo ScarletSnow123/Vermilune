@@ -317,7 +317,7 @@ public partial class SettingsPage : UserControl, IPage
         LauncherApp.I.Notify("动画效果", s.AnimationMode switch
         {
             "off" => "已关闭",
-            "fancy" => "华丽模式：独立光效与粒子，不叠加模糊",
+            "fancy" => "华丽模式：独立光效，不叠加模糊",
             _ => "流畅模式"
         });
     }

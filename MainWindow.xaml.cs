@@ -8,7 +8,6 @@ using System.Windows.Media;
 using System.Windows.Media.Animation;
 using System.Windows.Media.Effects;
 using System.Windows.Media.Imaging;
-using Ellipse = System.Windows.Shapes.Ellipse;
 using System.Windows.Threading;
 using Vermilune.Core;
 using Vermilune.UI;
@@ -284,7 +283,7 @@ public partial class MainWindow : Window
             return;
         }
 
-        // 华丽模式：独立的光效、缩放、旋转和粒子，不使用模糊，避免与高级模糊效果叠加。
+        // 华丽模式：独立的光效、缩放和回弹，不使用模糊，避免与高级模糊效果叠加。
         page.Opacity = 1;
         page.BeginAnimation(OpacityProperty, new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(460))
         {
@@ -304,10 +303,6 @@ public partial class MainWindow : Window
         scale.BeginAnimation(ScaleTransform.ScaleXProperty, scaleIn);
         scale.BeginAnimation(ScaleTransform.ScaleYProperty, scaleIn.Clone());
         rotate.Angle = 0;
-        rotate.BeginAnimation(RotateTransform.AngleProperty, new DoubleAnimation(-2.4, 0, TimeSpan.FromMilliseconds(560))
-        {
-            EasingFunction = new BackEase { Amplitude = 0.4, EasingMode = EasingMode.EaseOut }
-        });
 
         var accent = ThemeManager.Accent;
         var glow = new DropShadowEffect
@@ -336,75 +331,6 @@ public partial class MainWindow : Window
             }
         };
         glow.BeginAnimation(DropShadowEffect.OpacityProperty, glowOpacity);
-        PlayFancyParticles();
-    }
-
-    private void PlayFancyParticles()
-    {
-        if (FxCanvas is null) return;
-        FxCanvas.Children.Clear();
-        var width = Math.Max(320, FxCanvas.ActualWidth);
-        var height = Math.Max(240, FxCanvas.ActualHeight);
-        var random = new Random();
-        var accent = ThemeManager.Accent;
-        for (var i = 0; i < 22; i++)
-        {
-            var size = 2 + random.NextDouble() * 5;
-            var dot = new Ellipse
-            {
-                Width = size,
-                Height = size,
-                Fill = new SolidColorBrush(Color.FromArgb((byte)(120 + random.Next(100)), accent.R, accent.G, accent.B)),
-                IsHitTestVisible = false
-            };
-            var startX = width * (0.12 + random.NextDouble() * 0.76);
-            var startY = height * (0.25 + random.NextDouble() * 0.65);
-            Canvas.SetLeft(dot, startX);
-            Canvas.SetTop(dot, startY);
-            FxCanvas.Children.Add(dot);
-            var rise = new DoubleAnimation(startY, startY - 40 - random.NextDouble() * 120,
-                TimeSpan.FromMilliseconds(700 + random.Next(650)))
-            {
-                BeginTime = TimeSpan.FromMilliseconds(random.Next(300)),
-                EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseOut }
-            };
-            Canvas.SetTop(dot, startY);
-            dot.BeginAnimation(Canvas.TopProperty, rise);
-            var fade = new DoubleAnimation(0.9, 0, TimeSpan.FromMilliseconds(850 + random.Next(500)))
-            {
-                BeginTime = TimeSpan.FromMilliseconds(random.Next(250))
-            };
-            fade.Completed += (_, _) => FxCanvas.Children.Remove(dot);
-            dot.BeginAnimation(OpacityProperty, fade);
-        }
-
-        for (var i = 0; i < 2; i++)
-        {
-            var ring = new Ellipse
-            {
-                Width = 28,
-                Height = 28,
-                Stroke = new SolidColorBrush(Color.FromArgb(150, accent.R, accent.G, accent.B)),
-                StrokeThickness = 1.5,
-                IsHitTestVisible = false
-            };
-            Canvas.SetLeft(ring, width / 2 - 14);
-            Canvas.SetTop(ring, height / 2 - 14);
-            FxCanvas.Children.Add(ring);
-            var grow = new DoubleAnimation(28, 260, TimeSpan.FromMilliseconds(850))
-            {
-                BeginTime = TimeSpan.FromMilliseconds(i * 120),
-                EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
-            };
-            var fade = new DoubleAnimation(0.5, 0, TimeSpan.FromMilliseconds(850))
-            {
-                BeginTime = TimeSpan.FromMilliseconds(i * 120)
-            };
-            fade.Completed += (_, _) => FxCanvas.Children.Remove(ring);
-            ring.BeginAnimation(WidthProperty, grow);
-            ring.BeginAnimation(HeightProperty, grow.Clone());
-            ring.BeginAnimation(OpacityProperty, fade);
-        }
     }
 
     public void NavigateToVersions(string versionId)
