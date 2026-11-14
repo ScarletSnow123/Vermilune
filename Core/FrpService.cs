@@ -2,6 +2,7 @@ using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
 using System.Text;
+using System.Text.Json.Nodes;
 
 namespace Vermilune.Core;
 
@@ -116,6 +117,86 @@ public sealed class FrpService : IDisposable
         if (line.Contains("start proxy success", StringComparison.OrdinalIgnoreCase) ||
             line.Contains("login to server success", StringComparison.OrdinalIgnoreCase))
             LastError = null;
+    }
+
+    public async Task StartOpenFrpAsync(string token, string tunnelId,
+        IProgress<DownloadProgress>? progress, CancellationToken ct)
+    {
+        Stop();
+        var dir = Path.Combine(AppPaths.DataDir, "Tools", "OpenFrp");
+        Directory.CreateDirectory(dir);
+        var client = Path.Combine(dir, "frpc.exe");
+        if (!File.Exists(client))
+        {
+            var metaJson = await HttpService.GetStringAsync("https://api.openfrp.net/commonQuery/get?key=software", ct);
+            var meta = JsonNode.Parse(metaJson) as JsonObject;
+            var data = meta?["data"] as JsonObject;
+            var full = data?["latest_full"]?.GetValue<string>()?.Trim('/');
+            var source = (data?["source"] as JsonArray)?.OfType<JsonObject>()
+                .Select(x => x["value"]?.GetValue<string>()?.TrimEnd('/'))
+                .FirstOrDefault(x => !string.IsNullOrWhiteSpace(x));
+            if (string.IsNullOrWhiteSpace(full) || string.IsNullOrWhiteSpace(source))
+                throw new InvalidOperationException("无法获取 OpenFrp 客户端下载地址。");
+            var url = source + "/" + full + "/frpc_windows_amd64.zip";
+            var zip = Path.Combine(AppPaths.CacheDir, "openfrp-frpc.zip");
+            if (!File.Exists(zip) || new FileInfo(zip).Length < 1024 * 1024)
+            {
+                progress?.Report(new DownloadProgress { Stage = "下载 OpenFrp 客户端", Detail = full });
+                var downloadProgress = progress is null ? null : new Progress<(long Done, long Total)>(p =>
+                    progress.Report(new DownloadProgress
+                    {
+                        Stage = "下载 OpenFrp 客户端",
+                        Current = p.Done,
+                        Total = p.Total,
+                        Detail = p.Total > 0 ? $"{p.Done * 100 / p.Total}%" : full
+                    }));
+                await HttpService.DownloadFileAsync(url, zip, "", downloadProgress, ct, 3);
+            }
+            var temp = Path.Combine(AppPaths.CacheDir, "openfrp-" + Guid.NewGuid().ToString("N"));
+            Directory.CreateDirectory(temp);
+            try
+            {
+                ZipFile.ExtractToDirectory(zip, temp, true);
+                var exe = Directory.EnumerateFiles(temp, "frpc*.exe", SearchOption.AllDirectories).FirstOrDefault();
+                if (exe is null) throw new InvalidOperationException("OpenFrp 压缩包中缺少 frpc.exe。");
+                File.Copy(exe, client, true);
+            }
+            finally { try { Directory.Delete(temp, true); } catch { } }
+        }
+
+        var psi = new ProcessStartInfo
+        {
+            FileName = client,
+            WorkingDirectory = dir,
+            UseShellExecute = false,
+            CreateNoWindow = true,
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            StandardOutputEncoding = Encoding.UTF8,
+            StandardErrorEncoding = Encoding.UTF8
+        };
+        psi.ArgumentList.Add("-u");
+        psi.ArgumentList.Add(token);
+        psi.ArgumentList.Add("-p");
+        psi.ArgumentList.Add(tunnelId);
+        var process = new Process { StartInfo = psi, EnableRaisingEvents = true };
+        process.OutputDataReceived += (_, e) => Append(e.Data);
+        process.ErrorDataReceived += (_, e) => Append(e.Data);
+        process.Exited += (_, _) =>
+        {
+            if (ReferenceEquals(_process, process))
+            {
+                LastError = $"OpenFrp 客户端已退出（代码 {process.ExitCode}）。";
+                LogReceived?.Invoke(LastError);
+            }
+        };
+        if (!process.Start()) throw new InvalidOperationException("无法启动 OpenFrp 客户端。");
+        _process = process;
+        process.BeginOutputReadLine();
+        process.BeginErrorReadLine();
+        await Task.Delay(1200, ct);
+        if (process.HasExited)
+            throw new InvalidOperationException(LastError ?? "OpenFrp 启动失败，请检查访问密钥和隧道 ID。");
     }
 
     public void Stop()

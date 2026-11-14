@@ -40,6 +40,11 @@ public partial class MultiplayerPage : UserControl, IPage
         ServerMemoryBox.Text = s.ServerMemoryMb.ToString();
         ServerPortBox.Text = s.ServerPort.ToString();
         UseFrpCheck.IsChecked = s.UseFrp;
+        var providerIndex = string.Equals(s.FrpProvider, "custom", StringComparison.OrdinalIgnoreCase) ? 1 : 0;
+        FrpProviderCombo.SelectedIndex = providerIndex;
+        OpenFrpTokenBox.Text = s.OpenFrpToken;
+        OpenFrpTunnelBox.Text = s.OpenFrpTunnelId;
+        OpenFrpAddressBox.Text = s.OpenFrpAddress;
         FrpServerBox.Text = s.FrpServer;
         FrpPortBox.Text = s.FrpServerPort.ToString();
         FrpTokenBox.Text = s.FrpToken;
@@ -56,6 +61,14 @@ public partial class MultiplayerPage : UserControl, IPage
     {
         if (FrpPanel is not null)
             FrpPanel.Visibility = UseFrpCheck.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;
+    }
+
+    private void FrpProvider_Changed(object sender, SelectionChangedEventArgs e)
+    {
+        if (OpenFrpPanel is null || FrpCustomPanel is null) return;
+        var custom = (FrpProviderCombo.SelectedItem as ComboBoxItem)?.Tag?.ToString() == "custom";
+        OpenFrpPanel.Visibility = custom ? Visibility.Collapsed : Visibility.Visible;
+        FrpCustomPanel.Visibility = custom ? Visibility.Visible : Visibility.Collapsed;
     }
 
     private async void StartServer_Click(object sender, RoutedEventArgs e)
@@ -77,16 +90,31 @@ public partial class MultiplayerPage : UserControl, IPage
         if (!int.TryParse(FrpPortBox.Text.Trim(), out var frpPort)) frpPort = 7000;
         if (!int.TryParse(FrpRemotePortBox.Text.Trim(), out var frpRemotePort)) frpRemotePort = 25565;
         var useFrp = UseFrpCheck.IsChecked == true;
-        if (useFrp && (string.IsNullOrWhiteSpace(FrpServerBox.Text.Trim()) || string.IsNullOrWhiteSpace(FrpTokenBox.Text.Trim())))
+        var frpProvider = (FrpProviderCombo.SelectedItem as ComboBoxItem)?.Tag?.ToString() ?? "openfrp";
+        if (useFrp && frpProvider == "custom" &&
+            (string.IsNullOrWhiteSpace(FrpServerBox.Text.Trim()) || string.IsNullOrWhiteSpace(FrpTokenBox.Text.Trim())))
         {
             MessageDialog.Show(Window.GetWindow(this), "FRP 配置不完整",
-                "启用 FRP 中继时需要填写服务器地址和 Token。", "知道了", danger: true);
+                "自建 FRP 需要填写服务器地址和 Token。", "知道了", danger: true);
+            return;
+        }
+        if (useFrp && frpProvider == "openfrp" &&
+            (string.IsNullOrWhiteSpace(OpenFrpTokenBox.Text.Trim()) ||
+             string.IsNullOrWhiteSpace(OpenFrpTunnelBox.Text.Trim()) ||
+             string.IsNullOrWhiteSpace(OpenFrpAddressBox.Text.Trim())))
+        {
+            MessageDialog.Show(Window.GetWindow(this), "OpenFrp 配置不完整",
+                "请填写 OpenFrp 访问密钥、隧道 ID 和面板上的公网地址。", "知道了", danger: true);
             return;
         }
         var s = LauncherApp.I.Settings;
         s.ServerMemoryMb = Math.Clamp(memory, 1024, 16384);
         s.ServerPort = Math.Clamp(port, 1024, 65535);
         s.UseFrp = useFrp;
+        s.FrpProvider = frpProvider;
+        s.OpenFrpToken = OpenFrpTokenBox.Text.Trim();
+        s.OpenFrpTunnelId = OpenFrpTunnelBox.Text.Trim();
+        s.OpenFrpAddress = OpenFrpAddressBox.Text.Trim();
         s.FrpServer = FrpServerBox.Text.Trim();
         s.FrpServerPort = Math.Clamp(frpPort, 1, 65535);
         s.FrpToken = FrpTokenBox.Text.Trim();
@@ -105,9 +133,14 @@ public partial class MultiplayerPage : UserControl, IPage
             _serverTimer.Start();
             if (s.UseFrp)
             {
-                ServerStatusText.Text = "服务端已启动，正在连接 FRP 中继…";
-                await LauncherApp.I.Frp.StartAsync(s.FrpServer, s.FrpServerPort, s.FrpToken,
-                    s.ServerPort, s.FrpRemotePort, progress, CancellationToken.None);
+                ServerStatusText.Text = frpProvider == "openfrp"
+                    ? "服务端已启动，正在连接 OpenFrp…"
+                    : "服务端已启动，正在连接 FRP 中继…";
+                if (frpProvider == "openfrp")
+                    await LauncherApp.I.Frp.StartOpenFrpAsync(s.OpenFrpToken, s.OpenFrpTunnelId, progress, CancellationToken.None);
+                else
+                    await LauncherApp.I.Frp.StartAsync(s.FrpServer, s.FrpServerPort, s.FrpToken,
+                        s.ServerPort, s.FrpRemotePort, progress, CancellationToken.None);
                 ServerStatusText.Text = "服务端与 FRP 中继已启动。";
             }
             else
@@ -190,11 +223,18 @@ public partial class MultiplayerPage : UserControl, IPage
 
         var s = LauncherApp.I.Settings;
         var frpActive = s.UseFrp && LauncherApp.I.Frp.IsRunning;
-        var ipv4 = frpActive ? s.FrpServer : (server.PublicAddress ?? server.LocalAddress);
+        var frpAddress = string.Equals(s.FrpProvider, "openfrp", StringComparison.OrdinalIgnoreCase)
+            ? s.OpenFrpAddress
+            : (string.IsNullOrWhiteSpace(s.FrpServer) ? "" : $"{s.FrpServer}:{s.FrpRemotePort}");
+        var ipv4 = frpActive ? frpAddress : (server.PublicAddress ?? server.LocalAddress);
         var ipv6 = server.Ipv6Address;
         var portValue = frpActive ? s.FrpRemotePort : (server.Port > 0 ? server.Port : s.ServerPort);
 
-        if (!string.IsNullOrWhiteSpace(ipv4))
+        if (!string.IsNullOrWhiteSpace(frpActive ? frpAddress : null))
+        {
+            AddressText.Text = frpAddress;
+        }
+        else if (!string.IsNullOrWhiteSpace(ipv4))
         {
             AddressText.Text = $"{ipv4}:{portValue}";
         }
@@ -232,7 +272,10 @@ public partial class MultiplayerPage : UserControl, IPage
         MappingText.Text = string.Join("\n", new[]
         {
             frpActive ? "FRP 客户端已连接，朋友连接上方服务器地址。" : null,
-            s.UseFrp && !frpActive ? ("FRP 未连接：" + (LauncherApp.I.Frp.LastError ?? "请检查服务器地址、Token 和 frps 状态。")) : null,
+            s.UseFrp && !frpActive ? ("FRP 未连接：" + (LauncherApp.I.Frp.LastError ??
+                (string.Equals(s.FrpProvider, "openfrp", StringComparison.OrdinalIgnoreCase)
+                    ? "请检查 OpenFrp 访问密钥、隧道 ID 和隧道状态。"
+                    : "请检查服务器地址、Token 和 frps 状态。"))) : null,
             frpActive ? null : server.FirewallStatus,
             frpActive ? null : server.MappingStatus,
             frpActive ? null : (string.IsNullOrWhiteSpace(server.PublicAddress)

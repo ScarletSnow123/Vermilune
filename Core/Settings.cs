@@ -84,6 +84,10 @@ public sealed class AppSettings
     public int ServerMemoryMb { get; set; } = 2048;
     public int ServerPort { get; set; } = 25565;
     public bool UseFrp { get; set; }
+    public string FrpProvider { get; set; } = "openfrp";
+    public string OpenFrpToken { get; set; } = "";
+    public string OpenFrpTunnelId { get; set; } = "";
+    public string OpenFrpAddress { get; set; } = "";
     public string FrpServer { get; set; } = "";
     public int FrpServerPort { get; set; } = 7000;
     public string FrpToken { get; set; } = "";

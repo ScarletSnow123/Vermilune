@@ -11,7 +11,7 @@
 ## 功能
 
 - 版本扫描、Java 自动检测、启动参数与内存配置
-- 一键小服务器 + UPnP / 自建 FRP 中继
+- 一键小服务器 + UPnP / 自建 FRP / OpenFrp 公共中继
 - 原版 / Fabric 一键小服务器（后台运行，无需一直进游戏）
 - Microsoft 设备代码登录、离线账号
 - Yggdrasil / LittleSkin 外置登录（authlib-injector）

@@ -9,3 +9,7 @@ Minecraft server files are downloaded from Mojang / Fabric meta on demand.
 FRP (Apache-2.0)
 https://github.com/fatedier/frp
 The Windows frpc component is downloaded on demand at runtime.
+
+OpenFrp (third-party relay service)
+https://openfrp.net
+The OpenFrp frpc client is downloaded on demand when the user enables the OpenFrp relay.
