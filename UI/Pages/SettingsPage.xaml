@@ -216,7 +216,7 @@
                                                 Click="ClearBackground_Click" />
                                     </StackPanel>
                                     <StackPanel Orientation="Horizontal" Margin="0,7,0,0" HorizontalAlignment="Right">
-                                        <TextBlock Text="背景不透明度" Style="{StaticResource Hint}" VerticalAlignment="Center" Margin="0,0,8,0" />
+                                        <TextBlock Text="背景亮度" Style="{StaticResource Hint}" VerticalAlignment="Center" Margin="0,0,8,0" />
                                         <Slider x:Name="BgOpacitySlider" Width="120" Minimum="0" Maximum="100"
                                                 ValueChanged="BgOpacitySlider_ValueChanged" />
                                     </StackPanel>
