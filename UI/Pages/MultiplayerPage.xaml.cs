@@ -107,6 +107,13 @@ public partial class MultiplayerPage : UserControl, IPage
         try { Clipboard.SetText(text); LauncherApp.I.Notify("已复制", text); } catch { }
     }
 
+    private void CopyIpv6_Click(object sender, RoutedEventArgs e)
+    {
+        var text = Ipv6Text.Text?.Trim() ?? "";
+        if (text.Length == 0) return;
+        try { Clipboard.SetText(text); LauncherApp.I.Notify("已复制 IPv6 地址", text); } catch { }
+    }
+
     private async Task CheckServerPortAsync()
     {
         if (_checkingPort || !LauncherApp.I.Server.IsRunning) return;
@@ -138,20 +145,40 @@ public partial class MultiplayerPage : UserControl, IPage
         if (!server.IsRunning)
         {
             AddressText.Text = "开服后显示公网或本地地址。";
+            Ipv6Text.Visibility = Visibility.Collapsed;
+            CopyIpv6Button.Visibility = Visibility.Collapsed;
             MappingCallout.Visibility = Visibility.Collapsed;
             return;
         }
-        AddressText.Text = string.IsNullOrWhiteSpace(address)
-            ? "正在获取地址…"
-            : $"{address}:{port}";
 
-        var warning = string.IsNullOrWhiteSpace(server.PublicAddress) ||
+        var ipv4 = server.PublicAddress ?? server.LocalAddress;
+        var ipv6 = server.Ipv6Address;
+        var portValue = server.Port > 0 ? server.Port : LauncherApp.I.Settings.ServerPort;
+
+        if (!string.IsNullOrWhiteSpace(ipv4))
+        {
+            AddressText.Text = $"{ipv4}:{portValue}";
+        }
+        else if (!string.IsNullOrWhiteSpace(ipv6))
+        {
+            AddressText.Text = $"[{ipv6}]:{portValue}";
+        }
+        else
+        {
+            AddressText.Text = "正在获取地址…";
+        }
+
+        Ipv6Text.Text = string.IsNullOrWhiteSpace(ipv6) ? "" : $"[{ipv6}]:{portValue}";
+        Ipv6Text.Visibility = string.IsNullOrWhiteSpace(ipv6) ? Visibility.Collapsed : Visibility.Visible;
+        CopyIpv6Button.Visibility = string.IsNullOrWhiteSpace(ipv6) ? Visibility.Collapsed : Visibility.Visible;
+
+        var warning = string.IsNullOrWhiteSpace(server.PublicAddress) && string.IsNullOrWhiteSpace(ipv6) ||
                       (server.MappingStatus?.Contains("失败", StringComparison.OrdinalIgnoreCase) ?? false) ||
                       (server.MappingStatus?.Contains("内网", StringComparison.OrdinalIgnoreCase) ?? false) ||
                       (server.MappingStatus?.Contains("CGNAT", StringComparison.OrdinalIgnoreCase) ?? false) ||
                       (server.MappingStatus?.Contains("手动", StringComparison.OrdinalIgnoreCase) ?? false);
         MappingCallout.Visibility = Visibility.Visible;
-        MappingTitle.Text = warning ? "无法从公网连接" : "端口映射成功";
+        MappingTitle.Text = warning ? "无法从公网连接" : (string.IsNullOrWhiteSpace(server.PublicAddress) ? "可使用 IPv6 直连" : "端口映射成功");
         MappingTitle.Foreground = (Brush)FindResource(warning ? "DangerBrush" : "AccentBrush");
         MappingIcon.Data = (Geometry)FindResource(warning ? "IconWarning" : "IconCheck");
         MappingIcon.Stroke = (Brush)FindResource(warning ? "DangerBrush" : "AccentBrush");
@@ -166,8 +193,8 @@ public partial class MultiplayerPage : UserControl, IPage
             server.FirewallStatus,
             server.MappingStatus,
             string.IsNullOrWhiteSpace(server.PublicAddress)
-                ? "未获取到公网地址，朋友无法通过公网直连。"
-                : "公网地址已获取。"
+                ? (string.IsNullOrWhiteSpace(ipv6) ? "未获取到公网 IPv4 或 IPv6 地址。" : "没有可用的公网 IPv4；如果双方都有 IPv6，可使用上方 IPv6 地址。")
+                : "公网 IPv4 地址已获取。"
         }.Where(x => !string.IsNullOrWhiteSpace(x)));
     }
 }

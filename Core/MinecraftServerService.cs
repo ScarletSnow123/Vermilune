@@ -20,6 +20,7 @@ public sealed class MinecraftServerService : IDisposable
     public string? ServerDirectory { get; private set; }
     public int Port { get; private set; }
     public string? PublicAddress { get; private set; }
+    public string? Ipv6Address { get; private set; }
     public string? LocalAddress { get; private set; }
     public string? MappingStatus { get; private set; }
     public string? FirewallStatus { get; private set; }
@@ -95,6 +96,7 @@ public sealed class MinecraftServerService : IDisposable
         try { File.WriteAllText(Path.Combine(serverDir, ".server.pid"), process.Id.ToString()); } catch { }
         process.BeginOutputReadLine();
         process.BeginErrorReadLine();
+        Ipv6Address = UpnpService.FindGlobalIpv6();
         FirewallStatus = await FirewallService.EnsureTcpRuleAsync(port, ct);
         var mapping = await LauncherApp.I.Upnp.MapAsync(port, ct);
         PublicAddress = mapping.PublicAddress;

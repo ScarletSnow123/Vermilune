@@ -98,6 +98,31 @@ public sealed class UpnpService
         catch { return null; }
     }
 
+    public static string? FindGlobalIpv6()
+    {
+        try
+        {
+            foreach (var address in NetworkInterface.GetAllNetworkInterfaces()
+                         .Where(n => n.OperationalStatus == OperationalStatus.Up &&
+                                     n.NetworkInterfaceType is not NetworkInterfaceType.Loopback)
+                         .SelectMany(n => n.GetIPProperties().UnicastAddresses)
+                         .Select(a => a.Address)
+                         .Where(a => a.AddressFamily == AddressFamily.InterNetworkV6 &&
+                                     !IPAddress.IsLoopback(a) &&
+                                     !a.IsIPv6LinkLocal &&
+                                     !a.IsIPv6SiteLocal &&
+                                     !a.IsIPv6Multicast &&
+                                     !a.IsIPv6Teredo))
+            {
+                var bytes = address.GetAddressBytes();
+                // 公网 IPv6 一般是 2000::/3；排除 ULA fc00::/7。
+                if ((bytes[0] & 0xE0) == 0x20) return address.ToString();
+            }
+        }
+        catch { }
+        return null;
+    }
+
     private static string? FindLocalIpv4()
     {
         try

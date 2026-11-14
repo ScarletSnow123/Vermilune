@@ -78,6 +78,9 @@
                         <TextBlock x:Name="AddressText" Text="开服后显示公网或本地地址。"
                                    FontFamily="{DynamicResource MonoFont}" FontSize="16"
                                    Foreground="{DynamicResource AccentBrush}" Margin="0,10,0,0" />
+                        <TextBlock x:Name="Ipv6Text" Text="" FontFamily="{DynamicResource MonoFont}"
+                                   FontSize="12" Foreground="{DynamicResource TextSubBrush}"
+                                   TextWrapping="Wrap" Margin="0,5,0,0" Visibility="Collapsed" />
                         <Border x:Name="MappingCallout" Visibility="Collapsed" CornerRadius="7"
                                 Padding="11" Margin="0,10,0,0" BorderThickness="1"
                                 Background="#22EB6B6B" BorderBrush="#55EB6B6B">
@@ -102,8 +105,13 @@
                                 </StackPanel>
                             </Grid>
                         </Border>
-                        <Button Style="{StaticResource ButtonBase}" Height="32" Content="复制地址"
-                                HorizontalAlignment="Left" Margin="0,10,0,0" Click="Copy_Click" />
+                        <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
+                            <Button Style="{StaticResource ButtonBase}" Height="32" Content="复制地址"
+                                    Click="Copy_Click" />
+                            <Button x:Name="CopyIpv6Button" Style="{StaticResource ButtonBase}" Height="32"
+                                    Content="复制 IPv6" Margin="8,0,0,0" Visibility="Collapsed"
+                                    Click="CopyIpv6_Click" />
+                        </StackPanel>
                     </StackPanel>
                 </Border>
 
