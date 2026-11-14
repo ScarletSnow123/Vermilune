@@ -7,9 +7,14 @@ namespace Vermilune.UI.Pages;
 
 public partial class MultiplayerPage : UserControl, IPage
 {
+    private readonly System.Windows.Threading.DispatcherTimer _serverTimer;
+    private bool _checkingPort;
+
     public MultiplayerPage()
     {
         InitializeComponent();
+        _serverTimer = new System.Windows.Threading.DispatcherTimer { Interval = TimeSpan.FromSeconds(2) };
+        _serverTimer.Tick += async (_, _) => await CheckServerPortAsync();
         LauncherApp.I.Server.LogReceived += line => Dispatcher.BeginInvoke(new Action(() => AppendServerLog(line)));
         LauncherApp.I.Server.Ready += () => Dispatcher.BeginInvoke(new Action(() =>
         {
@@ -36,6 +41,7 @@ public partial class MultiplayerPage : UserControl, IPage
         ServerStartButton.IsEnabled = !LauncherApp.I.Server.IsRunning;
         ServerStopButton.IsEnabled = LauncherApp.I.Server.IsRunning;
         ServerStatusText.Text = LauncherApp.I.Server.IsRunning ? "服务端运行中。" : "未启动。";
+        if (LauncherApp.I.Server.IsRunning) _serverTimer.Start();
         UpdateAddress();
     }
 
@@ -69,6 +75,7 @@ public partial class MultiplayerPage : UserControl, IPage
             await LauncherApp.I.Server.StartAsync(version, s.ServerMemoryMb, s.ServerPort, true, progress, CancellationToken.None);
             ServerStopButton.IsEnabled = true;
             ServerStatusText.Text = "服务端启动中，正在尝试 UPnP 端口映射…";
+            _serverTimer.Start();
             UpdateAddress();
         }
         catch (Exception ex)
@@ -83,6 +90,7 @@ public partial class MultiplayerPage : UserControl, IPage
     private async void StopServer_Click(object sender, RoutedEventArgs e)
     {
         ServerStopButton.IsEnabled = false;
+        _serverTimer.Stop();
         ServerStatusText.Text = "正在关闭服务器…";
         await LauncherApp.I.Server.StopAsync();
         ServerStartButton.IsEnabled = true;
@@ -95,6 +103,22 @@ public partial class MultiplayerPage : UserControl, IPage
         var text = AddressText.Text?.Trim() ?? "";
         if (text.Length == 0 || text.StartsWith("开服后", StringComparison.Ordinal)) return;
         try { Clipboard.SetText(text); LauncherApp.I.Notify("已复制", text); } catch { }
+    }
+
+    private async Task CheckServerPortAsync()
+    {
+        if (_checkingPort || !LauncherApp.I.Server.IsRunning) return;
+        _checkingPort = true;
+        try
+        {
+            var open = await LauncherApp.I.Server.TestLocalPortAsync();
+            ServerStatusText.Text = open
+                ? "服务端端口已监听。若朋友仍无法连接，请检查 UPnP、防火墙或公网 IP。"
+                : "服务端仍在启动，端口尚未监听…";
+            if (!open && LauncherApp.I.Server.LastError is { } error) ServerStatusText.Text = error;
+            UpdateAddress();
+        }
+        finally { _checkingPort = false; }
     }
 
     private void AppendServerLog(string line)
@@ -118,8 +142,11 @@ public partial class MultiplayerPage : UserControl, IPage
         AddressText.Text = string.IsNullOrWhiteSpace(address)
             ? "正在获取地址…"
             : $"{address}:{port}";
-        MappingText.Text = server.MappingStatus ?? (string.IsNullOrWhiteSpace(server.PublicAddress)
-            ? "未获取到公网 IP，请检查路由器 UPnP 或手动转发端口。"
-            : "端口映射成功。");
+        MappingText.Text = string.Join("\n", new[]
+        {
+            server.FirewallStatus,
+            server.MappingStatus,
+            string.IsNullOrWhiteSpace(server.PublicAddress) ? "未获取到公网地址。" : "公网地址已获取。"
+        }.Where(x => !string.IsNullOrWhiteSpace(x)));
     }
 }

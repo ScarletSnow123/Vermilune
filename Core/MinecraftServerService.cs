@@ -21,6 +21,7 @@ public sealed class MinecraftServerService : IDisposable
     public string? PublicAddress { get; private set; }
     public string? LocalAddress { get; private set; }
     public string? MappingStatus { get; private set; }
+    public string? FirewallStatus { get; private set; }
     public string? LastError { get; private set; }
     public event Action<string>? LogReceived;
     public event Action? Ready;
@@ -95,6 +96,7 @@ public sealed class MinecraftServerService : IDisposable
         _process = process;
         process.BeginOutputReadLine();
         process.BeginErrorReadLine();
+        FirewallStatus = await FirewallService.EnsureTcpRuleAsync(port, ct);
         var mapping = await LauncherApp.I.Upnp.MapAsync(port, ct);
         PublicAddress = mapping.PublicAddress;
         LocalAddress = mapping.LocalAddress;
@@ -190,6 +192,20 @@ public sealed class MinecraftServerService : IDisposable
         {
             Log.Warn("复制服务端 Mod 失败：" + ex.Message);
         }
+    }
+
+    public async Task<bool> TestLocalPortAsync(CancellationToken ct = default)
+    {
+        if (!IsRunning) return false;
+        try
+        {
+            using var client = new System.Net.Sockets.TcpClient();
+            using var timeout = CancellationTokenSource.CreateLinkedTokenSource(ct);
+            timeout.CancelAfter(TimeSpan.FromSeconds(2));
+            await client.ConnectAsync(System.Net.IPAddress.Loopback, Port, timeout.Token);
+            return client.Connected;
+        }
+        catch { return false; }
     }
 
     public async Task StopAsync()

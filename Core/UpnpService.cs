@@ -39,17 +39,9 @@ public sealed class UpnpService
             var externalText = external?.ToString() ?? "";
             if (IsPrivate(external))
             {
-                var publicText = await TryGetPublicIpAsync(ct);
-                if (!string.IsNullOrWhiteSpace(publicText) && !IsPrivate(IPAddress.Parse(publicText)))
-                {
-                    PublicIp = publicText;
-                    Status = "UPnP 映射成功，但路由器返回了内网 WAN 地址；当前使用公网 IP 检测结果。若仍无法连接，可能是 CGNAT / 双重 NAT。";
-                }
-                else
-                {
-                    PublicIp = null;
-                    Status = "UPnP 映射成功，但路由器返回的是内网地址；可能是 CGNAT / 双重 NAT，需要在路由器上手动转发端口。";
-                }
+                // 路由器 WAN 口是内网地址时，UPnP 映射通常无法从公网访问，不能把公网 IP 检测结果当成可连接地址。
+                PublicIp = null;
+                Status = "UPnP 已创建映射，但路由器 WAN 是内网地址，可能是 CGNAT / 双重 NAT；请使用本地地址或在路由器手动转发端口。";
             }
             else if (string.IsNullOrWhiteSpace(externalText) || externalText == "0.0.0.0")
             {
