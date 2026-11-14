@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.IO;
 using System.Text.Json.Nodes;
 using Microsoft.Win32;
@@ -41,6 +42,27 @@ public static class WallpaperEngineService
     {
         var env = Environment.GetEnvironmentVariable("WE_CONFIG");
         if (!string.IsNullOrWhiteSpace(env) && File.Exists(env)) return env;
+
+        // Wallpaper Engine 可以装在任意 Steam 库或自定义目录，优先从正在运行的进程定位。
+        foreach (var processName in new[] { "wallpaper32", "wallpaper64" })
+        {
+            try
+            {
+                foreach (var process in Process.GetProcessesByName(processName))
+                {
+                    try
+                    {
+                        var exe = process.MainModule?.FileName;
+                        if (string.IsNullOrWhiteSpace(exe)) continue;
+                        var config = Path.Combine(Path.GetDirectoryName(exe)!, "config.json");
+                        if (File.Exists(config)) return config;
+                    }
+                    catch { }
+                    finally { process.Dispose(); }
+                }
+            }
+            catch { }
+        }
 
         var steamRoots = new List<string>();
         try
@@ -97,6 +119,16 @@ public static class WallpaperEngineService
             if (ImageExtensions.Contains(ext, StringComparer.OrdinalIgnoreCase) ||
                 VideoExtensions.Contains(ext, StringComparer.OrdinalIgnoreCase))
                 return full;
+
+            if (string.Equals(ext, ".pkg", StringComparison.OrdinalIgnoreCase))
+            {
+                var dir = Path.GetDirectoryName(full)!;
+                foreach (var preview in new[] { "preview.jpg", "preview.png", "preview.gif", "preview.webp" })
+                {
+                    var found = Path.Combine(dir, preview);
+                    if (File.Exists(found)) return found;
+                }
+            }
 
             if (string.Equals(Path.GetFileName(full), "project.json", StringComparison.OrdinalIgnoreCase))
             {
