@@ -61,7 +61,7 @@
             <Border x:Name="InternalBanner" Visibility="Collapsed"
                     Background="#33FF5A5A" BorderBrush="#77FF5A5A" BorderThickness="1"
                     CornerRadius="8" Padding="12,7" Margin="0,0,0,6">
-                <TextBlock Text="此为内部版本，所以 CurseForge 搜索可用，但请勿分发！"
+                <TextBlock Text="内部版本：CurseForge 搜索能用，别外传。"
                            Foreground="#FFFF7070" FontSize="10.5" FontWeight="SemiBold" />
             </Border>
             <Border Background="#22E5B567" BorderBrush="#66E5B567" BorderThickness="1"
@@ -115,7 +115,7 @@
                         </Grid.ColumnDefinitions>
                         <ProgressBar IsIndeterminate="True" Width="90" Height="4" VerticalAlignment="Center"
                                      Foreground="{DynamicResource AccentBrush}" Background="#33FFFFFF" />
-                        <TextBlock Grid.Column="1" Text="正在搜索，请稍候…" Margin="12,0,0,0"
+                        <TextBlock Grid.Column="1" Text="正在搜索…" Margin="12,0,0,0"
                                    FontSize="12.5" FontWeight="SemiBold"
                                    Foreground="{DynamicResource AccentBrush}" VerticalAlignment="Center" />
                     </Grid>

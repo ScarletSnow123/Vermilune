@@ -281,7 +281,7 @@
                                         <ToolTip MaxWidth="430" Padding="12" Background="{DynamicResource SurfaceBrush}"
                                                  BorderBrush="{DynamicResource StrokeStrongBrush}" BorderThickness="1">
                                             <StackPanel>
-                                                <TextBlock Text="自定义游戏窗口的标题，若留空则不进行更改。"
+                                                <TextBlock Text="自定义游戏窗口的标题，留空就不改。"
                                                            Foreground="{DynamicResource TextBrush}" FontSize="11.5"
                                                            TextWrapping="Wrap" />
                                                 <TextBlock Text="支持以下替换标记：" Margin="0,7,0,2"
@@ -296,7 +296,7 @@
                                                            Foreground="{DynamicResource TextSubBrush}" />
                                                 <TextBlock Text="- {version}：游戏对应的原版版本号" FontSize="10.5"
                                                            Foreground="{DynamicResource TextSubBrush}" />
-                                                <TextBlock Text="注意：如果实例安装了 Modern UI 模组，这里的设置会失效。"
+                                                <TextBlock Text="提醒：实例装了 Modern UI 模组的话，这里的设置会失效。"
                                                            Margin="0,7,0,0" FontSize="10.5" TextWrapping="Wrap"
                                                            Foreground="{DynamicResource TextMutedBrush}" />
                                             </StackPanel>

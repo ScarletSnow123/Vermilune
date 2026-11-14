@@ -129,7 +129,7 @@ public partial class DownloadPage : UserControl, IPage
         DetailTitle.Text = v.Id;
         DetailSub.Text = $"{v.DisplayType} · {v.ReleaseDateText}" + (v.Installed ? " · 已安装" : "");
         DetailNote.Text = v.Installed
-            ? "该版本已经存在。重新安装会补齐缺失文件，并用官方 JSON 替换现有版本 JSON（不会删除存档与 Mods）。"
+            ? "这个版本已经在了。重装会补齐缺失文件，并用官方 JSON 替换版本 JSON（存档和 Mods 不动）。"
             : "安装会下载版本 JSON、客户端 jar、运行库与资源文件。已存在的文件会跳过。";
         InstallButton.IsEnabled = !_installing;
         if (NewInstanceButton is not null) NewInstanceButton.IsEnabled = !_installing && _selected is not null;
@@ -172,7 +172,7 @@ public partial class DownloadPage : UserControl, IPage
             InstallButton.Content = "安装为新实例";
             return;
         }
-        InstallButton.Content = _selected.Installed ? "补齐 / 重新安装" : "安装此版本";
+        InstallButton.Content = _selected.Installed ? "补齐 / 重新安装" : "装这个版本";
         if (VanillaLoaderCombo?.SelectedItem is ComboBoxItem item && (item.Tag as string) is { Length: > 0 } loader)
             InstallButton.Content = loader switch
             {
@@ -250,7 +250,7 @@ public partial class DownloadPage : UserControl, IPage
             InstallForgeButton.IsEnabled = _forgeVersions.Count > 0 && !_installing;
             ForgeStatus.Text = _forgeVersions.Count > 0
                 ? $"共 {_forgeVersions.Count} 个版本，默认选择推荐版。"
-                : $"没有找到 Forge {mc} 的版本；请换一个 Minecraft 版本或使用本地 installer。";
+                : $"没找到 Forge {mc} 的版本；换个 Minecraft 版本，或者用本地 installer。";
         }
         catch (Exception ex)
         {
@@ -276,7 +276,7 @@ public partial class DownloadPage : UserControl, IPage
         if (java is null)
         {
             MessageDialog.Show(Window.GetWindow(this), "找不到 Java",
-                $"部署 Forge {mc} 需要 Java {major} 或更高，请先在「设置 → 启动」里指定 Java。",
+                $"部署 Forge {mc} 要 Java {major} 或更高，先去「设置 → 启动」里指定 Java。",
                 "知道了", danger: true);
             return;
         }
@@ -343,7 +343,7 @@ public partial class DownloadPage : UserControl, IPage
             }
             if (LauncherApp.I.Versions.VersionExists(customName))
             {
-                MessageDialog.Show(Window.GetWindow(this), "实例已存在", $"已经存在名为「{customName}」的版本，请换一个名称。", "知道了", danger: true);
+                MessageDialog.Show(Window.GetWindow(this), "实例已存在", $"已经有叫「{customName}」的版本了，换个名字。", "知道了", danger: true);
                 return;
             }
         }
@@ -391,10 +391,10 @@ public partial class DownloadPage : UserControl, IPage
                 var versions = await LauncherApp.I.Forge.GetVersionsAsync(version.Id, _cts.Token);
                 var forge = versions.FirstOrDefault(x => x.ForgeVersion == chosen)
                             ?? versions.FirstOrDefault()
-                            ?? throw new InvalidOperationException("没有找到该 Minecraft 版本的 Forge。");
+                            ?? throw new InvalidOperationException("没找到这个 Minecraft 版本的 Forge。");
                 await LauncherApp.I.EnsureJavaAsync();
                 var java = LauncherApp.I.Java.Pick(VersionResolver.InferJavaMajor(version.Id, ""), LauncherApp.I.Settings.JavaPath)
-                           ?? throw new InvalidOperationException("部署 Forge 需要对应版本的 Java，请先在设置里指定。");
+                           ?? throw new InvalidOperationException("部署 Forge 要对应版本的 Java，先去设置里指定。");
                 installedLoader = await LauncherApp.I.Forge.InstallAsync(version.Id, forge.ForgeVersion, LauncherApp.I.MinecraftDir, java.Path, progress, _cts.Token);
             }
             else if (loader == "neoforge")
@@ -404,10 +404,10 @@ public partial class DownloadPage : UserControl, IPage
                 var versions = await LauncherApp.I.Forge.GetNeoForgeVersionsAsync(version.Id, _cts.Token);
                 var neo = versions.FirstOrDefault(x => x.ForgeVersion == chosen)
                           ?? versions.FirstOrDefault()
-                          ?? throw new InvalidOperationException("没有找到该 Minecraft 版本的 NeoForge。");
+                          ?? throw new InvalidOperationException("没找到这个 Minecraft 版本的 NeoForge。");
                 await LauncherApp.I.EnsureJavaAsync();
                 var java = LauncherApp.I.Java.Pick(VersionResolver.InferJavaMajor(version.Id, ""), LauncherApp.I.Settings.JavaPath)
-                           ?? throw new InvalidOperationException("部署 NeoForge 需要对应版本的 Java，请先在设置里指定。");
+                           ?? throw new InvalidOperationException("部署 NeoForge 要对应版本的 Java，先去设置里指定。");
                 installedLoader = await LauncherApp.I.Forge.InstallNeoForgeAsync(version.Id, neo.ForgeVersion, LauncherApp.I.MinecraftDir, java.Path, progress, _cts.Token);
             }
             else if (loader == "quilt")
@@ -417,10 +417,10 @@ public partial class DownloadPage : UserControl, IPage
                 var versions = await LauncherApp.I.Quilt.GetVersionsAsync(version.Id, _cts.Token);
                 var quilt = versions.FirstOrDefault(x => x.ForgeVersion == chosen)
                             ?? versions.FirstOrDefault()
-                            ?? throw new InvalidOperationException("没有找到该 Minecraft 版本的 Quilt。");
+                            ?? throw new InvalidOperationException("没找到这个 Minecraft 版本的 Quilt。");
                 await LauncherApp.I.EnsureJavaAsync();
                 var java = LauncherApp.I.Java.Pick(VersionResolver.InferJavaMajor(version.Id, ""), LauncherApp.I.Settings.JavaPath)
-                           ?? throw new InvalidOperationException("部署 Quilt 需要对应版本的 Java，请先在设置里指定。");
+                           ?? throw new InvalidOperationException("部署 Quilt 要对应版本的 Java，先去设置里指定。");
                 installedLoader = await LauncherApp.I.Quilt.InstallAsync(version.Id, quilt.ForgeVersion, LauncherApp.I.MinecraftDir, java.Path, progress, _cts.Token);
             }
 
@@ -494,7 +494,7 @@ public partial class DownloadPage : UserControl, IPage
             ForgeDetailCombo.ItemsSource = list;
             ForgeDetailCombo.SelectedItem = list.FirstOrDefault(x => x.Recommended) ?? list.FirstOrDefault();
             ForgeDetailStatus.Text = list.Count == 0
-                ? "没有找到该 Minecraft 版本的 Forge。"
+                ? "没找到这个 Minecraft 版本的 Forge。"
                 : $"{list.Count} 个版本；推荐 / 最新已标注，可自行选择。";
         }
         catch (OperationCanceledException)
@@ -523,7 +523,7 @@ public partial class DownloadPage : UserControl, IPage
             NeoForgeDetailCombo.ItemsSource = list;
             NeoForgeDetailCombo.SelectedItem = list.FirstOrDefault();
             NeoForgeDetailStatus.Text = list.Count == 0
-                ? "没有找到该 Minecraft 版本的 NeoForge。"
+                ? "没找到这个 Minecraft 版本的 NeoForge。"
                 : $"{list.Count} 个版本，默认选择最新版。";
         }
         catch (OperationCanceledException)
@@ -552,7 +552,7 @@ public partial class DownloadPage : UserControl, IPage
             QuiltDetailCombo.ItemsSource = list;
             QuiltDetailCombo.SelectedItem = list.FirstOrDefault();
             QuiltDetailStatus.Text = list.Count == 0
-                ? "没有找到该 Minecraft 版本的 Quilt。"
+                ? "没找到这个 Minecraft 版本的 Quilt。"
                 : $"{list.Count} 个版本，默认选择最新稳定版。";
         }
         catch (OperationCanceledException)
@@ -671,7 +671,7 @@ public partial class DownloadPage : UserControl, IPage
             InstallFabricButton.IsEnabled = items.Count > 0 && !_installing;
             FabricStatus.Text = items.Count > 0
                 ? $"共 {items.Count} 个 Loader；默认选择稳定版。"
-                : "没有可用的 Fabric Loader，请检查网络。";
+                : "没有可用的 Fabric Loader，检查一下网络。";
         }
         catch (Exception ex)
         {
@@ -734,12 +734,12 @@ public partial class DownloadPage : UserControl, IPage
         var java = LauncherApp.I.Java.All.OrderByDescending(j => j.Major).FirstOrDefault();
         if (java is null)
         {
-            MessageDialog.Show(Window.GetWindow(this), "找不到 Java", "请先在「设置」里扫描或指定 Java。", "知道了", danger: true);
+            MessageDialog.Show(Window.GetWindow(this), "找不到 Java", "先去「设置」里扫描或指定 Java。", "知道了", danger: true);
             return;
         }
         try
         {
-            ForgeStatus.Text = "安装器已启动。请按安装器提示完成安装，然后点击「刷新版本」。";
+            ForgeStatus.Text = "安装器起来了。按提示装完，再点「刷新版本」。";
             var psi = new System.Diagnostics.ProcessStartInfo
             {
                 FileName = java.Path,

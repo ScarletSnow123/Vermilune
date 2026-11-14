@@ -160,7 +160,7 @@
 
                 <Border Style="{StaticResource Card}" Margin="0,12,0,0">
                     <StackPanel>
-                        <TextBlock Text="快速修复建议" Style="{StaticResource SectionTitle}" />
+                        <TextBlock Text="怎么修" Style="{StaticResource SectionTitle}" />
                         <TextBlock Text="1. 先处理「严重」级别的问题，再启动游戏。" Style="{StaticResource MutedText}" Margin="0,9,0,0" />
                         <TextBlock Text="2. 缺前置时只安装对应版本，不要混用不同加载器的 Mod。" Style="{StaticResource MutedText}" Margin="0,5,0,0" />
                         <TextBlock Text="3. 报错页读取的是当前实例的 logs 与 crash-reports。" Style="{StaticResource MutedText}" Margin="0,5,0,0" />

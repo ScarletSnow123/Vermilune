@@ -20,7 +20,7 @@
             </Grid.ColumnDefinitions>
             <StackPanel>
                 <TextBlock Text="下载" Style="{StaticResource PageTitle}" />
-                <TextBlock Text="安装原版、Fabric、Forge、NeoForge，或搜索整合包与资源；安装前请确认下载源可用。" Style="{StaticResource PageSubtitle}" />
+                <TextBlock Text="装原版、Fabric、Forge、NeoForge，或者搜整合包和资源。装之前先确认下载源能用。" Style="{StaticResource PageSubtitle}" />
             </StackPanel>
             <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
                 <TextBlock x:Name="SourceText" Text="下载源：自动" Style="{StaticResource MutedText}"
@@ -189,7 +189,7 @@
                         </Button.RenderTransform>
                     </Button>
                     <Button x:Name="InstallButton" Style="{StaticResource PrimaryButton}" Height="40" Margin="0,8,0,0"
-                            Content="安装此版本" IsEnabled="False" Click="InstallVanilla_Click" />
+                            Content="装这个版本" IsEnabled="False" Click="InstallVanilla_Click" />
                     <TextBlock x:Name="InstallHint" Text="需要联网下载；可以在设置中切换镜像源。" Style="{StaticResource MutedText}"
                                Margin="0,9,0,0" />
                 </StackPanel>
@@ -242,13 +242,13 @@
             <Border Grid.Column="2" Style="{StaticResource Card}">
                 <StackPanel>
                     <TextBlock Text="版本要求" Style="{StaticResource SectionTitle}" />
-                    <TextBlock Text="Fabric 与原版版本一一对应；请先确认游戏版本已安装或允许自动安装。" Style="{StaticResource MutedText}" Margin="0,9,0,0" />
+                    <TextBlock Text="Fabric 跟着原版版本走；先确认游戏版本装好了，或者允许自动安装。" Style="{StaticResource MutedText}" Margin="0,9,0,0" />
                     <Border Style="{StaticResource Divider}" />
                     <TextBlock Text="镜像" Style="{StaticResource Label}" />
                     <TextBlock Text="Fabric 元数据来自 meta.fabricmc.net；下载源设置只影响 Mojang 文件。" Style="{StaticResource MutedText}" Margin="0,6,0,0" />
                     <Border Style="{StaticResource Divider}" />
                     <TextBlock Text="常见问题" Style="{StaticResource Label}" />
-                    <TextBlock Text="如果 Loader 列表为空，检查网络或在设置中切换下载源后重试。" Style="{StaticResource MutedText}" Margin="0,6,0,0" />
+                    <TextBlock Text="Loader 列表空的话，换个下载源再试。" Style="{StaticResource MutedText}" Margin="0,6,0,0" />
                 </StackPanel>
             </Border>
         </Grid>
@@ -286,7 +286,7 @@
                     <TextBlock x:Name="ForgeStatus" Text="选择 游戏版本后会加载可用的 Forge 加载器版本。" Style="{StaticResource MutedText}"
                                Margin="0,9,0,0" TextWrapping="Wrap" />
                     <Border Style="{StaticResource Divider}" />
-                    <TextBlock Text="如果官方 installer 无法在后台运行，仍可使用本地安装器："
+                    <TextBlock Text="官方 installer 在后台跑不起来的话，还能用本地安装器："
                                Style="{StaticResource MutedText}" Margin="0,0,0,7" />
                     <StackPanel Orientation="Horizontal">
                         <Button Style="{StaticResource ButtonBase}" Height="32" Content="选择本地 installer" Click="RunForgeInstaller_Click" />
@@ -303,11 +303,11 @@
                     <TextBlock Text="Forge 会写入 .minecraft/libraries 并生成 versions 下的版本目录。"
                                Style="{StaticResource MutedText}" Margin="0,9,0,0" />
                     <TextBlock Text="1. 选择与整合包一致的 游戏版本。" Style="{StaticResource MutedText}" Margin="0,6,0,0" />
-                    <TextBlock Text="2. 优先使用推荐版 Forge；旧整合包请选对应版本。" Style="{StaticResource MutedText}" Margin="0,6,0,0" />
+                    <TextBlock Text="2. 优先使用推荐版 Forge；旧整合包挑对应版本。" Style="{StaticResource MutedText}" Margin="0,6,0,0" />
                     <TextBlock Text="3. 安装完成后到「版本」页选择 Forge 实例，再把 Mod 放进 mods。" Style="{StaticResource MutedText}" Margin="0,6,0,0" />
                     <Border Style="{StaticResource Divider}" />
                     <TextBlock Text="NeoForge" Style="{StaticResource Label}" />
-                    <TextBlock Text="NeoForge 使用官方 maven 部署器，版本会按当前 Minecraft 版本过滤。" Style="{StaticResource MutedText}" Margin="0,6,0,0" />
+                    <TextBlock Text="NeoForge 使用官方 maven 部署器，版本会按 Minecraft 版本筛。" Style="{StaticResource MutedText}" Margin="0,6,0,0" />
                 </StackPanel>
             </Border>
         </Grid>

@@ -124,7 +124,7 @@
                         <TextBlock Text="版权与免责" Style="{StaticResource SectionTitle}" />
                         <TextBlock Text="Vermilune 是个人项目；Minecraft 客户端、资源与各 Mod 的版权归 Mojang Studios 与对应作者所有。"
                                    Style="{StaticResource MutedText}" Margin="0,9,0,0" />
-                        <TextBlock Text="本启动器不绕过正版验证，不提供盗版资源；请使用自己拥有的账号与合法获取的整合包。"
+                        <TextBlock Text="本启动器不绕过正版验证，不提供盗版资源；用自己拥有的账号和合法获取的整合包。"
                                    Style="{StaticResource MutedText}" Margin="0,6,0,0" />
                         <TextBlock Text="主页右栏沿用原有布局与配色；古明地觉图片仅作个人启动器装饰。"
                                    Style="{StaticResource MutedText}" Margin="0,6,0,0" />

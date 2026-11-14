@@ -790,7 +790,7 @@ public partial class MainWindow : Window
         target ??= LauncherApp.I.CurrentVersion;
         if (target is null)
         {
-            MessageDialog.Show(this, "安装 Mod", "当前没有可用版本，请先安装一个 Minecraft 版本。", "知道了");
+            MessageDialog.Show(this, "安装 Mod", "现在没有可用版本，先装个 Minecraft。", "知道了");
             return;
         }
 

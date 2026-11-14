@@ -74,7 +74,7 @@ public partial class ResourceBrowser : UserControl
                                        string.Equals(v.Id, selectedId, StringComparison.OrdinalIgnoreCase))
                                    ?? versions.FirstOrDefault();
         TargetHint.Text = versions.Count == 0
-            ? "没有扫描到版本实例，请先到「版本」页安装或刷新。"
+            ? "没有扫描到版本实例，先去「版本」页装一个，或者刷新一下。"
             : "";
         TargetHint.Visibility = versions.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
     }
@@ -193,7 +193,7 @@ public partial class ResourceBrowser : UserControl
         {
             if (version != _searchVersion) return;
             SearchStatus.Text = "搜索超时";
-            EmptyText.Text = "网络连接超时，请点击「搜索」重试。";
+            EmptyText.Text = "网络连接超时，点「搜索」再试一次。";
             EmptyText.Visibility = Visibility.Visible;
         }
         catch (Exception ex)
@@ -317,7 +317,7 @@ public partial class ResourceBrowser : UserControl
         var file = _files[VersionCombo.SelectedIndex];
         if (string.IsNullOrWhiteSpace(file.Url))
         {
-            MessageDialog.Show(Window.GetWindow(this), "无法安装", "该文件没有可用的下载地址。", "知道了", danger: true);
+            MessageDialog.Show(Window.GetWindow(this), "装不了", "这个文件没有下载地址。", "知道了", danger: true);
             return;
         }
         if (_type == ResourceType.Modpack)
@@ -354,7 +354,7 @@ public partial class ResourceBrowser : UserControl
 
         if (TargetCombo.SelectedItem is not VersionInfo target)
         {
-            MessageDialog.Show(Window.GetWindow(this), "选择实例", "请选择要安装到哪个版本实例。", "知道了", danger: true);
+            MessageDialog.Show(Window.GetWindow(this), "选择实例", "选个要装进去的实例。", "知道了", danger: true);
             return;
         }
         if (!MessageDialog.Show(Window.GetWindow(this), "安装资源",

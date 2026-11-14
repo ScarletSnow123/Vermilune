@@ -206,7 +206,7 @@ public partial class VersionsPage : UserControl, IPage
         JavaAutoCheck.IsChecked = _instance.AutoJava;
         JavaCombo.IsEnabled = !_instance.AutoJava;
         FillJavaChoices();
-        JavaHint.Text = $"该版本建议 Java {v.JavaMajor}" + (string.IsNullOrEmpty(_instance.JavaPath) ? "（当前自动）" : "（已指定）");
+        JavaHint.Text = $"这个版本建议 Java {v.JavaMajor}" + (string.IsNullOrEmpty(_instance.JavaPath) ? "（当前自动）" : "（已指定）");
 
         WidthBox.Text = _instance.Width > 0 ? _instance.Width.ToString() : "";
         HeightBox.Text = _instance.Height > 0 ? _instance.Height.ToString() : "";
@@ -395,7 +395,7 @@ public partial class VersionsPage : UserControl, IPage
         if (!ok)
         {
             check.IsChecked = row.Info.Enabled;
-            MessageDialog.Show(Window.GetWindow(this), "无法切换 Mod", error, "知道了", danger: true);
+            MessageDialog.Show(Window.GetWindow(this), "切换不了 Mod", error, "知道了", danger: true);
             return;
         }
         if (_selected is not null) LoadMods(_selected);
@@ -537,7 +537,7 @@ public partial class VersionsPage : UserControl, IPage
         if (_selected is null) return;
         if (LauncherApp.I.Launch.IsRunning && string.Equals(LauncherApp.I.Launch.CurrentVersionId, _selected.Id, StringComparison.OrdinalIgnoreCase))
         {
-            MessageDialog.Show(Window.GetWindow(this), "游戏正在运行", "请先关闭游戏，再重命名这个版本。", "知道了", danger: true);
+            MessageDialog.Show(Window.GetWindow(this), "游戏正在运行", "先把游戏关了，再重命名这个版本。", "知道了", danger: true);
             return;
         }
         var old = _selected.Id;
@@ -572,7 +572,7 @@ public partial class VersionsPage : UserControl, IPage
         var v = _selected;
         if (LauncherApp.I.Launch.IsRunning && string.Equals(LauncherApp.I.Launch.CurrentVersionId, v.Id, StringComparison.OrdinalIgnoreCase))
         {
-            MessageDialog.Show(Window.GetWindow(this), "游戏正在运行", "请先关闭游戏，再删除这个版本。", "知道了", danger: true);
+            MessageDialog.Show(Window.GetWindow(this), "游戏正在运行", "先把游戏关了，再删这个版本。", "知道了", danger: true);
             return;
         }
         if (!MessageDialog.Show(Window.GetWindow(this), "删除版本",

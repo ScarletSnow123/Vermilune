@@ -10,7 +10,7 @@
 
         <StackPanel Margin="0,12,0,0">
             <TextBlock Text="联机" Style="{StaticResource PageTitle}" />
-            <TextBlock Text="在主机上一键开启小服务器，朋友通过公网地址直接加入。"
+            <TextBlock Text="在自己电脑上一键开个小服，朋友拿地址就能进。"
                        Style="{StaticResource PageSubtitle}" />
         </StackPanel>
 
@@ -20,7 +20,7 @@
                 <Border Style="{StaticResource Card}">
                     <StackPanel>
                         <TextBlock Text="一键开服" Style="{StaticResource SectionTitle}" />
-                        <TextBlock Text="服务端完全运行在你的电脑上，不经过开发者服务器。原版与 Fabric 实例支持一键准备服务端文件。"
+                        <TextBlock Text="服务端跑在你自己电脑上。原版和 Fabric 都能一键准备。"
                                    Style="{StaticResource MutedText}" Margin="0,6,0,0" TextWrapping="Wrap" />
 
                         <Grid Margin="0,14,0,0">
@@ -45,21 +45,21 @@
                             </StackPanel>
                         </Grid>
 
-                        <TextBlock Text="一键开服仅支持原版 / Fabric 实例；Forge、NeoForge、Quilt 请使用对应服务端安装器。"
+                        <TextBlock Text="现在只支持原版和 Fabric；Forge、NeoForge、Quilt 得先用对应安装器。"
                                    Style="{StaticResource MutedText}" Margin="0,9,0,0" TextWrapping="Wrap" />
                         <CheckBox x:Name="ServerEulaCheck" Content="我已阅读并同意 Minecraft 最终用户许可协议（EULA）"
                                   FontSize="10.5" Foreground="{DynamicResource TextMutedBrush}" Margin="0,10,0,0" />
-                        <CheckBox x:Name="ServerWhitelistCheck" Content="启用白名单（开启后需要在 whitelist.json 中添加玩家）"
+                        <CheckBox x:Name="ServerWhitelistCheck" Content="开白名单（要自己去 whitelist.json 加人）"
                                   FontSize="10.5" Foreground="{DynamicResource TextMutedBrush}" Margin="0,6,0,0" />
 
-                        <CheckBox x:Name="UseFrpCheck" Content="通过 FRP 公共中继转发"
+                        <CheckBox x:Name="UseFrpCheck" Content="用 FRP 中继转发"
                                   FontSize="10.5" Foreground="{DynamicResource TextMutedBrush}" Margin="0,10,0,0"
                                   Checked="UseFrp_Checked" Unchecked="UseFrp_Checked" />
                         <StackPanel x:Name="FrpPanel" Visibility="Collapsed" Margin="0,8,0,0">
                             <ComboBox x:Name="FrpProviderCombo" Height="32" Margin="0,0,0,8"
                                       SelectionChanged="FrpProvider_Changed">
-                                <ComboBoxItem Content="OpenFrp（免费公共中继，推荐）" Tag="openfrp" />
-                                <ComboBoxItem Content="自建 FRP（使用自己的 frps）" Tag="custom" />
+                                <ComboBoxItem Content="OpenFrp（免费公共中继）" Tag="openfrp" />
+                                <ComboBoxItem Content="自己的 frps" Tag="custom" />
                             </ComboBox>
 
                             <StackPanel x:Name="OpenFrpPanel">
@@ -72,7 +72,7 @@
                                         <ColumnDefinition Width="*" />
                                     </Grid.ColumnDefinitions>
                                     <StackPanel>
-                                        <TextBlock Text="OpenFrp 访问密钥" Style="{StaticResource FormLabel}" />
+                                        <TextBlock Text="访问密钥" Style="{StaticResource FormLabel}" />
                                         <TextBox x:Name="OpenFrpTokenBox" Style="{StaticResource InputBox}" Height="32" />
                                     </StackPanel>
                                     <StackPanel Grid.Column="2">
@@ -80,7 +80,7 @@
                                         <TextBox x:Name="OpenFrpTunnelBox" Style="{StaticResource InputBox}" Height="32" />
                                     </StackPanel>
                                     <StackPanel Grid.Column="4">
-                                        <TextBlock Text="公网地址（从面板复制）" Style="{StaticResource FormLabel}" />
+                                        <TextBlock Text="公网地址（面板里复制）" Style="{StaticResource FormLabel}" />
                                         <TextBox x:Name="OpenFrpAddressBox" Style="{StaticResource InputBox}" Height="32" />
                                     </StackPanel>
                                 </Grid>
@@ -117,7 +117,7 @@
                                         <TextBox x:Name="FrpRemotePortBox" Style="{StaticResource InputBox}" Height="32" />
                                     </StackPanel>
                                 </Grid>
-                                <TextBlock Text="使用自己的 frps；启动器不会连接开发者服务器。"
+                                <TextBlock Text="填自己的 frps 地址和 Token。"
                                            Style="{StaticResource MutedText}" Margin="0,6,0,0" TextWrapping="Wrap" />
                             </StackPanel>
                         </StackPanel>
@@ -128,7 +128,7 @@
                             <Button x:Name="ServerStopButton" Style="{StaticResource ButtonBase}" Height="36"
                                     Padding="16,0" Content="关闭服务器" Margin="8,0,0,0"
                                     IsEnabled="False" Click="StopServer_Click" />
-                            <TextBlock x:Name="ServerStatusText" Text="未启动。" Style="{StaticResource MutedText}"
+                            <TextBlock x:Name="ServerStatusText" Text="没启动。" Style="{StaticResource MutedText}"
                                        VerticalAlignment="Center" Margin="14,0,0,0" />
                         </StackPanel>
 
@@ -136,7 +136,7 @@
                                 Margin="0,10,0,0" Padding="7,5">
                             <ScrollViewer x:Name="ServerLogScroll" Height="96" VerticalScrollBarVisibility="Hidden"
                                           IsHitTestVisible="False">
-                                <TextBlock x:Name="ServerLogText" Text="等待服务端输出…"
+                                <TextBlock x:Name="ServerLogText" Text="服务端日志会显示在这里…"
                                            FontFamily="{DynamicResource MonoFont}" FontSize="9"
                                            Foreground="{DynamicResource HomeLogTextBrush}"
                                            TextWrapping="NoWrap" />
@@ -147,8 +147,8 @@
 
                 <Border Style="{StaticResource Card}" Margin="0,12,0,0">
                     <StackPanel>
-                        <TextBlock Text="连接地址" Style="{StaticResource SectionTitle}" />
-                        <TextBlock x:Name="AddressText" Text="开服后显示公网或本地地址。"
+                        <TextBlock Text="地址" Style="{StaticResource SectionTitle}" />
+                        <TextBlock x:Name="AddressText" Text="开服后这里显示地址。"
                                    FontFamily="{DynamicResource MonoFont}" FontSize="16"
                                    Foreground="{DynamicResource AccentBrush}" Margin="0,10,0,0" />
                         <TextBlock x:Name="Ipv6Text" Text="" FontFamily="{DynamicResource MonoFont}"
@@ -170,7 +170,7 @@
                                           Fill="Transparent" HorizontalAlignment="Center" VerticalAlignment="Center" />
                                 </Border>
                                 <StackPanel Grid.Column="1" Margin="10,0,0,0">
-                                    <TextBlock x:Name="MappingTitle" Text="无法从公网连接" FontSize="12"
+                                    <TextBlock x:Name="MappingTitle" Text="外网连不进来" FontSize="12"
                                                FontWeight="SemiBold" Foreground="{DynamicResource DangerBrush}" />
                                     <TextBlock x:Name="MappingText" Text="" FontSize="10.5"
                                                Foreground="{DynamicResource TextSubBrush}"
@@ -190,13 +190,13 @@
 
                 <Border Style="{StaticResource Card}" Margin="0,12,0,0">
                     <StackPanel>
-                        <TextBlock Text="使用说明" Style="{StaticResource SectionTitle}" />
-                        <TextBlock Text="1. 选择原版或 Fabric 实例，设置内存和端口。" Style="{StaticResource MutedText}" Margin="0,8,0,0" />
-                        <TextBlock Text="2. 勾选 EULA，点击「一键开服」。" Style="{StaticResource MutedText}" Margin="0,5,0,0" />
-                        <TextBlock Text="3. 把上方地址发给朋友，在多人游戏中直接连接。" Style="{StaticResource MutedText}" Margin="0,5,0,0" />
-                        <TextBlock Text="启动器会尝试 UPnP 自动映射端口；路由器不支持 UPnP 或在 CGNAT 网络下，需要手动转发端口或使用其他内网穿透方式。"
+                        <TextBlock Text="怎么用" Style="{StaticResource SectionTitle}" />
+                        <TextBlock Text="1. 选个原版或 Fabric 实例，设好内存和端口。" Style="{StaticResource MutedText}" Margin="0,8,0,0" />
+                        <TextBlock Text="2. 勾上 EULA，点「一键开服」。" Style="{StaticResource MutedText}" Margin="0,5,0,0" />
+                        <TextBlock Text="3. 把地址发给朋友，多人游戏里直接连。" Style="{StaticResource MutedText}" Margin="0,5,0,0" />
+                        <TextBlock Text="启动器会试着用 UPnP 开端口。路由器不支持，或者你是 CGNAT，就得手动转发或走中继。"
                                    Style="{StaticResource MutedText}" Margin="0,12,0,0" TextWrapping="Wrap" />
-                        <TextBlock Text="仅支持原版和 Fabric；Forge / NeoForge / Quilt 服务端请先使用对应安装器。"
+                        <TextBlock Text="目前只有原版和 Fabric 能一键开服。"
                                    Style="{StaticResource MutedText}" Margin="0,5,0,0" TextWrapping="Wrap" />
                     </StackPanel>
                 </Border>

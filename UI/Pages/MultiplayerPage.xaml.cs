@@ -21,7 +21,7 @@ public partial class MultiplayerPage : UserControl, IPage
         LauncherApp.I.Server.LogReceived += line => Dispatcher.BeginInvoke(new Action(() => AppendServerLog(line)));
         LauncherApp.I.Server.Ready += () => Dispatcher.BeginInvoke(new Action(() =>
         {
-            ServerStatusText.Text = "服务端已就绪。";
+            ServerStatusText.Text = "服务端好了。";
             UpdateAddress();
         }));
     }
@@ -56,7 +56,7 @@ public partial class MultiplayerPage : UserControl, IPage
         FrpPanel.Visibility = s.UseFrp ? Visibility.Visible : Visibility.Collapsed;
         ServerStartButton.IsEnabled = !LauncherApp.I.Server.IsRunning;
         ServerStopButton.IsEnabled = LauncherApp.I.Server.IsRunning;
-        ServerStatusText.Text = LauncherApp.I.Server.IsRunning ? "服务端运行中。" : "未启动。";
+        ServerStatusText.Text = LauncherApp.I.Server.IsRunning ? "服务端运行中。" : "没启动。";
         if (LauncherApp.I.Server.IsRunning) _serverTimer.Start();
         UpdateAddress();
     }
@@ -94,14 +94,14 @@ public partial class MultiplayerPage : UserControl, IPage
     {
         if (ServerEulaCheck.IsChecked != true)
         {
-            MessageDialog.Show(Window.GetWindow(this), "需要同意 EULA",
-                "启动 Minecraft 服务端前，需要先阅读并同意 Minecraft 最终用户许可协议。",
+            MessageDialog.Show(Window.GetWindow(this), "先同意 EULA",
+                "开服前得先同意 Minecraft EULA。",
                 "知道了", danger: true);
             return;
         }
         if (ServerVersionCombo.SelectedItem is not VersionInfo version)
         {
-            MessageDialog.Show(Window.GetWindow(this), "没有可用实例", "请先安装一个原版或 Fabric 实例。", "知道了", danger: true);
+            MessageDialog.Show(Window.GetWindow(this), "没找到实例", "先装个原版或 Fabric 实例。", "知道了", danger: true);
             return;
         }
         if (!int.TryParse(ServerMemoryBox.Text.Trim(), out var memory)) memory = 2048;
@@ -113,8 +113,8 @@ public partial class MultiplayerPage : UserControl, IPage
         if (useFrp && frpProvider == "custom" &&
             (string.IsNullOrWhiteSpace(FrpServerBox.Text.Trim()) || string.IsNullOrWhiteSpace(FrpTokenBox.Text.Trim())))
         {
-            MessageDialog.Show(Window.GetWindow(this), "FRP 配置不完整",
-                "自建 FRP 需要填写服务器地址和 Token。", "知道了", danger: true);
+            MessageDialog.Show(Window.GetWindow(this), "FRP 没填完",
+                "自己的 frps 要填地址和 Token。", "知道了", danger: true);
             return;
         }
         if (useFrp && frpProvider == "openfrp" &&
@@ -122,8 +122,8 @@ public partial class MultiplayerPage : UserControl, IPage
              string.IsNullOrWhiteSpace(OpenFrpTunnelBox.Text.Trim()) ||
              string.IsNullOrWhiteSpace(OpenFrpAddressBox.Text.Trim())))
         {
-            MessageDialog.Show(Window.GetWindow(this), "OpenFrp 配置不完整",
-                "请填写 OpenFrp 访问密钥、隧道 ID 和面板上的公网地址。", "知道了", danger: true);
+            MessageDialog.Show(Window.GetWindow(this), "OpenFrp 没填完",
+                "把 OpenFrp 的访问密钥、隧道 ID 和公网地址填上。", "知道了", danger: true);
             return;
         }
         var s = LauncherApp.I.Settings;
@@ -185,7 +185,7 @@ public partial class MultiplayerPage : UserControl, IPage
         ServerStatusText.Text = "正在关闭服务器…";
         await LauncherApp.I.Server.StopAsync();
         ServerStartButton.IsEnabled = true;
-        ServerStatusText.Text = "服务器已关闭。";
+        ServerStatusText.Text = "服务器关了。";
         UpdateAddress();
     }
 
@@ -211,7 +211,7 @@ public partial class MultiplayerPage : UserControl, IPage
         {
             var open = await LauncherApp.I.Server.TestLocalPortAsync();
             ServerStatusText.Text = open
-                ? "服务端端口已监听。若朋友仍无法连接，请检查 UPnP、防火墙或公网 IP。"
+                ? "端口通了。朋友还连不上，就看看 UPnP、防火墙或公网 IP。"
                 : "服务端仍在启动，端口尚未监听…";
             if (!open && LauncherApp.I.Server.LastError is { } error) ServerStatusText.Text = error;
             UpdateAddress();
@@ -221,7 +221,7 @@ public partial class MultiplayerPage : UserControl, IPage
 
     private void AppendServerLog(string line)
     {
-        if (ServerLogText.Text == "等待服务端输出…") ServerLogText.Text = "";
+        if (ServerLogText.Text == "服务端日志会显示在这里…") ServerLogText.Text = "";
         var lines = (ServerLogText.Text + "\n" + line).Split('\n');
         ServerLogText.Text = string.Join("\n", lines.TakeLast(40));
         ServerLogScroll.ScrollToEnd();
@@ -234,7 +234,7 @@ public partial class MultiplayerPage : UserControl, IPage
         var address = server.PublicAddress ?? server.LocalAddress;
         if (!server.IsRunning)
         {
-            AddressText.Text = "开服后显示公网或本地地址。";
+            AddressText.Text = "开服后这里显示地址。";
             Ipv6Text.Visibility = Visibility.Collapsed;
             CopyIpv6Button.Visibility = Visibility.Collapsed;
             MappingCallout.Visibility = Visibility.Collapsed;
@@ -278,8 +278,8 @@ public partial class MultiplayerPage : UserControl, IPage
                       (server.MappingStatus?.Contains("CGNAT", StringComparison.OrdinalIgnoreCase) ?? false) ||
                       (server.MappingStatus?.Contains("手动", StringComparison.OrdinalIgnoreCase) ?? false);
         MappingCallout.Visibility = Visibility.Visible;
-        MappingTitle.Text = warning ? "无法从公网连接" : (frpActive ? "已通过 FRP 发布" :
-            (string.IsNullOrWhiteSpace(server.PublicAddress) ? "可使用 IPv6 直连" : "端口映射成功"));
+        MappingTitle.Text = warning ? "外网连不进来" : (frpActive ? "FRP 已连上" :
+            (string.IsNullOrWhiteSpace(server.PublicAddress) ? "可以用 IPv6 连" : "端口通了"));
         MappingTitle.Foreground = (Brush)FindResource(warning ? "DangerBrush" : "AccentBrush");
         MappingIcon.Data = (Geometry)FindResource(warning ? "IconWarning" : "IconCheck");
         MappingIcon.Stroke = (Brush)FindResource(warning ? "DangerBrush" : "AccentBrush");
@@ -294,12 +294,12 @@ public partial class MultiplayerPage : UserControl, IPage
             frpActive ? "FRP 客户端已连接，朋友连接上方服务器地址。" : null,
             s.UseFrp && !frpActive ? ("FRP 未连接：" + (LauncherApp.I.Frp.LastError ??
                 (string.Equals(s.FrpProvider, "openfrp", StringComparison.OrdinalIgnoreCase)
-                    ? "请检查 OpenFrp 访问密钥、隧道 ID 和隧道状态。"
-                    : "请检查服务器地址、Token 和 frps 状态。"))) : null,
+                    ? "看看 OpenFrp 的访问密钥、隧道 ID 和隧道状态。"
+                    : "看看服务器地址、Token 和 frps 状态。"))) : null,
             frpActive ? null : server.FirewallStatus,
             frpActive ? null : server.MappingStatus,
             frpActive ? null : (string.IsNullOrWhiteSpace(server.PublicAddress)
-                ? (string.IsNullOrWhiteSpace(ipv6) ? "未获取到公网 IPv4 或 IPv6 地址。" : "没有可用的公网 IPv4；如果双方都有 IPv6，可使用上方 IPv6 地址。")
+                ? (string.IsNullOrWhiteSpace(ipv6) ? "没拿到公网 IPv4 或 IPv6 地址。" : "没有公网 IPv4；双方都有 IPv6 的话，用上面的 IPv6 地址。")
                 : "公网 IPv4 地址已获取。")
         }.Where(x => !string.IsNullOrWhiteSpace(x)));
     }

@@ -147,7 +147,7 @@ public partial class SettingsPage : UserControl, IPage
         var hex = AccentHexBox.Text.Trim();
         if (!IsHex(hex))
         {
-            MessageDialog.Show(Window.GetWindow(this), "颜色格式不正确", "请输入 #RRGGBB，例如 #E5B567。", "知道了", danger: true);
+            MessageDialog.Show(Window.GetWindow(this), "颜色格式不正确", "填 #RRGGBB，比如 #E5B567。", "知道了", danger: true);
             return;
         }
         ApplyAccent(hex.StartsWith('#') ? hex : "#" + hex);
@@ -254,7 +254,7 @@ public partial class SettingsPage : UserControl, IPage
         if (string.IsNullOrWhiteSpace(picked))
         {
             MessageDialog.Show(Window.GetWindow(this), "没有找到背景图片",
-                "请把 png / jpg / gif / mp4 / webm 等文件放进背景文件夹，然后再点刷新。",
+                "把 png / jpg / gif / mp4 / webm 放进背景文件夹，再点刷新。",
                 "知道了", danger: true);
             return;
         }

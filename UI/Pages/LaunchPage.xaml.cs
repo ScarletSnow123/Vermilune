@@ -173,7 +173,7 @@ public partial class LaunchPage : UserControl, IPage, INotifyPropertyChanged
             StatusLabel.Text = _state switch
             {
                 LaunchState.Running => "游戏正在运行。关闭游戏后，这里会记录退出状态。",
-                LaunchState.Preparing or LaunchState.Downloading or LaunchState.Starting => "正在准备启动，请稍候…",
+                LaunchState.Preparing or LaunchState.Downloading or LaunchState.Starting => "正在准备启动…",
                 LaunchState.Failed => "启动失败。查看日志，或到报错页进行分析。",
                 _ => "就绪。选择一个版本，然后按下启动。"
             };
@@ -330,7 +330,7 @@ public partial class LaunchPage : UserControl, IPage, INotifyPropertyChanged
         {
             if (!await LauncherApp.I.EnsureAccountReadyAsync())
             {
-                MessageDialog.Show(Window.GetWindow(this), "登录已失效", "请先重新登录 Microsoft 账号，再上传皮肤。", "知道了", danger: true);
+                MessageDialog.Show(Window.GetWindow(this), "登录已失效", "先重新登录 Microsoft 账号，再传皮肤。", "知道了", danger: true);
                 return;
             }
             try
@@ -370,7 +370,7 @@ public partial class LaunchPage : UserControl, IPage, INotifyPropertyChanged
         }
         if (!await LauncherApp.I.EnsureAccountReadyAsync())
         {
-            MessageDialog.Show(Window.GetWindow(this), "登录已失效", "请先重新登录 Microsoft 账号。", "知道了", danger: true);
+            MessageDialog.Show(Window.GetWindow(this), "登录已失效", "先重新登录 Microsoft 账号。", "知道了", danger: true);
             return;
         }
         if (CapePickerDialog.Show(Window.GetWindow(this)))
@@ -588,7 +588,7 @@ public partial class LaunchPage : UserControl, IPage, INotifyPropertyChanged
     {
         if (_state == LaunchState.Running)
         {
-            if (MessageDialog.Show(Window.GetWindow(this), "结束游戏", "要结束当前 Minecraft 进程吗？未保存的世界进度可能丢失。",
+            if (MessageDialog.Show(Window.GetWindow(this), "结束游戏", "要结束现在的 Minecraft 吗？没保存的进度会丢。",
                     "结束游戏", "取消", danger: true))
                 LauncherApp.I.Launch.Cancel();
             return;
@@ -628,7 +628,7 @@ public partial class LaunchPage : UserControl, IPage, INotifyPropertyChanged
         if (version is null)
         {
             MessageDialog.Show(Window.GetWindow(this), "没有可启动的版本",
-                "当前没有检测到任何 Minecraft 版本。\n请先到「下载」安装原版或 Fabric，或检查 Minecraft 目录设置。",
+                "没检测到 Minecraft 版本。\n先去「下载」装个原版或 Fabric，或者检查 Minecraft 目录设置。",
                 "去下载", "关闭");
             App.Window?.NavigateTo("download");
             return;
@@ -637,7 +637,7 @@ public partial class LaunchPage : UserControl, IPage, INotifyPropertyChanged
         var resolved = app.Versions.Resolve(version.Id);
         if (resolved is null)
         {
-            MessageDialog.Show(Window.GetWindow(this), "版本损坏", "无法解析该版本的 JSON，请重装该版本。", "知道了", danger: true);
+            MessageDialog.Show(Window.GetWindow(this), "版本损坏", "这个版本的 JSON 读不了，重装一下吧。", "知道了", danger: true);
             return;
         }
 
@@ -673,7 +673,7 @@ public partial class LaunchPage : UserControl, IPage, INotifyPropertyChanged
         {
             MessageDialog.Show(Window.GetWindow(this), "找不到 Java",
                 $"这个版本需要 Java {resolved.JavaMajor}，但没有在系统里找到可用的 64 位 Java。\n" +
-                "请安装对应 Java，或在「设置 → 启动」里手动指定 java.exe。",
+                "装个对应的 Java，或者在「设置 → 启动」里手动指定 java.exe。",
                 "去设置", "关闭", danger: true);
             App.Window?.NavigateTo("settings");
             return;
@@ -681,8 +681,8 @@ public partial class LaunchPage : UserControl, IPage, INotifyPropertyChanged
         if (java.Major < resolved.JavaMajor)
         {
             MessageDialog.Show(Window.GetWindow(this), "Java 主版本过低",
-                $"该版本需要 Java {resolved.JavaMajor} 或更高，当前只有 Java {java.Major}。\n" +
-                "请安装新版本 Java，或在该版本的「修改」页里指定。",
+                $"这个版本需要 Java {resolved.JavaMajor} 或更高，当前只有 Java {java.Major}。\n" +
+                "装个新 Java，或者在这个版本的「修改」页里指定。",
                 "知道了", danger: true);
             return;
         }
@@ -1789,7 +1789,7 @@ public partial class LaunchPage : UserControl, IPage, INotifyPropertyChanged
         var id = SelectedVersion?.Id ?? LauncherApp.I.CurrentVersion?.Id;
         if (string.IsNullOrWhiteSpace(id))
         {
-            MessageDialog.Show(Window.GetWindow(this), "没有可用版本", "请先在「版本」页安装一个版本。", "知道了");
+            MessageDialog.Show(Window.GetWindow(this), "没有可用版本", "先去「版本」页装一个。", "知道了");
             return;
         }
         try
