@@ -20,7 +20,7 @@
                 <Border Style="{StaticResource Card}">
                     <StackPanel>
                         <TextBlock Text="一键开服" Style="{StaticResource SectionTitle}" />
-                        <TextBlock Text="服务端在后台运行，不需要一直打开游戏。原版与 Fabric 实例支持一键准备服务端文件。"
+                        <TextBlock Text="服务端完全运行在你的电脑上，不经过开发者服务器。原版与 Fabric 实例支持一键准备服务端文件。"
                                    Style="{StaticResource MutedText}" Margin="0,6,0,0" TextWrapping="Wrap" />
 
                         <Grid Margin="0,14,0,0">
@@ -50,7 +50,7 @@
                         <CheckBox x:Name="ServerWhitelistCheck" Content="启用白名单（开启后需要在 whitelist.json 中添加玩家）"
                                   FontSize="10.5" Foreground="{DynamicResource TextMutedBrush}" Margin="0,6,0,0" />
 
-                        <CheckBox x:Name="UseFrpCheck" Content="通过自建 FRP 中继发布到公网"
+                        <CheckBox x:Name="UseFrpCheck" Content="通过自建 FRP 中继发布（可选，使用你自己的服务器）"
                                   FontSize="10.5" Foreground="{DynamicResource TextMutedBrush}" Margin="0,10,0,0"
                                   Checked="UseFrp_Checked" Unchecked="UseFrp_Checked" />
                         <StackPanel x:Name="FrpPanel" Visibility="Collapsed" Margin="0,8,0,0">
@@ -81,7 +81,7 @@
                                     <TextBox x:Name="FrpRemotePortBox" Style="{StaticResource InputBox}" Height="32" />
                                 </StackPanel>
                             </Grid>
-                            <TextBlock Text="服务器需运行 frps，并放行 frps 端口和远程端口。朋友连接「服务器 IP:远程端口」。"
+                            <TextBlock Text="不填写则只在本机 / 局域网发布，启动器不会使用开发者服务器。启用后需在你自己的服务器运行 frps，并放行相应端口。"
                                        Style="{StaticResource MutedText}" Margin="0,6,0,0" TextWrapping="Wrap" />
                         </StackPanel>
 
