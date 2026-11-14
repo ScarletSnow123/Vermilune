@@ -65,6 +65,57 @@
 
                 <Border Style="{StaticResource Card}" Margin="0,12,0,0">
                     <StackPanel>
+                        <TextBlock Text="一键开服" Style="{StaticResource SectionTitle}" />
+                        <TextBlock Text="房主用当前实例启动一个小型服务端，朋友直接连接。服务器在后台运行，不需要一直待在游戏里。"
+                                   Style="{StaticResource MutedText}" Margin="0,6,0,0" TextWrapping="Wrap" />
+                        <Grid Margin="0,12,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="12" />
+                                <ColumnDefinition Width="120" />
+                                <ColumnDefinition Width="12" />
+                                <ColumnDefinition Width="110" />
+                            </Grid.ColumnDefinitions>
+                            <StackPanel>
+                                <TextBlock Text="实例" Style="{StaticResource FormLabel}" />
+                                <ComboBox x:Name="ServerVersionCombo" Height="34" DisplayMemberPath="DisplayName" />
+                            </StackPanel>
+                            <StackPanel Grid.Column="2">
+                                <TextBlock Text="内存 MB" Style="{StaticResource FormLabel}" />
+                                <TextBox x:Name="ServerMemoryBox" Style="{StaticResource InputBox}" Height="34" />
+                            </StackPanel>
+                            <StackPanel Grid.Column="4">
+                                <TextBlock Text="端口" Style="{StaticResource FormLabel}" />
+                                <TextBox x:Name="ServerPortBox" Style="{StaticResource InputBox}" Height="34" />
+                            </StackPanel>
+                        </Grid>
+                        <CheckBox x:Name="ServerEulaCheck" Content="我已阅读并同意 Minecraft 最终用户许可协议（EULA）"
+                                  FontSize="10.5" Foreground="{DynamicResource TextMutedBrush}" Margin="0,10,0,0" />
+                        <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
+                            <Button x:Name="ServerStartButton" Style="{StaticResource PrimaryButton}" Height="34"
+                                    Padding="16,0" Content="一键开服" Click="StartServer_Click" />
+                            <Button x:Name="ServerStopButton" Style="{StaticResource ButtonBase}" Height="34"
+                                    Padding="14,0" Content="关闭服务器" Margin="8,0,0,0"
+                                    IsEnabled="False" Click="StopServer_Click" />
+                            <TextBlock x:Name="ServerStatusText" Text="未启动。" Style="{StaticResource MutedText}"
+                                       VerticalAlignment="Center" Margin="12,0,0,0" />
+                        </StackPanel>
+                        <Border Background="{DynamicResource HomeLogInnerBrush}" CornerRadius="4"
+                                Margin="0,9,0,0" Padding="7,5">
+                            <ScrollViewer Height="84" VerticalScrollBarVisibility="Auto">
+                                <TextBlock x:Name="ServerLogText" Text="等待服务端输出…"
+                                           FontFamily="{DynamicResource MonoFont}" FontSize="9"
+                                           Foreground="{DynamicResource HomeLogTextBrush}"
+                                           TextWrapping="NoWrap" />
+                            </ScrollViewer>
+                        </Border>
+                        <TextBlock Text="仅支持原版和 Fabric 实例；Forge / NeoForge / Quilt 服务端请先使用对应安装器。"
+                                   Style="{StaticResource MutedText}" Margin="0,7,0,0" TextWrapping="Wrap" />
+                    </StackPanel>
+                </Border>
+
+                <Border Style="{StaticResource Card}" Margin="0,12,0,0">
+                    <StackPanel>
                         <TextBlock Text="连接地址" Style="{StaticResource SectionTitle}" />
                         <TextBlock x:Name="AddressText" Text="启动联机后显示虚拟 IP。"
                                    FontFamily="{DynamicResource MonoFont}" FontSize="16"

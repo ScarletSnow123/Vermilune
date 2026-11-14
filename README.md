@@ -12,6 +12,7 @@
 
 - 版本扫描、Java 自动检测、启动参数与内存配置
 - EasyTier 虚拟局域网联机（房主/朋友房间码）
+- 原版 / Fabric 一键小服务器（后台运行，无需一直进游戏）
 - Microsoft 设备代码登录、离线账号
 - Yggdrasil / LittleSkin 外置登录（authlib-injector）
 - 多账号保存与切换，不用重复登录
