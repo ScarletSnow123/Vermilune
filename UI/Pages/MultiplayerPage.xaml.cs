@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
@@ -10,6 +11,7 @@ public partial class MultiplayerPage : UserControl, IPage
 {
     private readonly System.Windows.Threading.DispatcherTimer _serverTimer;
     private bool _checkingPort;
+    private bool _suppressFrpOpen;
 
     public MultiplayerPage()
     {
@@ -41,7 +43,9 @@ public partial class MultiplayerPage : UserControl, IPage
         ServerPortBox.Text = s.ServerPort.ToString();
         UseFrpCheck.IsChecked = s.UseFrp;
         var providerIndex = string.Equals(s.FrpProvider, "custom", StringComparison.OrdinalIgnoreCase) ? 1 : 0;
+        _suppressFrpOpen = true;
         FrpProviderCombo.SelectedIndex = providerIndex;
+        _suppressFrpOpen = false;
         OpenFrpTokenBox.Text = s.OpenFrpToken;
         OpenFrpTunnelBox.Text = s.OpenFrpTunnelId;
         OpenFrpAddressBox.Text = s.OpenFrpAddress;
@@ -69,6 +73,21 @@ public partial class MultiplayerPage : UserControl, IPage
         var custom = (FrpProviderCombo.SelectedItem as ComboBoxItem)?.Tag?.ToString() == "custom";
         OpenFrpPanel.Visibility = custom ? Visibility.Collapsed : Visibility.Visible;
         FrpCustomPanel.Visibility = custom ? Visibility.Visible : Visibility.Collapsed;
+        if (!custom && !_suppressFrpOpen) OpenOpenFrpSite();
+    }
+
+    private void OpenFrpSite_Click(object sender, RoutedEventArgs e) => OpenOpenFrpSite();
+
+    private static void OpenOpenFrpSite()
+    {
+        try
+        {
+            Process.Start(new ProcessStartInfo("https://console.openfrp.net") { UseShellExecute = true });
+        }
+        catch (Exception ex)
+        {
+            Log.Warn("打开 OpenFrp 控制台失败：" + ex.Message);
+        }
     }
 
     private async void StartServer_Click(object sender, RoutedEventArgs e)
