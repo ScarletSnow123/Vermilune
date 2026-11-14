@@ -148,7 +148,7 @@
                             <Grid>
                                 <StackPanel>
                                     <TextBlock Text="高级视觉效果" FontSize="12.5" FontWeight="SemiBold" />
-                                    <TextBlock Text="页面切换使用 BitmapCache 与模糊过渡；会增加显存 / 内存占用，默认关闭。华丽动画不会叠加模糊。"
+                                    <TextBlock Text="页面切换使用 BitmapCache 与模糊过渡；会增加显存 / 内存占用，默认关闭。"
                                                Style="{StaticResource Hint}" Margin="0,4,0,0" TextWrapping="Wrap" />
                                 </StackPanel>
                                 <CheckBox x:Name="VisualEffectsCheck" Style="{StaticResource Switch}"
