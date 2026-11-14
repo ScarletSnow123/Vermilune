@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.IO;
 using System.Text.Json.Nodes;
+using System.Text.RegularExpressions;
 using Microsoft.Win32;
 
 namespace Vermilune.Core;
@@ -86,6 +87,50 @@ public static class WallpaperEngineService
             steamRoots.Add(Path.Combine(drive.RootDirectory.FullName, "Steam"));
             steamRoots.Add(Path.Combine(drive.RootDirectory.FullName, "SteamLibrary"));
             steamRoots.Add(Path.Combine(drive.RootDirectory.FullName, "Program Files (x86)", "Steam"));
+        }
+
+        // Steam 库可能不在默认目录，libraryfolders.vdf 里记录了实际路径。
+        foreach (var root in steamRoots.Distinct(StringComparer.OrdinalIgnoreCase).ToList())
+        {
+            try
+            {
+                var vdf = Path.Combine(root, "steamapps", "libraryfolders.vdf");
+                if (!File.Exists(vdf)) continue;
+                foreach (var line in File.ReadLines(vdf))
+                {
+                    var match = Regex.Match(line, @"""path""\s+""([^""]+)""", RegexOptions.IgnoreCase);
+                    if (!match.Success) continue;
+                    var library = match.Groups[1].Value.Replace("\\\\", "\\");
+                    var candidate = Path.Combine(library, "steamapps", "common", "wallpaper_engine", "config.json");
+                    if (File.Exists(candidate)) return candidate;
+                }
+            }
+            catch { }
+        }
+
+        // Steam 卸载项通常记录了 Wallpaper Engine 的实际安装目录。
+        foreach (var hive in new[] { RegistryHive.CurrentUser, RegistryHive.LocalMachine })
+        {
+            foreach (var view in new[] { RegistryView.Registry64, RegistryView.Registry32 })
+            {
+                try
+                {
+                    using var baseKey = RegistryKey.OpenBaseKey(hive, view);
+                    foreach (var uninstallPath in new[]
+                             {
+                                 @"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\Steam App 431960",
+                                 @"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\Wallpaper Engine"
+                             })
+                    {
+                        using var key = baseKey.OpenSubKey(uninstallPath);
+                        var location = key?.GetValue("InstallLocation") as string;
+                        if (string.IsNullOrWhiteSpace(location)) continue;
+                        var candidate = Path.Combine(location, "config.json");
+                        if (File.Exists(candidate)) return candidate;
+                    }
+                }
+                catch { }
+            }
         }
 
         foreach (var root in steamRoots.Distinct(StringComparer.OrdinalIgnoreCase))
