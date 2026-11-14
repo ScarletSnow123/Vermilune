@@ -137,8 +137,9 @@
                         <ComboBoxItem Content="Fabric · 选择 Loader 版本" Tag="fabric" />
                         <ComboBoxItem Content="Forge · 选择 Forge 版本" Tag="forge" />
                         <ComboBoxItem Content="NeoForge · 选择 NeoForge 版本" Tag="neoforge" />
+                        <ComboBoxItem Content="Quilt · 选择 Quilt 版本" Tag="quilt" />
                     </ComboBox>
-                    <TextBlock Text="选择 Fabric / Forge / NeoForge 后，会先下载游戏本体，再自动继续安装加载器。" Style="{StaticResource MutedText}"
+                    <TextBlock Text="选择 Fabric / Forge / NeoForge / Quilt 后，会先下载游戏本体，再自动继续安装加载器。" Style="{StaticResource MutedText}"
                                Margin="0,7,0,0" TextWrapping="Wrap" />
                     <StackPanel x:Name="FabricOptions" Visibility="Collapsed" Margin="0,10,0,0">
                         <TextBlock Text="Fabric Loader 版本" Style="{StaticResource FormLabel}" />
@@ -162,6 +163,12 @@
                         <TextBlock Text="NeoForge 版本" Style="{StaticResource FormLabel}" />
                         <ComboBox x:Name="NeoForgeDetailCombo" Height="34" DisplayMemberPath="Display" />
                         <TextBlock x:Name="NeoForgeDetailStatus" Text="" Style="{StaticResource MutedText}" Margin="0,5,0,0"
+                                   TextWrapping="Wrap" />
+                    </StackPanel>
+                    <StackPanel x:Name="QuiltOptions" Visibility="Collapsed" Margin="0,10,0,0">
+                        <TextBlock Text="Quilt 版本" Style="{StaticResource FormLabel}" />
+                        <ComboBox x:Name="QuiltDetailCombo" Height="34" DisplayMemberPath="Display" />
+                        <TextBlock x:Name="QuiltDetailStatus" Text="" Style="{StaticResource MutedText}" Margin="0,5,0,0"
                                    TextWrapping="Wrap" />
                     </StackPanel>
                     <TextBlock Text="实例名称（可选）" Style="{StaticResource FormLabel}" Margin="0,12,0,0" />

@@ -24,6 +24,7 @@ public partial class DownloadPage : UserControl, IPage
     private string _detailFabricMc = "";
     private string _detailForgeMc = "";
     private string _detailNeoForgeMc = "";
+    private string _detailQuiltMc = "";
 
     public DownloadPage()
     {
@@ -178,6 +179,7 @@ public partial class DownloadPage : UserControl, IPage
                 "fabric" => "下载本体并部署 Fabric",
                 "forge" => "下载本体并部署 Forge",
                 "neoforge" => "下载本体并部署 NeoForge",
+                "quilt" => "下载本体并部署 Quilt",
                 _ => "下载本体并部署"
             };
     }
@@ -328,6 +330,7 @@ public partial class DownloadPage : UserControl, IPage
             "fabric" => "Fabric",
             "forge" => "Forge",
             "neoforge" => "NeoForge",
+            "quilt" => "Quilt",
             _ => ""
         };
         var customName = InstallNameBox?.Text.Trim() ?? "";
@@ -407,6 +410,19 @@ public partial class DownloadPage : UserControl, IPage
                            ?? throw new InvalidOperationException("部署 NeoForge 需要对应版本的 Java，请先在设置里指定。");
                 installedLoader = await LauncherApp.I.Forge.InstallNeoForgeAsync(version.Id, neo.ForgeVersion, LauncherApp.I.MinecraftDir, java.Path, progress, _cts.Token);
             }
+            else if (loader == "quilt")
+            {
+                var chosen = (QuiltDetailCombo.SelectedItem as ForgeVersionInfo)?.ForgeVersion ?? "";
+                reporter.Report(new DownloadProgress { Stage = "部署 Quilt", Detail = string.IsNullOrEmpty(chosen) ? "正在获取最新版本" : "Quilt " + chosen });
+                var versions = await LauncherApp.I.Quilt.GetVersionsAsync(version.Id, _cts.Token);
+                var quilt = versions.FirstOrDefault(x => x.ForgeVersion == chosen)
+                            ?? versions.FirstOrDefault()
+                            ?? throw new InvalidOperationException("没有找到该 Minecraft 版本的 Quilt。");
+                await LauncherApp.I.EnsureJavaAsync();
+                var java = LauncherApp.I.Java.Pick(VersionResolver.InferJavaMajor(version.Id, ""), LauncherApp.I.Settings.JavaPath)
+                           ?? throw new InvalidOperationException("部署 Quilt 需要对应版本的 Java，请先在设置里指定。");
+                installedLoader = await LauncherApp.I.Quilt.InstallAsync(version.Id, quilt.ForgeVersion, LauncherApp.I.MinecraftDir, java.Path, progress, _cts.Token);
+            }
 
             var finalId = string.IsNullOrEmpty(installedLoader) ? version.Id : installedLoader;
             if (customName.Length > 0)
@@ -458,9 +474,11 @@ public partial class DownloadPage : UserControl, IPage
         FabricOptions.Visibility = loader == "fabric" ? Visibility.Visible : Visibility.Collapsed;
         ForgeOptions.Visibility = loader == "forge" ? Visibility.Visible : Visibility.Collapsed;
         NeoForgeOptions.Visibility = loader == "neoforge" ? Visibility.Visible : Visibility.Collapsed;
+        QuiltOptions.Visibility = loader == "quilt" ? Visibility.Visible : Visibility.Collapsed;
         if (loader == "fabric" && _selected is not null) _ = LoadDetailFabricAsync(_selected.Id);
         else if (loader == "forge" && _selected is not null) _ = LoadDetailForgeAsync(_selected.Id);
         else if (loader == "neoforge" && _selected is not null) _ = LoadDetailNeoForgeAsync(_selected.Id);
+        else if (loader == "quilt" && _selected is not null) _ = LoadDetailQuiltAsync(_selected.Id);
     }
 
     private async Task LoadDetailForgeAsync(string mc)
@@ -518,6 +536,35 @@ public partial class DownloadPage : UserControl, IPage
             _detailNeoForgeMc = "";
             NeoForgeDetailStatus.Text = "NeoForge 版本加载失败：" + ex.Message;
             Log.Warn("NeoForge 版本列表加载失败：" + ex.Message);
+        }
+    }
+
+    private async Task LoadDetailQuiltAsync(string mc)
+    {
+        if (_detailQuiltMc == mc && QuiltDetailCombo.Items.Count > 0) return;
+        _detailQuiltMc = mc;
+        QuiltDetailCombo.ItemsSource = null;
+        QuiltDetailStatus.Text = "正在加载 Quilt 版本列表…";
+        using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(20));
+        try
+        {
+            var list = await LauncherApp.I.Quilt.GetVersionsAsync(mc, timeout.Token);
+            QuiltDetailCombo.ItemsSource = list;
+            QuiltDetailCombo.SelectedItem = list.FirstOrDefault();
+            QuiltDetailStatus.Text = list.Count == 0
+                ? "没有找到该 Minecraft 版本的 Quilt。"
+                : $"{list.Count} 个版本，默认选择最新稳定版。";
+        }
+        catch (OperationCanceledException)
+        {
+            _detailQuiltMc = "";
+            QuiltDetailStatus.Text = "Quilt 版本列表加载超时。";
+        }
+        catch (Exception ex)
+        {
+            _detailQuiltMc = "";
+            QuiltDetailStatus.Text = "Quilt 版本加载失败：" + ex.Message;
+            Log.Warn("Quilt 版本列表加载失败：" + ex.Message);
         }
     }
 

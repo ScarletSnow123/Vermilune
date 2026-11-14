@@ -15,7 +15,7 @@
 - Yggdrasil / LittleSkin 外置登录（authlib-injector）
 - 多账号保存与切换，不用重复登录
 - 拖入 CurseForge / Modrinth 整合包 zip 直接安装
-- Forge / Fabric / NeoForge 安装
+- Forge / Fabric / NeoForge / Quilt 安装
 - Modrinth、CurseForge 资源搜索
 - 整合包搜索与一键安装
 - Mod 扫描、重复/前置/版本兼容检查与崩溃日志分析
