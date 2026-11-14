@@ -45,6 +45,8 @@
                             </StackPanel>
                         </Grid>
 
+                        <TextBlock Text="一键开服仅支持原版 / Fabric 实例；Forge、NeoForge、Quilt 请使用对应服务端安装器。"
+                                   Style="{StaticResource MutedText}" Margin="0,9,0,0" TextWrapping="Wrap" />
                         <CheckBox x:Name="ServerEulaCheck" Content="我已阅读并同意 Minecraft 最终用户许可协议（EULA）"
                                   FontSize="10.5" Foreground="{DynamicResource TextMutedBrush}" Margin="0,10,0,0" />
                         <CheckBox x:Name="ServerWhitelistCheck" Content="启用白名单（开启后需要在 whitelist.json 中添加玩家）"
