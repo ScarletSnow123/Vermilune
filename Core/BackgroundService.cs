@@ -4,7 +4,7 @@ namespace Vermilune.Core;
 
 public static class BackgroundService
 {
-    private static readonly string[] Extensions = { ".png", ".jpg", ".jpeg", ".bmp" };
+    private static readonly string[] Extensions = { ".png", ".jpg", ".jpeg", ".bmp", ".gif", ".webp", ".mp4", ".webm", ".mkv", ".mov", ".m4v" };
 
     public static string Folder
     {
@@ -22,7 +22,7 @@ public static class BackgroundService
         Directory.CreateDirectory(folder);
         var readme = Path.Combine(folder, "README.txt");
         if (!File.Exists(readme))
-            File.WriteAllText(readme, "把背景图片放进这个文件夹，然后在启动器设置里点「刷新背景」或重新打开启动器。\n支持 png / jpg / jpeg / bmp。\n");
+            File.WriteAllText(readme, "把背景图片放进这个文件夹，然后在启动器设置里点「刷新背景」或重新打开启动器。\n支持 png / jpg / jpeg / bmp / gif / webp / mp4 / webm / mkv / mov。\n");
     }
 
     public static string? PickLatest()
@@ -57,5 +57,10 @@ public static class BackgroundService
     }
 
     public static bool IsImage(string path) =>
-        File.Exists(path) && Extensions.Contains(Path.GetExtension(path), StringComparer.OrdinalIgnoreCase);
+        File.Exists(path) && new[] { ".png", ".jpg", ".jpeg", ".bmp", ".gif", ".webp" }
+            .Contains(Path.GetExtension(path), StringComparer.OrdinalIgnoreCase);
+
+    public static bool IsVideo(string path) =>
+        File.Exists(path) && new[] { ".mp4", ".webm", ".mkv", ".mov", ".m4v" }
+            .Contains(Path.GetExtension(path), StringComparer.OrdinalIgnoreCase);
 }

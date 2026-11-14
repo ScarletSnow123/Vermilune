@@ -56,11 +56,18 @@ public partial class SettingsPage : UserControl, IPage
             SyncRgbFromHex(s.Accent);
             OpacitySlider.Value = Math.Clamp(s.UiOpacity * 100, 30, 100);
             OpacityValueText.Text = $"{s.UiOpacity * 100:0}%";
-            BgPathText.Text = s.BackgroundImage == "none"
-                ? "已关闭背景图片"
-                : (!string.IsNullOrWhiteSpace(s.BackgroundImage) && File.Exists(s.BackgroundImage)
-                    ? "当前：" + s.BackgroundImage
-                    : "把图片放进背景文件夹后点刷新");
+            var bgMode = s.BackgroundMode is "custom" or "wallpaper" ? s.BackgroundMode : "default";
+            BgModeDefault.IsChecked = bgMode == "default";
+            BgModeCustom.IsChecked = bgMode == "custom";
+            BgModeWallpaper.IsChecked = bgMode == "wallpaper";
+            BgPathText.Text = bgMode switch
+            {
+                "wallpaper" => "跟随 Wallpaper Engine 当前壁纸；未检测到时自动隐藏背景。",
+                "custom" when !string.IsNullOrWhiteSpace(s.BackgroundImage) && s.BackgroundImage != "none" &&
+                               File.Exists(s.BackgroundImage) => "当前：" + s.BackgroundImage,
+                "custom" => "选择图片或视频文件，支持 png / jpg / gif / mp4 / webm。",
+                _ => "使用纯色背景。"
+            };
             LightModeCheck.IsChecked = string.Equals(s.UiThemeMode, "light", StringComparison.OrdinalIgnoreCase);
             var motion = s.AnimationMode is "off" or "fancy" ? s.AnimationMode : "smooth";
             MotionOff.IsChecked = motion == "off";
@@ -196,6 +203,34 @@ public partial class SettingsPage : UserControl, IPage
         LauncherApp.I.RaiseSettingsChanged();
     }
 
+    private void BackgroundMode_Checked(object sender, RoutedEventArgs e)
+    {
+        if (_loading || sender is not RadioButton { Tag: string mode }) return;
+        var s = LauncherApp.I.Settings;
+        s.BackgroundMode = mode is "custom" or "wallpaper" ? mode : "default";
+        LauncherApp.I.Save();
+        LauncherApp.I.RaiseSettingsChanged();
+        LoadSettings();
+    }
+
+    private void ChooseBackgroundFile_Click(object sender, RoutedEventArgs e)
+    {
+        var dialog = new OpenFileDialog
+        {
+            Filter = "背景文件|*.png;*.jpg;*.jpeg;*.bmp;*.gif;*.webp;*.mp4;*.webm;*.mkv;*.mov;*.m4v|图片|*.png;*.jpg;*.jpeg;*.bmp;*.gif;*.webp|视频|*.mp4;*.webm;*.mkv;*.mov;*.m4v|所有文件|*.*",
+            Title = "选择背景图片或视频"
+        };
+        if (dialog.ShowDialog() != true) return;
+        var s = LauncherApp.I.Settings;
+        s.BackgroundImage = dialog.FileName;
+        s.BackgroundMode = "custom";
+        s.BackgroundImageOpacity = Math.Max(0.2, s.BackgroundImageOpacity);
+        LauncherApp.I.Save();
+        LauncherApp.I.RaiseSettingsChanged();
+        LoadSettings();
+        LauncherApp.I.Notify("背景已更新", Path.GetFileName(dialog.FileName));
+    }
+
     private void BgOpacitySlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
     {
         if (_loading) return;
@@ -209,7 +244,7 @@ public partial class SettingsPage : UserControl, IPage
     {
         BackgroundService.EnsureFolder();
         Shell.OpenFolder(BackgroundService.Folder);
-        LauncherApp.I.Notify("背景文件夹已打开", "把图片放进去后点「刷新」即可使用。");
+        LauncherApp.I.Notify("背景文件夹已打开", "把图片或视频放进去后点「刷新」即可使用。");
     }
 
     private void RefreshBackground_Click(object sender, RoutedEventArgs e)
@@ -218,12 +253,13 @@ public partial class SettingsPage : UserControl, IPage
         if (string.IsNullOrWhiteSpace(picked))
         {
             MessageDialog.Show(Window.GetWindow(this), "没有找到背景图片",
-                "请把 png / jpg / jpeg / bmp 图片放进刚打开的背景文件夹，然后再点刷新。",
+                "请把 png / jpg / gif / mp4 / webm 等文件放进背景文件夹，然后再点刷新。",
                 "知道了", danger: true);
             return;
         }
         var s = LauncherApp.I.Settings;
         s.BackgroundImage = picked;
+        s.BackgroundMode = "custom";
         s.BackgroundImageOpacity = Math.Max(0.2, s.BackgroundImageOpacity);
         LauncherApp.I.Save();
         LauncherApp.I.RaiseSettingsChanged();
@@ -244,6 +280,7 @@ public partial class SettingsPage : UserControl, IPage
     {
         var s = LauncherApp.I.Settings;
         s.BackgroundImage = "none";
+        s.BackgroundMode = "default";
         LauncherApp.I.Save();
         LauncherApp.I.RaiseSettingsChanged();
         LoadSettings();
@@ -317,7 +354,7 @@ public partial class SettingsPage : UserControl, IPage
         LauncherApp.I.Notify("动画效果", s.AnimationMode switch
         {
             "off" => "已关闭",
-            "fancy" => "华丽模式：独立光效，不叠加模糊",
+            "fancy" => "华丽模式：柔和错峰过渡，不叠加模糊",
             _ => "流畅模式"
         });
     }

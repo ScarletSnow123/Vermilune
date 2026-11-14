@@ -130,7 +130,7 @@
                             <Grid>
                                 <StackPanel>
                                     <TextBlock Text="动画效果" FontSize="12.5" FontWeight="SemiBold" />
-                                    <TextBlock Text="关 / 流畅 / 华丽。华丽模式使用独立光效，不会与模糊叠加。"
+                                    <TextBlock Text="关 / 流畅 / 华丽。华丽模式使用更长的柔和过渡，不叠加模糊。"
                                                Style="{StaticResource Hint}" Margin="0,4,0,0" TextWrapping="Wrap" />
                                 </StackPanel>
                                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
@@ -179,24 +179,44 @@
                             </Grid>
                         </Border>
 
+                        <Border Style="{StaticResource SettingRow}">
+                            <Grid>
+                                <StackPanel>
+                                    <TextBlock Text="背景来源" FontSize="12.5" FontWeight="SemiBold" />
+                                    <TextBlock Text="默认纯色、自定义图片/视频，或跟随 Wallpaper Engine 当前壁纸。"
+                                               Style="{StaticResource Hint}" Margin="0,4,0,0" TextWrapping="Wrap" />
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                                    <RadioButton x:Name="BgModeDefault" Style="{StaticResource TabItem}" GroupName="BackgroundMode"
+                                                 Content="默认" Tag="default" Checked="BackgroundMode_Checked" Margin="0,0,8,0" />
+                                    <RadioButton x:Name="BgModeCustom" Style="{StaticResource TabItem}" GroupName="BackgroundMode"
+                                                 Content="自定义" Tag="custom" Checked="BackgroundMode_Checked" Margin="0,0,8,0" />
+                                    <RadioButton x:Name="BgModeWallpaper" Style="{StaticResource TabItem}" GroupName="BackgroundMode"
+                                                 Content="壁纸引擎" Tag="wallpaper" Checked="BackgroundMode_Checked" />
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+
                         <Border Style="{StaticResource SettingRow}" BorderThickness="0">
                             <Grid>
                                 <StackPanel>
-                                    <TextBlock Text="背景图片" FontSize="12.5" FontWeight="SemiBold" />
+                                    <TextBlock Text="自定义背景" FontSize="12.5" FontWeight="SemiBold" />
                                     <TextBlock x:Name="BgPathText" Text="把图片放进背景文件夹后点刷新" Style="{StaticResource Hint}" Margin="0,4,0,0"
                                                HorizontalAlignment="Left" TextTrimming="CharacterEllipsis" MaxWidth="500" />
                                 </StackPanel>
                                 <StackPanel HorizontalAlignment="Right" VerticalAlignment="Center">
                                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                                        <Button Style="{StaticResource ButtonBase}" Height="30" Content="打开背景文件夹"
-                                                Click="OpenBackgroundFolder_Click" />
+                                        <Button Style="{StaticResource ButtonBase}" Height="30" Content="选择文件"
+                                                Click="ChooseBackgroundFile_Click" />
+                                        <Button Style="{StaticResource ButtonBase}" Height="30" Content="打开文件夹"
+                                                Margin="6,0,0,0" Click="OpenBackgroundFolder_Click" />
                                         <Button Style="{StaticResource ButtonBase}" Height="30" Content="刷新"
                                                 Margin="6,0,0,0" Click="RefreshBackground_Click" />
                                         <Button Style="{StaticResource GhostButton}" Height="30" Content="清除" Margin="6,0,0,0"
                                                 Click="ClearBackground_Click" />
                                     </StackPanel>
                                     <StackPanel Orientation="Horizontal" Margin="0,7,0,0" HorizontalAlignment="Right">
-                                        <TextBlock Text="图片不透明度" Style="{StaticResource Hint}" VerticalAlignment="Center" Margin="0,0,8,0" />
+                                        <TextBlock Text="背景不透明度" Style="{StaticResource Hint}" VerticalAlignment="Center" Margin="0,0,8,0" />
                                         <Slider x:Name="BgOpacitySlider" Width="120" Minimum="0" Maximum="100"
                                                 ValueChanged="BgOpacitySlider_ValueChanged" />
                                     </StackPanel>

@@ -28,6 +28,10 @@
                 <ImageBrush x:Name="BgImageBrush" Stretch="UniformToFill" AlignmentX="Center" AlignmentY="Center" />
             </Border.Background>
         </Border>
+        <MediaElement x:Name="BgVideo" Visibility="Collapsed" Stretch="UniformToFill"
+                      LoadedBehavior="Manual" UnloadedBehavior="Manual" IsMuted="True"
+                      IsHitTestVisible="False" MediaEnded="BgVideo_MediaEnded"
+                      MediaFailed="BgVideo_MediaFailed" />
 
         <!-- 主框 -->
         <Border x:Name="Frame" CornerRadius="10" BorderBrush="Transparent"

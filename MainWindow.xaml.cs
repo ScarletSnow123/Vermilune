@@ -28,7 +28,7 @@ public partial class MainWindow : Window
     private Rect _restoreBounds;
     private string _loadedBackgroundPath = "";
     private BitmapImage? _loadedBackground;
-    private bool _backgroundRolled;
+    private DispatcherTimer? _wallpaperTimer;
 
     public MainWindow()
     {
@@ -58,6 +58,12 @@ public partial class MainWindow : Window
 
         if (s.Maximized) ToggleMaximize();
         ApplyTheme();
+        _wallpaperTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(10) };
+        _wallpaperTimer.Tick += (_, _) =>
+        {
+            if (LauncherApp.I.Settings.BackgroundMode == "wallpaper") ApplyTheme();
+        };
+        _wallpaperTimer.Start();
         _updatingSliders = true;
         OpacitySlider.Value = s.UiOpacity * 100;
         BgOpacitySlider.Value = s.BackgroundImageOpacity * 100;
@@ -116,58 +122,106 @@ public partial class MainWindow : Window
     {
         if (!_ready) return;
         var s = LauncherApp.I.Settings;
-        if (!_backgroundRolled && !string.Equals(s.BackgroundImage, "none", StringComparison.OrdinalIgnoreCase))
-        {
-            // 每个启动器会话只随机一次；设置页刷新背景时不再重抽。
-            _backgroundRolled = true;
-            var picked = BackgroundService.PickRandom(s.BackgroundImage);
-            if (!string.IsNullOrWhiteSpace(picked))
-            {
-                s.BackgroundImage = picked;
-                s.BackgroundImageOpacity = Math.Max(0.2, s.BackgroundImageOpacity);
-                LauncherApp.I.SaveDebounced();
-            }
-        }
-        var hasImage = s.BackgroundImage != "none" && !string.IsNullOrWhiteSpace(s.BackgroundImage) && File.Exists(s.BackgroundImage);
-        ThemeManager.Apply(s.Accent, s.UiOpacity, hasImage,
+        string? backgroundPath = null;
+        if (s.BackgroundMode == "custom" && !string.IsNullOrWhiteSpace(s.BackgroundImage) &&
+            s.BackgroundImage != "none" && File.Exists(s.BackgroundImage))
+            backgroundPath = s.BackgroundImage;
+        else if (s.BackgroundMode == "wallpaper")
+            backgroundPath = WallpaperEngineService.GetCurrentWallpaper();
+
+        var hasBackground = !string.IsNullOrWhiteSpace(backgroundPath) && File.Exists(backgroundPath);
+        ThemeManager.Apply(s.Accent, s.UiOpacity, hasBackground,
             string.Equals(s.UiThemeMode, "light", StringComparison.OrdinalIgnoreCase));
-        if (hasImage)
-        {
-            try
-            {
-                if (!string.Equals(_loadedBackgroundPath, s.BackgroundImage, StringComparison.OrdinalIgnoreCase) || _loadedBackground is null)
-                {
-                    var bmp = new BitmapImage();
-                    bmp.BeginInit();
-                    bmp.CacheOption = BitmapCacheOption.OnLoad;
-                    // 背景只按屏幕宽度解码，避免 4K 原图长期占用几十 MB 内存。
-                    var targetWidth = Math.Max(1280, Math.Min(1920, (int)SystemParameters.WorkArea.Width));
-                    bmp.DecodePixelWidth = targetWidth;
-                    // 先完整读入内存再解码，避免图片轮换/文件占用导致“无法从流中读取”。
-                    bmp.StreamSource = new MemoryStream(File.ReadAllBytes(s.BackgroundImage));
-                    bmp.EndInit();
-                    bmp.Freeze();
-                    BgImageBrush.ImageSource = null;
-                    _loadedBackground = bmp;
-                    _loadedBackgroundPath = s.BackgroundImage;
-                }
-                BgImageBrush.ImageSource = _loadedBackground;
-                BgImageBorder.Visibility = Visibility.Visible;
-                BgImageBorder.Opacity = s.BackgroundImageOpacity;
-            }
-            catch (Exception ex)
-            {
-                Log.Warn("加载背景图失败：" + ex.Message);
-                BgImageBorder.Visibility = Visibility.Collapsed;
-            }
-        }
+        if (hasBackground && BackgroundService.IsVideo(backgroundPath!))
+            ApplyVideoBackground(backgroundPath!, s.BackgroundImageOpacity);
+        else if (hasBackground)
+            ApplyImageBackground(backgroundPath!, s.BackgroundImageOpacity);
         else
+            ClearBackground();
+    }
+
+    private void ApplyImageBackground(string path, double opacity)
+    {
+        BgVideo.Stop();
+        BgVideo.Visibility = Visibility.Collapsed;
+        BgVideo.Source = null;
+        var s = LauncherApp.I.Settings;
+        try
         {
-            BgImageBrush.ImageSource = null;
-            _loadedBackground = null;
-            _loadedBackgroundPath = "";
+            if (!string.Equals(_loadedBackgroundPath, path, StringComparison.OrdinalIgnoreCase) || _loadedBackground is null)
+            {
+                var bmp = new BitmapImage();
+                bmp.BeginInit();
+                bmp.CacheOption = BitmapCacheOption.OnLoad;
+                var targetWidth = Math.Max(1280, Math.Min(1920, (int)SystemParameters.WorkArea.Width));
+                bmp.DecodePixelWidth = targetWidth;
+                bmp.StreamSource = new MemoryStream(File.ReadAllBytes(path));
+                bmp.EndInit();
+                bmp.Freeze();
+                BgImageBrush.ImageSource = null;
+                _loadedBackground = bmp;
+                _loadedBackgroundPath = path;
+            }
+            BgImageBrush.ImageSource = _loadedBackground;
+            BgImageBorder.Visibility = Visibility.Visible;
+            BgImageBorder.Opacity = opacity;
+        }
+        catch (Exception ex)
+        {
+            Log.Warn("加载背景图失败：" + ex.Message);
             BgImageBorder.Visibility = Visibility.Collapsed;
         }
+    }
+
+    private void ApplyVideoBackground(string path, double opacity)
+    {
+        BgImageBrush.ImageSource = null;
+        BgImageBorder.Visibility = Visibility.Collapsed;
+        try
+        {
+            if (!string.Equals(_loadedBackgroundPath, path, StringComparison.OrdinalIgnoreCase) ||
+                BgVideo.Source is null)
+            {
+                BgVideo.Stop();
+                BgVideo.Source = new Uri(path, UriKind.Absolute);
+                _loadedBackgroundPath = path;
+            }
+            BgVideo.Visibility = Visibility.Visible;
+            BgVideo.Opacity = opacity;
+            BgVideo.Play();
+        }
+        catch (Exception ex)
+        {
+            Log.Warn("加载背景视频失败：" + ex.Message);
+            BgVideo.Visibility = Visibility.Collapsed;
+        }
+    }
+
+    private void ClearBackground()
+    {
+        BgImageBrush.ImageSource = null;
+        _loadedBackground = null;
+        _loadedBackgroundPath = "";
+        BgImageBorder.Visibility = Visibility.Collapsed;
+        BgVideo.Stop();
+        BgVideo.Source = null;
+        BgVideo.Visibility = Visibility.Collapsed;
+    }
+
+    private void BgVideo_MediaEnded(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            BgVideo.Position = TimeSpan.Zero;
+            BgVideo.Play();
+        }
+        catch { }
+    }
+
+    private void BgVideo_MediaFailed(object sender, ExceptionRoutedEventArgs e)
+    {
+        Log.Warn("背景视频播放失败：" + e.ErrorException.Message);
+        BgVideo.Visibility = Visibility.Collapsed;
     }
 
     private void UpdateTitleStatus()
@@ -283,54 +337,26 @@ public partial class MainWindow : Window
             return;
         }
 
-        // 华丽模式：独立的光效、缩放和回弹，不使用模糊，避免与高级模糊效果叠加。
+        // 华丽模式：柔和的错峰缩放与上移，不使用旋转、粒子和辉光。
         page.Opacity = 1;
-        page.BeginAnimation(OpacityProperty, new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(460))
+        page.BeginAnimation(OpacityProperty, new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(420))
         {
             EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
         });
         translate.Y = 0;
-        translate.BeginAnimation(TranslateTransform.YProperty, new DoubleAnimation(30, 0, TimeSpan.FromMilliseconds(560))
+        translate.BeginAnimation(TranslateTransform.YProperty, new DoubleAnimation(18, 0, TimeSpan.FromMilliseconds(420))
         {
-            EasingFunction = new BackEase { Amplitude = 0.35, EasingMode = EasingMode.EaseOut }
+            EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
         });
         scale.ScaleX = 1;
         scale.ScaleY = 1;
-        var scaleIn = new DoubleAnimation(0.93, 1, TimeSpan.FromMilliseconds(560))
+        var scaleIn = new DoubleAnimation(0.985, 1, TimeSpan.FromMilliseconds(420))
         {
-            EasingFunction = new BackEase { Amplitude = 0.25, EasingMode = EasingMode.EaseOut }
+            EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
         };
         scale.BeginAnimation(ScaleTransform.ScaleXProperty, scaleIn);
         scale.BeginAnimation(ScaleTransform.ScaleYProperty, scaleIn.Clone());
         rotate.Angle = 0;
-
-        var accent = ThemeManager.Accent;
-        var glow = new DropShadowEffect
-        {
-            Color = accent,
-            BlurRadius = 0,
-            ShadowDepth = 0,
-            Opacity = 0
-        };
-        page.Effect = glow;
-        var glowIn = new DoubleAnimationUsingKeyFrames();
-        glowIn.KeyFrames.Add(new EasingDoubleKeyFrame(0, KeyTime.FromPercent(0)));
-        glowIn.KeyFrames.Add(new EasingDoubleKeyFrame(46, KeyTime.FromPercent(0.35)));
-        glowIn.KeyFrames.Add(new EasingDoubleKeyFrame(0, KeyTime.FromPercent(1)));
-        glow.BeginAnimation(BlurEffect.RadiusProperty, glowIn);
-        var glowOpacity = new DoubleAnimationUsingKeyFrames();
-        glowOpacity.KeyFrames.Add(new EasingDoubleKeyFrame(0, KeyTime.FromPercent(0)));
-        glowOpacity.KeyFrames.Add(new EasingDoubleKeyFrame(0.75, KeyTime.FromPercent(0.25)));
-        glowOpacity.KeyFrames.Add(new EasingDoubleKeyFrame(0, KeyTime.FromPercent(1)));
-        glowOpacity.Completed += (_, _) =>
-        {
-            if (ReferenceEquals(PageHost.Content, page))
-            {
-                page.Effect = null;
-                PageHost.Effect = null;
-            }
-        };
-        glow.BeginAnimation(DropShadowEffect.OpacityProperty, glowOpacity);
     }
 
     public void NavigateToVersions(string versionId)

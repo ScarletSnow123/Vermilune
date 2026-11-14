@@ -77,6 +77,7 @@ public sealed class AppSettings
     public string AvatarStyle { get; set; } = "minimal";
     /// <summary>界面底色不透明度，0.25 - 1.0。</summary>
     public double UiOpacity { get; set; } = 0.96;
+    public string BackgroundMode { get; set; } = "default"; // default | custom | wallpaper
     public string BackgroundImage { get; set; } = "";
     public double BackgroundImageOpacity { get; set; } = 0.34;
     /// <summary>动画强度：off / smooth / fancy。</summary>
@@ -148,6 +149,10 @@ public sealed class AppSettings
         HomeWidgets ??= new();
         HomeStyles ??= new();
         UiOpacity = Math.Clamp(UiOpacity, 0.25, 1.0);
+        if (BackgroundMode is not ("default" or "custom" or "wallpaper"))
+            BackgroundMode = string.IsNullOrWhiteSpace(BackgroundImage) || BackgroundImage == "none" ? "default" : "custom";
+        if (BackgroundMode == "custom" && (string.IsNullOrWhiteSpace(BackgroundImage) || BackgroundImage == "none"))
+            BackgroundMode = "default";
         BackgroundImageOpacity = Math.Clamp(BackgroundImageOpacity, 0.0, 1.0);
         CurseForgeApiKey = (CurseForgeApiKey ?? "").Trim();
         CurseForgeProxyUrl = (CurseForgeProxyUrl ?? "").Trim().TrimEnd('/');
