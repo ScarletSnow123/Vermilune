@@ -1,4 +1,4 @@
-# Vermilune v1.3.2-beta
+# Vermilune v1.3.1
 
 ## 简介
 
@@ -34,4 +34,4 @@
 
 ## 版本
 
-- v1.3.2-beta
+- v1.3.1
