@@ -357,6 +357,31 @@ public partial class MainWindow : Window
         scale.BeginAnimation(ScaleTransform.ScaleXProperty, scaleIn);
         scale.BeginAnimation(ScaleTransform.ScaleYProperty, scaleIn.Clone());
         rotate.Angle = 0;
+        PlayAccentSweep();
+    }
+
+    private void PlayAccentSweep()
+    {
+        if (FxSweep is null) return;
+        FxSweep.BeginAnimation(OpacityProperty, null);
+        FxSweep.Visibility = Visibility.Visible;
+        FxSweep.Width = Math.Max(1, ActualWidth);
+        if (FxSweep.RenderTransform is not TranslateTransform move)
+        {
+            move = new TranslateTransform(-FxSweep.Width, 0);
+            FxSweep.RenderTransform = move;
+        }
+        move.BeginAnimation(TranslateTransform.XProperty, null);
+        move.X = -FxSweep.Width;
+        FxSweep.Opacity = 0.9;
+        var slide = new DoubleAnimation(-FxSweep.Width, FxSweep.Width, TimeSpan.FromMilliseconds(620))
+        {
+            EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
+        };
+        var fade = new DoubleAnimation(0.9, 0, TimeSpan.FromMilliseconds(620));
+        fade.Completed += (_, _) => FxSweep.Visibility = Visibility.Collapsed;
+        move.BeginAnimation(TranslateTransform.XProperty, slide);
+        FxSweep.BeginAnimation(OpacityProperty, fade);
     }
 
     public void NavigateToVersions(string versionId)

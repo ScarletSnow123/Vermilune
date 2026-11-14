@@ -235,6 +235,11 @@
             </Border>
         </Border>
 
+        <Border x:Name="FxSweep" Panel.ZIndex="69" Height="2" Width="0"
+                HorizontalAlignment="Left" VerticalAlignment="Top"
+                Background="{DynamicResource AccentGradientBrush}"
+                IsHitTestVisible="False" Opacity="0" RenderTransformOrigin="0,0.5" />
+
         <!-- 无边框缩放 -->
         <Thumb x:Name="ThumbLeft" Width="6" HorizontalAlignment="Left" VerticalAlignment="Stretch"
                Style="{StaticResource InvisibleThumb}" Cursor="SizeWE" Tag="L" DragDelta="Resize_DragDelta" Panel.ZIndex="80" />
