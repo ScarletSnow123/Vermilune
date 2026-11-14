@@ -72,7 +72,8 @@ public partial class MultiplayerPage : UserControl, IPage
             ServerStatusText.Text = p.Stage + (string.IsNullOrWhiteSpace(p.Detail) ? "" : " · " + p.Detail));
         try
         {
-            await LauncherApp.I.Server.StartAsync(version, s.ServerMemoryMb, s.ServerPort, true, progress, CancellationToken.None);
+            await LauncherApp.I.Server.StartAsync(version, s.ServerMemoryMb, s.ServerPort, true,
+                ServerWhitelistCheck.IsChecked == true, progress, CancellationToken.None);
             ServerStopButton.IsEnabled = true;
             ServerStatusText.Text = "服务端启动中，正在尝试 UPnP 端口映射…";
             _serverTimer.Start();

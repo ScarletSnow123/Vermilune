@@ -28,7 +28,7 @@ public sealed class MinecraftServerService : IDisposable
     public event Action? Ready;
 
     public async Task StartAsync(VersionInfo version, int memoryMb, int port, bool eulaAccepted,
-        IProgress<DownloadProgress>? progress, CancellationToken ct)
+        bool whitelist, IProgress<DownloadProgress>? progress, CancellationToken ct)
     {
         if (!eulaAccepted) throw new InvalidOperationException("需要先勾选同意 Minecraft EULA。");
         if (version.Loader is not (LoaderKind.Vanilla or LoaderKind.Fabric))
@@ -43,21 +43,17 @@ public sealed class MinecraftServerService : IDisposable
 
         File.WriteAllText(Path.Combine(serverDir, "eula.txt"), "eula=true\n");
         var properties = Path.Combine(serverDir, "server.properties");
-        if (!File.Exists(properties))
+        var lines = File.Exists(properties) ? File.ReadAllLines(properties).ToList() : new List<string>
         {
-            File.WriteAllText(properties,
-                "server-port=" + port + "\n" +
-                "online-mode=true\n" +
-                "motd=Vermilune 联机服务器\n" +
-                "enable-command-block=true\n" +
-                "spawn-protection=16\n");
-        }
-        else
-        {
-            var lines = File.ReadAllLines(properties).Where(l => !l.StartsWith("server-port=", StringComparison.OrdinalIgnoreCase)).ToList();
-            lines.Add("server-port=" + port);
-            File.WriteAllLines(properties, lines);
-        }
+            "online-mode=true",
+            "motd=Vermilune 联机服务器",
+            "enable-command-block=true",
+            "spawn-protection=16"
+        };
+        SetProperty(lines, "server-port", port.ToString());
+        SetProperty(lines, "white-list", whitelist ? "true" : "false");
+        SetProperty(lines, "enforce-whitelist", whitelist ? "true" : "false");
+        File.WriteAllLines(properties, lines);
 
         var jar = await EnsureServerJarAsync(version, serverDir, progress, ct);
         CopyInstanceMods(version, serverDir);
@@ -105,6 +101,13 @@ public sealed class MinecraftServerService : IDisposable
         LocalAddress = mapping.LocalAddress;
         MappingStatus = mapping.Status;
         progress?.Report(new DownloadProgress { Stage = "服务端启动中", Detail = "Java " + java.Major + " · 端口 " + port });
+    }
+
+    private static void SetProperty(List<string> lines, string key, string value)
+    {
+        var index = lines.FindIndex(l => l.StartsWith(key + "=", StringComparison.OrdinalIgnoreCase));
+        if (index >= 0) lines[index] = key + "=" + value;
+        else lines.Add(key + "=" + value);
     }
 
     private void Append(string? line)
