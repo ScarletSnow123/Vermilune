@@ -45,7 +45,7 @@
                             <StackPanel Margin="0,8,0,0">
                                 <TextBlock Text="公共节点" Style="{StaticResource FormLabel}" />
                                 <TextBox x:Name="NodeBox" Style="{StaticResource InputBox}" Height="34"
-                                         Tag="tcp://easytier-us.slarker.me:11010" />
+                                         Tag="tcp://easytier-us.slarker.me:11010,tcp://225284.xyz:11010" />
                                 <TextBlock Text="虚拟 IP 会自动分配；一般无需修改公共节点。"
                                            Style="{StaticResource MutedText}" Margin="0,6,0,0" TextWrapping="Wrap" />
                             </StackPanel>

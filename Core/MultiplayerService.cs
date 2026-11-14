@@ -11,7 +11,7 @@ namespace Vermilune.Core;
 /// </summary>
 public sealed class MultiplayerService : IDisposable
 {
-    public const string DefaultPublicNode = "tcp://easytier-us.slarker.me:11010";
+    public const string DefaultPublicNode = "tcp://easytier-us.slarker.me:11010,tcp://225284.xyz:11010";
     private const string EasyTierVersion = "2.6.4";
     private Process? _process;
 
@@ -90,13 +90,7 @@ public sealed class MultiplayerService : IDisposable
             StandardOutputEncoding = Encoding.UTF8,
             StandardErrorEncoding = Encoding.UTF8
         };
-        foreach (var arg in new[]
-                 {
-                     "-d",
-                     "--network-name", network,
-                     "--network-secret", password,
-                     "-p", node
-                 })
+        foreach (var arg in BuildArguments(network, password, node))
             psi.ArgumentList.Add(arg);
 
         var process = new Process { StartInfo = psi, EnableRaisingEvents = true };
@@ -146,6 +140,20 @@ public sealed class MultiplayerService : IDisposable
         }
     }
 
+    private static IEnumerable<string> BuildArguments(string network, string secret, string nodes)
+    {
+        yield return "-d";
+        yield return "--network-name";
+        yield return network;
+        yield return "--network-secret";
+        yield return secret;
+        foreach (var node in (nodes ?? "").Split(new[] { ',', ';', '\n', ' ' }, StringSplitOptions.RemoveEmptyEntries))
+        {
+            yield return "-p";
+            yield return node.Trim();
+        }
+    }
+
     private static Process StartElevated(string core, string workdir, string network, string secret, string node)
     {
         if (!IsAdministrator())
@@ -158,7 +166,7 @@ public sealed class MultiplayerService : IDisposable
                 Verb = "runas",
                 WindowStyle = ProcessWindowStyle.Hidden
             };
-            foreach (var arg in new[] { "-d", "--network-name", network, "--network-secret", secret, "-p", node })
+            foreach (var arg in BuildArguments(network, secret, node))
                 psi.ArgumentList.Add(arg);
             try
             {
@@ -177,7 +185,7 @@ public sealed class MultiplayerService : IDisposable
             UseShellExecute = false,
             CreateNoWindow = true
         };
-        foreach (var arg in new[] { "-d", "--network-name", network, "--network-secret", secret, "-p", node })
+        foreach (var arg in BuildArguments(network, secret, node))
             direct.ArgumentList.Add(arg);
         return Process.Start(direct) ?? throw new InvalidOperationException("无法启动联机组件。");
     }
