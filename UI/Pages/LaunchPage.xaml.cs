@@ -724,7 +724,7 @@ public partial class LaunchPage : UserControl, IPage, INotifyPropertyChanged
             ProcessPriority = app.Settings.ProcessPriority,
             IpProtocol = app.Settings.IpProtocol,
             LauncherName = "Vermilune",
-            LauncherVersion = "1.3.2"
+            LauncherVersion = "1.3.2-beta"
         };
 
         _cts?.Dispose();
@@ -1714,34 +1714,6 @@ public partial class LaunchPage : UserControl, IPage, INotifyPropertyChanged
                 EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
             };
             card.BeginAnimation(OpacityProperty, fade);
-            if (mode != "fancy") continue;
-
-            var glow = new DropShadowEffect
-            {
-                Color = accent,
-                BlurRadius = 0,
-                ShadowDepth = 0,
-                Opacity = 0
-            };
-            card.Effect = glow;
-            var glowIn = new DoubleAnimation(0, 22, TimeSpan.FromMilliseconds(520))
-            {
-                BeginTime = delay,
-                EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut },
-                AutoReverse = true
-            };
-            glowIn.Completed += (_, _) =>
-            {
-                if (ReferenceEquals(card.Effect, glow)) card.Effect = null;
-            };
-            glow.BeginAnimation(BlurEffect.RadiusProperty, glowIn);
-            var glowOpacity = new DoubleAnimation(0, 0.55, TimeSpan.FromMilliseconds(520))
-            {
-                BeginTime = delay,
-                AutoReverse = true,
-                EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseOut }
-            };
-            glow.BeginAnimation(DropShadowEffect.OpacityProperty, glowOpacity);
         }
     }
 
