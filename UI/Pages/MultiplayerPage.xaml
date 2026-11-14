@@ -14,8 +14,8 @@
                        Style="{StaticResource PageSubtitle}" />
         </StackPanel>
 
-        <ScrollViewer Grid.Row="1" Margin="0,14,0,0" VerticalScrollBarVisibility="Auto"
-                      HorizontalScrollBarVisibility="Disabled">
+        <ScrollViewer x:Name="PageScroll" Grid.Row="1" Margin="0,14,0,0" VerticalScrollBarVisibility="Auto"
+                      HorizontalScrollBarVisibility="Disabled" PanningMode="VerticalOnly">
             <StackPanel Margin="0,0,10,30">
                 <Border Style="{StaticResource Card}">
                     <StackPanel>
@@ -132,7 +132,8 @@
 
                         <Border Background="{DynamicResource HomeLogInnerBrush}" CornerRadius="4"
                                 Margin="0,10,0,0" Padding="7,5">
-                            <ScrollViewer Height="96" VerticalScrollBarVisibility="Auto">
+                            <ScrollViewer x:Name="ServerLogScroll" Height="96" VerticalScrollBarVisibility="Hidden"
+                                          IsHitTestVisible="False">
                                 <TextBlock x:Name="ServerLogText" Text="等待服务端输出…"
                                            FontFamily="{DynamicResource MonoFont}" FontSize="9"
                                            Foreground="{DynamicResource HomeLogTextBrush}"

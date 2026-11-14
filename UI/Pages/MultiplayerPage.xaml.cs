@@ -224,6 +224,7 @@ public partial class MultiplayerPage : UserControl, IPage
         if (ServerLogText.Text == "等待服务端输出…") ServerLogText.Text = "";
         var lines = (ServerLogText.Text + "\n" + line).Split('\n');
         ServerLogText.Text = string.Join("\n", lines.TakeLast(40));
+        ServerLogScroll.ScrollToEnd();
     }
 
     private void UpdateAddress()
