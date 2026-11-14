@@ -29,6 +29,9 @@ public partial class MainWindow : Window
     private string _loadedBackgroundPath = "";
     private BitmapImage? _loadedBackground;
     private DispatcherTimer? _wallpaperTimer;
+    private DispatcherTimer? _wallpaperDebounce;
+    private FileSystemWatcher? _wallpaperWatcher;
+    private string _lastWallpaperPath = "";
     private DispatcherTimer? _gifTimer;
     private List<BitmapSource>? _gifFrames;
     private int _gifIndex;
@@ -48,6 +51,8 @@ public partial class MainWindow : Window
             LauncherApp.I.Server.Dispose();
             _webRenderer?.Dispose();
             _gifTimer?.Stop();
+            _wallpaperWatcher?.Dispose();
+            _wallpaperDebounce?.Stop();
         };
         StateChanged += (_, _) => { };
     }
@@ -76,11 +81,9 @@ public partial class MainWindow : Window
                 if (LauncherApp.I.Settings.BackgroundMode == "wallpaper") ApplyTheme();
             }));
         _wallpaperTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(10) };
-        _wallpaperTimer.Tick += (_, _) =>
-        {
-            if (LauncherApp.I.Settings.BackgroundMode == "wallpaper") ApplyTheme();
-        };
+        _wallpaperTimer.Tick += (_, _) => RefreshWallpaperIfChanged();
         _wallpaperTimer.Start();
+        StartWallpaperWatcher();
         _updatingSliders = true;
         OpacitySlider.Value = s.UiOpacity * 100;
         BgOpacitySlider.Value = s.BackgroundImageOpacity * 100;
@@ -149,6 +152,8 @@ public partial class MainWindow : Window
         var hasBackground = !string.IsNullOrWhiteSpace(backgroundPath) && File.Exists(backgroundPath);
         ThemeManager.Apply(s.Accent, s.UiOpacity, hasBackground,
             string.Equals(s.UiThemeMode, "light", StringComparison.OrdinalIgnoreCase));
+        if (string.Equals(s.BackgroundMode, "wallpaper", StringComparison.OrdinalIgnoreCase))
+            _lastWallpaperPath = backgroundPath ?? "";
         if (hasBackground && BackgroundService.IsVideo(backgroundPath!))
             ApplyVideoBackground(backgroundPath!, s.BackgroundImageOpacity);
         else if (hasBackground && string.Equals(Path.GetExtension(backgroundPath), ".html", StringComparison.OrdinalIgnoreCase))
@@ -157,6 +162,53 @@ public partial class MainWindow : Window
             ApplyImageBackground(backgroundPath!, s.BackgroundImageOpacity);
         else
             ClearBackground();
+    }
+
+    private void StartWallpaperWatcher()
+    {
+        try
+        {
+            var config = WallpaperEngineService.FindConfig();
+            if (string.IsNullOrWhiteSpace(config) || !File.Exists(config)) return;
+            _wallpaperWatcher = new FileSystemWatcher(Path.GetDirectoryName(config)!, Path.GetFileName(config))
+            {
+                NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.Size | NotifyFilters.FileName,
+                EnableRaisingEvents = true
+            };
+            _wallpaperWatcher.Changed += (_, _) => ScheduleWallpaperRefresh();
+            _wallpaperWatcher.Renamed += (_, _) => ScheduleWallpaperRefresh();
+            _wallpaperWatcher.Created += (_, _) => ScheduleWallpaperRefresh();
+        }
+        catch (Exception ex)
+        {
+            Log.Warn("监听 Wallpaper Engine 配置失败：" + ex.Message);
+        }
+    }
+
+    private void ScheduleWallpaperRefresh()
+    {
+        Dispatcher.BeginInvoke(new Action(() =>
+        {
+            _wallpaperDebounce ??= new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(350) };
+            _wallpaperDebounce.Stop();
+            _wallpaperDebounce.Tick -= WallpaperDebounce_Tick;
+            _wallpaperDebounce.Tick += WallpaperDebounce_Tick;
+            _wallpaperDebounce.Start();
+        }));
+    }
+
+    private void WallpaperDebounce_Tick(object? sender, EventArgs e)
+    {
+        _wallpaperDebounce?.Stop();
+        RefreshWallpaperIfChanged();
+    }
+
+    private void RefreshWallpaperIfChanged()
+    {
+        if (!_ready || !string.Equals(LauncherApp.I.Settings.BackgroundMode, "wallpaper", StringComparison.OrdinalIgnoreCase)) return;
+        var path = WallpaperEngineService.GetCurrentWallpaper() ?? "";
+        if (!string.Equals(path, _lastWallpaperPath, StringComparison.OrdinalIgnoreCase))
+            ApplyTheme();
     }
 
     private void ApplyImageBackground(string path, double opacity)
