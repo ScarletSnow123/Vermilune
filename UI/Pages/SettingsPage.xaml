@@ -130,7 +130,7 @@
                             <Grid>
                                 <StackPanel>
                                     <TextBlock Text="动画效果" FontSize="12.5" FontWeight="SemiBold" />
-                                    <TextBlock Text="关 / 流畅 / 华丽。华丽模式使用更长的柔和过渡，不叠加模糊。"
+                                    <TextBlock Text="关 / 流畅 / 华丽。华丽模式使用柔和过渡，可与高级模糊叠加。"
                                                Style="{StaticResource Hint}" Margin="0,4,0,0" TextWrapping="Wrap" />
                                 </StackPanel>
                                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">

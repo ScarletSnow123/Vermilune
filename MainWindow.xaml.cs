@@ -358,6 +358,23 @@ public partial class MainWindow : Window
         scale.BeginAnimation(ScaleTransform.ScaleYProperty, scaleIn.Clone());
         rotate.Angle = 0;
         PlayAccentSweep();
+
+        // 华丽模式也可以叠加高级模糊；模糊放在 PageHost 上，缩放仍作用于页面本身。
+        if (LauncherApp.I.Settings.EnableVisualEffects)
+        {
+            var blurMs = Math.Clamp(LauncherApp.I.Settings.BlurDelayMs, 360, 1000);
+            var blur = new BlurEffect { Radius = 0 };
+            PageHost.Effect = blur;
+            var blurIn = new DoubleAnimation(5, 0, TimeSpan.FromMilliseconds(Math.Min(360, blurMs)))
+            {
+                EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
+            };
+            blurIn.Completed += (_, _) =>
+            {
+                if (ReferenceEquals(PageHost.Content, page)) PageHost.Effect = null;
+            };
+            blur.BeginAnimation(BlurEffect.RadiusProperty, blurIn);
+        }
     }
 
     private void PlayAccentSweep()
