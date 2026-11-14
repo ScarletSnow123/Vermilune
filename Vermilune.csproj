@@ -54,5 +54,6 @@
   <ItemGroup>
     <PackageReference Include="Open.Nat" Version="2.1.0" />
     <PackageReference Include="System.Management" Version="10.0.15" />
+    <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.4314.35" />
   </ItemGroup>
 </Project>

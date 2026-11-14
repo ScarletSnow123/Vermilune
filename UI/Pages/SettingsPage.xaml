@@ -197,6 +197,19 @@
                             </Grid>
                         </Border>
 
+                        <Border x:Name="SceneWallpaperRow" Style="{StaticResource SettingRow}"
+                                BorderThickness="0" Visibility="Collapsed">
+                            <Grid>
+                                <StackPanel>
+                                    <TextBlock Text="场景壁纸动态预览" FontSize="12.5" FontWeight="SemiBold" />
+                                    <TextBlock Text="播放壁纸自带的 preview.gif，有动画但通常只有 256×256；关闭则使用拆包出的高清静帧"
+                                               Style="{StaticResource Hint}" Margin="0,4,0,0" TextWrapping="Wrap" MaxWidth="620" />
+                                </StackPanel>
+                                <CheckBox x:Name="SceneAnimatedCheck" HorizontalAlignment="Right" VerticalAlignment="Center"
+                                          Checked="SceneAnimated_Changed" Unchecked="SceneAnimated_Changed" />
+                            </Grid>
+                        </Border>
+
                         <Border x:Name="CustomBackgroundPanel" Style="{StaticResource SettingRow}"
                                 BorderThickness="0" Visibility="Collapsed">
                             <Grid>

@@ -29,6 +29,11 @@ public partial class MainWindow : Window
     private string _loadedBackgroundPath = "";
     private BitmapImage? _loadedBackground;
     private DispatcherTimer? _wallpaperTimer;
+    private DispatcherTimer? _gifTimer;
+    private List<BitmapSource>? _gifFrames;
+    private int _gifIndex;
+    private WebWallpaperRenderer? _webRenderer;
+    private string _webPath = "";
 
     public MainWindow()
     {
@@ -41,6 +46,8 @@ public partial class MainWindow : Window
         {
             LauncherApp.I.Frp.Stop();
             LauncherApp.I.Server.Dispose();
+            _webRenderer?.Dispose();
+            _gifTimer?.Stop();
         };
         StateChanged += (_, _) => { };
     }
@@ -63,6 +70,11 @@ public partial class MainWindow : Window
 
         if (s.Maximized) ToggleMaximize();
         ApplyTheme();
+        WallpaperEngineService.HighQualityPreviewReady += _ =>
+            Dispatcher.BeginInvoke(new Action(() =>
+            {
+                if (LauncherApp.I.Settings.BackgroundMode == "wallpaper") ApplyTheme();
+            }));
         _wallpaperTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(10) };
         _wallpaperTimer.Tick += (_, _) =>
         {
@@ -139,6 +151,8 @@ public partial class MainWindow : Window
             string.Equals(s.UiThemeMode, "light", StringComparison.OrdinalIgnoreCase));
         if (hasBackground && BackgroundService.IsVideo(backgroundPath!))
             ApplyVideoBackground(backgroundPath!, s.BackgroundImageOpacity);
+        else if (hasBackground && string.Equals(Path.GetExtension(backgroundPath), ".html", StringComparison.OrdinalIgnoreCase))
+            ApplyWebBackground(backgroundPath!, s.BackgroundImageOpacity);
         else if (hasBackground)
             ApplyImageBackground(backgroundPath!, s.BackgroundImageOpacity);
         else
@@ -150,9 +164,15 @@ public partial class MainWindow : Window
         BgVideo.Stop();
         BgVideo.Visibility = Visibility.Collapsed;
         BgVideo.Source = null;
+        StopAnimatedBackgrounds();
         var s = LauncherApp.I.Settings;
         try
         {
+            if (string.Equals(Path.GetExtension(path), ".gif", StringComparison.OrdinalIgnoreCase))
+            {
+                StartGifBackground(path, opacity);
+                return;
+            }
             if (!string.Equals(_loadedBackgroundPath, path, StringComparison.OrdinalIgnoreCase) || _loadedBackground is null)
             {
                 var bmp = new BitmapImage();
@@ -180,6 +200,7 @@ public partial class MainWindow : Window
 
     private void ApplyVideoBackground(string path, double opacity)
     {
+        StopAnimatedBackgrounds();
         BgImageBrush.ImageSource = null;
         BgImageBorder.Visibility = Visibility.Collapsed;
         try
@@ -204,6 +225,7 @@ public partial class MainWindow : Window
 
     private void ClearBackground()
     {
+        StopAnimatedBackgrounds();
         BgImageBrush.ImageSource = null;
         _loadedBackground = null;
         _loadedBackgroundPath = "";
@@ -211,6 +233,78 @@ public partial class MainWindow : Window
         BgVideo.Stop();
         BgVideo.Source = null;
         BgVideo.Visibility = Visibility.Collapsed;
+    }
+
+    private void StopAnimatedBackgrounds()
+    {
+        _gifTimer?.Stop();
+        _gifTimer = null;
+        _gifFrames = null;
+        _gifIndex = 0;
+        _webPath = "";
+        try { _webRenderer?.Dispose(); } catch { }
+        _webRenderer = null;
+    }
+
+    private void StartGifBackground(string path, double opacity)
+    {
+        try
+        {
+            using var stream = File.OpenRead(path);
+            var decoder = new GifBitmapDecoder(stream, BitmapCreateOptions.PreservePixelFormat, BitmapCacheOption.OnLoad);
+            _gifFrames = decoder.Frames.Cast<BitmapSource>().ToList();
+            if (_gifFrames.Count == 0) return;
+            foreach (var frame in _gifFrames) if (frame.CanFreeze) frame.Freeze();
+            _gifIndex = 0;
+            BgImageBorder.Visibility = Visibility.Visible;
+            BgImageBorder.Opacity = opacity;
+            BgImageBrush.ImageSource = _gifFrames[0];
+            _gifTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(90) };
+            _gifTimer.Tick += (_, _) =>
+            {
+                if (_gifFrames is null || _gifFrames.Count == 0) return;
+                _gifIndex = (_gifIndex + 1) % _gifFrames.Count;
+                BgImageBrush.ImageSource = _gifFrames[_gifIndex];
+            };
+            _gifTimer.Start();
+        }
+        catch (Exception ex)
+        {
+            Log.Warn("加载动态背景失败：" + ex.Message);
+            BgImageBorder.Visibility = Visibility.Collapsed;
+        }
+    }
+
+    private void ApplyWebBackground(string path, double opacity)
+    {
+        BgVideo.Stop();
+        BgVideo.Visibility = Visibility.Collapsed;
+        BgVideo.Source = null;
+        if (_webRenderer is not null && string.Equals(_webPath, path, StringComparison.OrdinalIgnoreCase))
+        {
+            BgImageBorder.Visibility = Visibility.Visible;
+            BgImageBorder.Opacity = opacity;
+            return;
+        }
+        StopAnimatedBackgrounds();
+        _webPath = path;
+        BgImageBorder.Visibility = Visibility.Visible;
+        BgImageBorder.Opacity = opacity;
+        var renderer = new WebWallpaperRenderer();
+        _webRenderer = renderer;
+        renderer.FrameReady += frame => Dispatcher.BeginInvoke(new Action(() =>
+        {
+            if (!ReferenceEquals(_webRenderer, renderer)) return;
+            BgImageBrush.ImageSource = frame;
+            BgImageBorder.Visibility = Visibility.Visible;
+            BgImageBorder.Opacity = opacity;
+        }));
+        renderer.Failed += message => Dispatcher.BeginInvoke(new Action(() =>
+        {
+            Log.Warn("Web 壁纸不可用：" + message);
+            BgImageBorder.Visibility = Visibility.Collapsed;
+        }));
+        _ = renderer.StartAsync(path);
     }
 
     private void BgVideo_MediaEnded(object sender, RoutedEventArgs e)

@@ -13,3 +13,11 @@ The Windows frpc component is downloaded on demand at runtime.
 OpenFrp (third-party relay service)
 https://openfrp.net
 The OpenFrp frpc client is downloaded on demand when the user enables the OpenFrp relay.
+
+RePKG (MIT)
+https://github.com/notscuffed/repkg
+Used to extract a high-resolution still image from Wallpaper Engine scene packages.
+
+Microsoft WebView2 (Microsoft Software License Terms)
+https://learn.microsoft.com/microsoft-edge/webview2/
+Used to render Wallpaper Engine web wallpapers inside a hidden capture window.

@@ -61,6 +61,8 @@ public partial class SettingsPage : UserControl, IPage
             BgModeCustom.IsChecked = bgMode == "custom";
             BgModeWallpaper.IsChecked = bgMode == "wallpaper";
             CustomBackgroundPanel.Visibility = bgMode == "custom" ? Visibility.Visible : Visibility.Collapsed;
+            SceneWallpaperRow.Visibility = bgMode == "wallpaper" ? Visibility.Visible : Visibility.Collapsed;
+            SceneAnimatedCheck.IsChecked = s.WallpaperSceneAnimated;
             BgPathText.Text = bgMode switch
             {
                 "wallpaper" => "跟随 Wallpaper Engine 当前壁纸；未检测到时自动隐藏背景",
@@ -202,6 +204,16 @@ public partial class SettingsPage : UserControl, IPage
         OpacityValueText.Text = $"{e.NewValue:0}%";
         LauncherApp.I.SaveDebounced();
         LauncherApp.I.RaiseSettingsChanged();
+    }
+
+    private void SceneAnimated_Changed(object sender, RoutedEventArgs e)
+    {
+        if (_loading) return;
+        LauncherApp.I.Settings.WallpaperSceneAnimated = SceneAnimatedCheck.IsChecked == true;
+        LauncherApp.I.Save();
+        LauncherApp.I.Notify("背景已更新", LauncherApp.I.Settings.WallpaperSceneAnimated
+            ? "场景壁纸使用动态预览（低清）"
+            : "场景壁纸使用高清静帧");
     }
 
     private void BackgroundMode_Checked(object sender, RoutedEventArgs e)

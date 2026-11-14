@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.IO.Compression;
 using System.IO;
 using System.Text.Json.Nodes;
 using System.Text.RegularExpressions;
@@ -14,6 +15,11 @@ public static class WallpaperEngineService
 {
     private static readonly string[] ImageExtensions = { ".png", ".jpg", ".jpeg", ".bmp", ".gif", ".webp" };
     private static readonly string[] VideoExtensions = { ".mp4", ".webm", ".mkv", ".mov", ".m4v" };
+    private static readonly string[] WebExtensions = { ".html", ".htm" };
+    private static readonly HashSet<string> Extracting = new(StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>场景壁纸的高清静帧提取完成后触发，参数是图片路径。</summary>
+    public static event Action<string>? HighQualityPreviewReady;
 
     public static string? GetCurrentWallpaper()
     {
@@ -162,11 +168,24 @@ public static class WallpaperEngineService
             if (!File.Exists(full)) return null;
             var ext = Path.GetExtension(full);
             if (ImageExtensions.Contains(ext, StringComparer.OrdinalIgnoreCase) ||
-                VideoExtensions.Contains(ext, StringComparer.OrdinalIgnoreCase))
+                VideoExtensions.Contains(ext, StringComparer.OrdinalIgnoreCase) ||
+                WebExtensions.Contains(ext, StringComparer.OrdinalIgnoreCase))
                 return full;
 
             if (string.Equals(ext, ".pkg", StringComparison.OrdinalIgnoreCase))
             {
+                if (LauncherApp.I.Settings.WallpaperSceneAnimated)
+                {
+                    var dir0 = Path.GetDirectoryName(full)!;
+                    foreach (var preview in new[] { "preview.gif", "preview.webp", "preview.jpg", "preview.png" })
+                    {
+                        var found = Path.Combine(dir0, preview);
+                        if (File.Exists(found)) return found;
+                    }
+                }
+                var cached = FindCachedPreview(full);
+                if (cached is not null) return cached;
+                QueuePackageExtraction(full);
                 var dir = Path.GetDirectoryName(full)!;
                 foreach (var preview in new[] { "preview.jpg", "preview.png", "preview.gif", "preview.webp" })
                 {
@@ -188,7 +207,8 @@ public static class WallpaperEngineService
                         var mediaExt = Path.GetExtension(media);
                         if (File.Exists(media) &&
                             (ImageExtensions.Contains(mediaExt, StringComparer.OrdinalIgnoreCase) ||
-                             VideoExtensions.Contains(mediaExt, StringComparer.OrdinalIgnoreCase)))
+                             VideoExtensions.Contains(mediaExt, StringComparer.OrdinalIgnoreCase) ||
+                             WebExtensions.Contains(mediaExt, StringComparer.OrdinalIgnoreCase)))
                             return media;
                     }
                 }
@@ -203,4 +223,150 @@ public static class WallpaperEngineService
         catch { }
         return null;
     }
+
+    private static string CacheDirectory(string pkg)
+    {
+        try
+        {
+            var key = Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(
+                System.Text.Encoding.UTF8.GetBytes(pkg + "|" + File.GetLastWriteTimeUtc(pkg).Ticks)));
+            return Path.Combine(AppPaths.CacheDir, "WallpaperPreviews", key[..16]);
+        }
+        catch { return Path.Combine(AppPaths.CacheDir, "WallpaperPreviews", "fallback"); }
+    }
+
+    private static string? FindCachedPreview(string pkg)
+    {
+        try
+        {
+            var dir = CacheDirectory(pkg);
+            if (!Directory.Exists(dir)) return null;
+            return Directory.EnumerateFiles(dir, "wallpaper.*").FirstOrDefault();
+        }
+        catch { return null; }
+    }
+
+    private static void QueuePackageExtraction(string pkg)
+    {
+        lock (Extracting)
+        {
+            if (!Extracting.Add(pkg)) return;
+        }
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                var image = await ExtractHighQualityPreviewAsync(pkg);
+                if (!string.IsNullOrWhiteSpace(image)) HighQualityPreviewReady?.Invoke(image);
+            }
+            catch (Exception ex)
+            {
+                Log.Warn("提取场景壁纸预览失败：" + ex.Message);
+            }
+            finally
+            {
+                lock (Extracting) Extracting.Remove(pkg);
+            }
+        });
+    }
+
+    private static async Task<string?> ExtractHighQualityPreviewAsync(string pkg)
+    {
+        var repkg = await EnsureRepkgAsync();
+        if (string.IsNullOrWhiteSpace(repkg)) return null;
+        var temp = Path.Combine(AppPaths.CacheDir, "WallpaperPreviews", "tmp-" + Guid.NewGuid().ToString("N"));
+        try
+        {
+            Directory.CreateDirectory(temp);
+            var psi = new ProcessStartInfo
+            {
+                FileName = repkg,
+                UseShellExecute = false,
+                CreateNoWindow = true,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                WorkingDirectory = Path.GetDirectoryName(repkg)!
+            };
+            psi.ArgumentList.Add("extract");
+            psi.ArgumentList.Add("-o");
+            psi.ArgumentList.Add(temp);
+            psi.ArgumentList.Add(pkg);
+            using var process = Process.Start(psi);
+            if (process is null) return null;
+            await process.WaitForExitAsync();
+            if (process.ExitCode != 0) return null;
+
+            string? best = null;
+            long bestArea = 0;
+            foreach (var file in Directory.EnumerateFiles(temp, "*", SearchOption.AllDirectories))
+            {
+                if (!ImageExtensions.Contains(Path.GetExtension(file), StringComparer.OrdinalIgnoreCase)) continue;
+                try
+                {
+                    using var stream = File.OpenRead(file);
+                    var decoder = System.Windows.Media.Imaging.BitmapDecoder.Create(
+                        stream, System.Windows.Media.Imaging.BitmapCreateOptions.DelayCreation,
+                        System.Windows.Media.Imaging.BitmapCacheOption.None);
+                    var frame = decoder.Frames[0];
+                    var area = (long)frame.PixelWidth * frame.PixelHeight;
+                    if (area <= bestArea) continue;
+                    bestArea = area;
+                    best = file;
+                }
+                catch { }
+            }
+            if (best is null || bestArea < 1280L * 720L) return null;
+
+            var cacheDir = CacheDirectory(pkg);
+            Directory.CreateDirectory(cacheDir);
+            foreach (var old in Directory.EnumerateFiles(cacheDir, "wallpaper.*")) File.Delete(old);
+            var target = Path.Combine(cacheDir, "wallpaper" + Path.GetExtension(best).ToLowerInvariant());
+            File.Copy(best, target, true);
+            return target;
+        }
+        finally
+        {
+            try { Directory.Delete(temp, true); } catch { }
+        }
+    }
+
+    private static async Task<string?> EnsureRepkgAsync()
+    {
+        var dir = Path.Combine(AppPaths.DataDir, "Tools", "RePKG");
+        var exe = Path.Combine(dir, "RePKG.exe");
+        if (File.Exists(exe)) return exe;
+        Directory.CreateDirectory(dir);
+        var zip = Path.Combine(AppPaths.CacheDir, "RePKG.zip");
+        var urls = new[]
+        {
+            "https://github.com/notscuffed/repkg/releases/download/v0.4.0-alpha/RePKG.zip",
+            "https://ghproxy.net/https://github.com/notscuffed/repkg/releases/download/v0.4.0-alpha/RePKG.zip"
+        };
+        foreach (var url in urls)
+        {
+            try
+            {
+                if (!File.Exists(zip) || new FileInfo(zip).Length < 100_000)
+                    await HttpService.DownloadFileAsync(url, zip, "", null, CancellationToken.None, 2);
+                var temp = Path.Combine(AppPaths.CacheDir, "repkg-" + Guid.NewGuid().ToString("N"));
+                Directory.CreateDirectory(temp);
+                try
+                {
+                    ZipFile.ExtractToDirectory(zip, temp, true);
+                    var found = Directory.EnumerateFiles(temp, "RePKG.exe", SearchOption.AllDirectories).FirstOrDefault();
+                    if (found is null) throw new InvalidOperationException("RePKG 压缩包里没有 RePKG.exe");
+                    File.Copy(found, exe, true);
+                    return exe;
+                }
+                finally { try { Directory.Delete(temp, true); } catch { } }
+            }
+            catch (Exception ex)
+            {
+                Log.Warn("下载 RePKG 失败：" + ex.Message);
+                try { File.Delete(zip); } catch { }
+            }
+        }
+        return null;
+    }
+
 }
