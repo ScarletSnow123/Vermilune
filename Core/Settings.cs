@@ -79,6 +79,9 @@ public sealed class AppSettings
     public double UiOpacity { get; set; } = 0.96;
     public string BackgroundImage { get; set; } = "";
     public double BackgroundImageOpacity { get; set; } = 0.34;
+    /// <summary>动画强度：off / smooth / fancy。</summary>
+    public string AnimationMode { get; set; } = "smooth";
+
     /// <summary>页面切换时使用 BitmapCache / 模糊等高级效果；默认关闭以降低显存和内存占用。</summary>
     public bool EnableVisualEffects { get; set; }
     /// <summary>高级模糊过渡时长，0 - 1000ms，默认 420ms。</summary>
@@ -138,6 +141,7 @@ public sealed class AppSettings
         if (string.IsNullOrWhiteSpace(MinecraftDir)) MinecraftDir = AppPaths.DefaultMinecraftDir();
         if (string.IsNullOrWhiteSpace(Accent) || !Accent.StartsWith('#')) Accent = "#8FD6B4";
         if (FeaturedTitle == "Vermilune 1.2分支") FeaturedTitle = "Vermilune 1.3分支";
+        if (AnimationMode is not ("off" or "smooth" or "fancy")) AnimationMode = "smooth";
         if (string.IsNullOrWhiteSpace(AvatarStyle)) AvatarStyle = "minimal";
         if (!string.Equals(AvatarStyle, "side", StringComparison.OrdinalIgnoreCase)) AvatarStyle = "minimal";
         HomeOffsets ??= new();

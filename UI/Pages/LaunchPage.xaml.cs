@@ -11,6 +11,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Media.Animation;
+using System.Windows.Media.Effects;
 using System.Windows.Threading;
 using Microsoft.Win32;
 using Vermilune.Core;
@@ -128,6 +129,7 @@ public partial class LaunchPage : UserControl, IPage, INotifyPropertyChanged
         ApplyHomeLayout();
         Dispatcher.BeginInvoke(new Action(() =>
         {
+            AnimateHomeCards();
             HomeContentScroll?.ScrollToTop();
             HomeSideScroll?.ScrollToTop();
             LaunchButton?.Focus();
@@ -1687,6 +1689,60 @@ public partial class LaunchPage : UserControl, IPage, INotifyPropertyChanged
 
         if (CardBorderButton is not null)
             CardBorderButton.Content = settings.ShowCardBorders ? "边缘线：开" : "边缘线：关";
+    }
+
+    private void AnimateHomeCards()
+    {
+        var mode = LauncherApp.I.Settings.AnimationMode;
+        if (mode is not ("smooth" or "fancy")) return;
+        var cards = _homeCards
+            .Concat(HomeWidgetCanvas is null ? Enumerable.Empty<FrameworkElement>() :
+                HomeWidgetCanvas.Children.OfType<FrameworkElement>())
+            .Where(card => card.Visibility == Visibility.Visible)
+            .ToList();
+        var accent = ThemeManager.Accent;
+        for (var i = 0; i < cards.Count; i++)
+        {
+            var card = cards[i];
+            var targetOpacity = card.Opacity;
+            card.BeginAnimation(OpacityProperty, null);
+            card.Opacity = targetOpacity;
+            var delay = TimeSpan.FromMilliseconds(Math.Min(i * 45, 420));
+            var fade = new DoubleAnimation(0, targetOpacity, TimeSpan.FromMilliseconds(mode == "fancy" ? 420 : 260))
+            {
+                BeginTime = delay,
+                EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
+            };
+            card.BeginAnimation(OpacityProperty, fade);
+            if (mode != "fancy") continue;
+
+            var glow = new DropShadowEffect
+            {
+                Color = accent,
+                BlurRadius = 0,
+                ShadowDepth = 0,
+                Opacity = 0
+            };
+            card.Effect = glow;
+            var glowIn = new DoubleAnimation(0, 22, TimeSpan.FromMilliseconds(520))
+            {
+                BeginTime = delay,
+                EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut },
+                AutoReverse = true
+            };
+            glowIn.Completed += (_, _) =>
+            {
+                if (ReferenceEquals(card.Effect, glow)) card.Effect = null;
+            };
+            glow.BeginAnimation(BlurEffect.RadiusProperty, glowIn);
+            var glowOpacity = new DoubleAnimation(0, 0.55, TimeSpan.FromMilliseconds(520))
+            {
+                BeginTime = delay,
+                AutoReverse = true,
+                EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseOut }
+            };
+            glow.BeginAnimation(DropShadowEffect.OpacityProperty, glowOpacity);
+        }
     }
 
     private void ApplyHomeLayout()

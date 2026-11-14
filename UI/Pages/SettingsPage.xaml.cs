@@ -62,6 +62,10 @@ public partial class SettingsPage : UserControl, IPage
                     ? "当前：" + s.BackgroundImage
                     : "把图片放进背景文件夹后点刷新");
             LightModeCheck.IsChecked = string.Equals(s.UiThemeMode, "light", StringComparison.OrdinalIgnoreCase);
+            var motion = s.AnimationMode is "off" or "fancy" ? s.AnimationMode : "smooth";
+            MotionOff.IsChecked = motion == "off";
+            MotionSmooth.IsChecked = motion == "smooth";
+            MotionFancy.IsChecked = motion == "fancy";
             VisualEffectsCheck.IsChecked = s.EnableVisualEffects;
             BlurDelaySlider.Value = Math.Clamp(s.BlurDelayMs, 360, 1000);
             BlurDelayValueText.Text = $"{(int)BlurDelaySlider.Value} ms";
@@ -302,6 +306,20 @@ public partial class SettingsPage : UserControl, IPage
         if (_loading) return;
         LauncherApp.I.Settings.IpProtocol = IpProtocolCombo.SelectedIndex switch { 1 => "ipv4", 2 => "ipv6", _ => "default" };
         LauncherApp.I.Save();
+    }
+
+    private void AnimationMode_Checked(object sender, RoutedEventArgs e)
+    {
+        if (_loading || sender is not RadioButton { Tag: string mode }) return;
+        var s = LauncherApp.I.Settings;
+        s.AnimationMode = mode is "off" or "fancy" ? mode : "smooth";
+        LauncherApp.I.Save();
+        LauncherApp.I.Notify("动画效果", s.AnimationMode switch
+        {
+            "off" => "已关闭",
+            "fancy" => "华丽模式：独立光效与粒子，不叠加模糊",
+            _ => "流畅模式"
+        });
     }
 
     private void VisualEffectsCheck_Click(object sender, RoutedEventArgs e)

@@ -8,6 +8,7 @@ using System.Windows.Media;
 using System.Windows.Media.Animation;
 using System.Windows.Media.Effects;
 using System.Windows.Media.Imaging;
+using Ellipse = System.Windows.Shapes.Ellipse;
 using System.Windows.Threading;
 using Vermilune.Core;
 using Vermilune.UI;
@@ -205,71 +206,204 @@ public partial class MainWindow : Window
         SetNav(key);
         if (page is IPage p) p.OnShown();
 
-        var move = new DoubleAnimation(8, 0, TimeSpan.FromMilliseconds(260))
-        {
-            EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
-        };
-        var fade = new DoubleAnimation(0.78, 1, TimeSpan.FromMilliseconds(240))
-        {
-            EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseOut }
-        };
-        if (page.RenderTransform is not TranslateTransform)
-            page.RenderTransform = new TranslateTransform(0, 0);
-        ((TranslateTransform)page.RenderTransform).BeginAnimation(TranslateTransform.YProperty, move);
+        AnimatePageIn(page);
+    }
+
+    private static (TranslateTransform Translate, ScaleTransform Scale, RotateTransform Rotate) EnsurePageTransform(FrameworkElement page)
+    {
+        if (page.RenderTransform is TransformGroup group &&
+            group.Children.OfType<TranslateTransform>().FirstOrDefault() is { } existingTranslate &&
+            group.Children.OfType<ScaleTransform>().FirstOrDefault() is { } existingScale &&
+            group.Children.OfType<RotateTransform>().FirstOrDefault() is { } existingRotate)
+            return (existingTranslate, existingScale, existingRotate);
+
+        var translate = new TranslateTransform();
+        var scale = new ScaleTransform(1, 1);
+        var rotate = new RotateTransform();
+        var created = new TransformGroup();
+        created.Children.Add(translate);
+        created.Children.Add(scale);
+        created.Children.Add(rotate);
+        page.RenderTransform = created;
+        page.RenderTransformOrigin = new Point(0.5, 0.5);
+        return (translate, scale, rotate);
+    }
+
+    private void AnimatePageIn(FrameworkElement page)
+    {
+        var mode = LauncherApp.I.Settings.AnimationMode;
+        if (mode is not ("off" or "fancy")) mode = "smooth";
+        var (translate, scale, rotate) = EnsurePageTransform(page);
+        page.BeginAnimation(OpacityProperty, null);
+        translate.BeginAnimation(TranslateTransform.YProperty, null);
+        scale.BeginAnimation(ScaleTransform.ScaleXProperty, null);
+        scale.BeginAnimation(ScaleTransform.ScaleYProperty, null);
+        rotate.BeginAnimation(RotateTransform.AngleProperty, null);
+        translate.Y = 0;
+        scale.ScaleX = 1;
+        scale.ScaleY = 1;
+        rotate.Angle = 0;
         page.Opacity = 1;
-        page.BeginAnimation(OpacityProperty, fade);
+        page.CacheMode = null;
+        page.Effect = null;
+        PageHost.Effect = null;
 
-        var effects = LauncherApp.I.Settings.EnableVisualEffects;
-        var blurMs = Math.Clamp(LauncherApp.I.Settings.BlurDelayMs, 360, 1000);
-        void CleanupEffects()
-        {
-            if (!ReferenceEquals(PageHost.Content, page)) return;
-            page.Effect = null;
-            page.CacheMode = null;
-            PageHost.Effect = null;
-        }
+        if (mode == "off") return;
 
-        if (effects)
+        if (mode == "smooth")
         {
-            // 高级效果默认关闭。缓存放在页面上，模糊放在 PageHost 上，
-            // 否则 CacheMode 会把模糊的首帧一起缓存，动画看起来像没有生效。
-            page.CacheMode = new BitmapCache(1.0);
-            var shadow = new DropShadowEffect
+            page.Opacity = 1;
+            page.BeginAnimation(OpacityProperty, new DoubleAnimation(0.82, 1, TimeSpan.FromMilliseconds(220))
             {
-                BlurRadius = 26,
-                ShadowDepth = 0,
-                Opacity = 0,
-                Color = Colors.Black
-            };
-            page.Effect = shadow;
-            var shadowFade = new DoubleAnimation(0.45, 0, TimeSpan.FromMilliseconds(360))
+                EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseOut }
+            });
+            translate.BeginAnimation(TranslateTransform.YProperty, new DoubleAnimation(10, 0, TimeSpan.FromMilliseconds(240))
             {
                 EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
-            };
-            shadow.BeginAnimation(DropShadowEffect.OpacityProperty, shadowFade);
+            });
 
-            if (blurMs > 0)
+            if (LauncherApp.I.Settings.EnableVisualEffects)
             {
+                var blurMs = Math.Clamp(LauncherApp.I.Settings.BlurDelayMs, 360, 1000);
                 var blur = new BlurEffect { Radius = 0 };
                 PageHost.Effect = blur;
-                var blurIn = new DoubleAnimation(10, 0, TimeSpan.FromMilliseconds(blurMs))
+                var blurIn = new DoubleAnimation(8, 0, TimeSpan.FromMilliseconds(blurMs))
                 {
                     EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
                 };
-                blurIn.Completed += (_, _) => CleanupEffects();
+                blurIn.Completed += (_, _) =>
+                {
+                    if (ReferenceEquals(PageHost.Content, page))
+                    {
+                        PageHost.Effect = null;
+                        page.CacheMode = null;
+                    }
+                };
                 blur.BeginAnimation(BlurEffect.RadiusProperty, blurIn);
             }
-            else
-            {
-                shadowFade.Completed += (_, _) => CleanupEffects();
-            }
+            return;
         }
-        else
+
+        // 华丽模式：独立的光效、缩放、旋转和粒子，不使用模糊，避免与高级模糊效果叠加。
+        page.Opacity = 1;
+        page.BeginAnimation(OpacityProperty, new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(460))
         {
-            page.Effect = null;
-            page.CacheMode = null;
-            PageHost.Effect = null;
-            move.Completed += (_, _) => CleanupEffects();
+            EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
+        });
+        translate.Y = 0;
+        translate.BeginAnimation(TranslateTransform.YProperty, new DoubleAnimation(30, 0, TimeSpan.FromMilliseconds(560))
+        {
+            EasingFunction = new BackEase { Amplitude = 0.35, EasingMode = EasingMode.EaseOut }
+        });
+        scale.ScaleX = 1;
+        scale.ScaleY = 1;
+        var scaleIn = new DoubleAnimation(0.93, 1, TimeSpan.FromMilliseconds(560))
+        {
+            EasingFunction = new BackEase { Amplitude = 0.25, EasingMode = EasingMode.EaseOut }
+        };
+        scale.BeginAnimation(ScaleTransform.ScaleXProperty, scaleIn);
+        scale.BeginAnimation(ScaleTransform.ScaleYProperty, scaleIn.Clone());
+        rotate.Angle = 0;
+        rotate.BeginAnimation(RotateTransform.AngleProperty, new DoubleAnimation(-2.4, 0, TimeSpan.FromMilliseconds(560))
+        {
+            EasingFunction = new BackEase { Amplitude = 0.4, EasingMode = EasingMode.EaseOut }
+        });
+
+        var accent = ThemeManager.Accent;
+        var glow = new DropShadowEffect
+        {
+            Color = accent,
+            BlurRadius = 0,
+            ShadowDepth = 0,
+            Opacity = 0
+        };
+        page.Effect = glow;
+        var glowIn = new DoubleAnimationUsingKeyFrames();
+        glowIn.KeyFrames.Add(new EasingDoubleKeyFrame(0, KeyTime.FromPercent(0)));
+        glowIn.KeyFrames.Add(new EasingDoubleKeyFrame(46, KeyTime.FromPercent(0.35)));
+        glowIn.KeyFrames.Add(new EasingDoubleKeyFrame(0, KeyTime.FromPercent(1)));
+        glow.BeginAnimation(BlurEffect.RadiusProperty, glowIn);
+        var glowOpacity = new DoubleAnimationUsingKeyFrames();
+        glowOpacity.KeyFrames.Add(new EasingDoubleKeyFrame(0, KeyTime.FromPercent(0)));
+        glowOpacity.KeyFrames.Add(new EasingDoubleKeyFrame(0.75, KeyTime.FromPercent(0.25)));
+        glowOpacity.KeyFrames.Add(new EasingDoubleKeyFrame(0, KeyTime.FromPercent(1)));
+        glowOpacity.Completed += (_, _) =>
+        {
+            if (ReferenceEquals(PageHost.Content, page))
+            {
+                page.Effect = null;
+                PageHost.Effect = null;
+            }
+        };
+        glow.BeginAnimation(DropShadowEffect.OpacityProperty, glowOpacity);
+        PlayFancyParticles();
+    }
+
+    private void PlayFancyParticles()
+    {
+        if (FxCanvas is null) return;
+        FxCanvas.Children.Clear();
+        var width = Math.Max(320, FxCanvas.ActualWidth);
+        var height = Math.Max(240, FxCanvas.ActualHeight);
+        var random = new Random();
+        var accent = ThemeManager.Accent;
+        for (var i = 0; i < 22; i++)
+        {
+            var size = 2 + random.NextDouble() * 5;
+            var dot = new Ellipse
+            {
+                Width = size,
+                Height = size,
+                Fill = new SolidColorBrush(Color.FromArgb((byte)(120 + random.Next(100)), accent.R, accent.G, accent.B)),
+                IsHitTestVisible = false
+            };
+            var startX = width * (0.12 + random.NextDouble() * 0.76);
+            var startY = height * (0.25 + random.NextDouble() * 0.65);
+            Canvas.SetLeft(dot, startX);
+            Canvas.SetTop(dot, startY);
+            FxCanvas.Children.Add(dot);
+            var rise = new DoubleAnimation(startY, startY - 40 - random.NextDouble() * 120,
+                TimeSpan.FromMilliseconds(700 + random.Next(650)))
+            {
+                BeginTime = TimeSpan.FromMilliseconds(random.Next(300)),
+                EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseOut }
+            };
+            Canvas.SetTop(dot, startY);
+            dot.BeginAnimation(Canvas.TopProperty, rise);
+            var fade = new DoubleAnimation(0.9, 0, TimeSpan.FromMilliseconds(850 + random.Next(500)))
+            {
+                BeginTime = TimeSpan.FromMilliseconds(random.Next(250))
+            };
+            fade.Completed += (_, _) => FxCanvas.Children.Remove(dot);
+            dot.BeginAnimation(OpacityProperty, fade);
+        }
+
+        for (var i = 0; i < 2; i++)
+        {
+            var ring = new Ellipse
+            {
+                Width = 28,
+                Height = 28,
+                Stroke = new SolidColorBrush(Color.FromArgb(150, accent.R, accent.G, accent.B)),
+                StrokeThickness = 1.5,
+                IsHitTestVisible = false
+            };
+            Canvas.SetLeft(ring, width / 2 - 14);
+            Canvas.SetTop(ring, height / 2 - 14);
+            FxCanvas.Children.Add(ring);
+            var grow = new DoubleAnimation(28, 260, TimeSpan.FromMilliseconds(850))
+            {
+                BeginTime = TimeSpan.FromMilliseconds(i * 120),
+                EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
+            };
+            var fade = new DoubleAnimation(0.5, 0, TimeSpan.FromMilliseconds(850))
+            {
+                BeginTime = TimeSpan.FromMilliseconds(i * 120)
+            };
+            fade.Completed += (_, _) => FxCanvas.Children.Remove(ring);
+            ring.BeginAnimation(WidthProperty, grow);
+            ring.BeginAnimation(HeightProperty, grow.Clone());
+            ring.BeginAnimation(OpacityProperty, fade);
         }
     }
 
@@ -470,7 +604,31 @@ public partial class MainWindow : Window
         {
             ToastText.Text = string.IsNullOrWhiteSpace(title) ? message : $"{title} · {message}";
             ToastBar.Visibility = Visibility.Visible;
-            ToastBar.BeginAnimation(OpacityProperty, new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(140)));
+            var mode = LauncherApp.I.Settings.AnimationMode;
+            if (mode == "off")
+            {
+                ToastBar.BeginAnimation(OpacityProperty, null);
+                ToastBar.Opacity = 1;
+            }
+            else
+            {
+                var fancy = mode == "fancy";
+                ToastBar.BeginAnimation(OpacityProperty,
+                    new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(fancy ? 240 : 140))
+                    {
+                        EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
+                    });
+                if (ToastBar.RenderTransform is not TranslateTransform toastMove)
+                {
+                    toastMove = new TranslateTransform(0, 0);
+                    ToastBar.RenderTransform = toastMove;
+                }
+                toastMove.BeginAnimation(TranslateTransform.YProperty,
+                    new DoubleAnimation(fancy ? 14 : 6, 0, TimeSpan.FromMilliseconds(fancy ? 300 : 160))
+                    {
+                        EasingFunction = new BackEase { Amplitude = fancy ? 0.25 : 0.1, EasingMode = EasingMode.EaseOut }
+                    });
+            }
             _toastTimer.Stop();
             _toastTimer.Start();
         }));

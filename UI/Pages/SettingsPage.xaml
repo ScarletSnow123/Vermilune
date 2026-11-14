@@ -129,8 +129,26 @@
                         <Border Style="{StaticResource SettingRow}">
                             <Grid>
                                 <StackPanel>
+                                    <TextBlock Text="动画效果" FontSize="12.5" FontWeight="SemiBold" />
+                                    <TextBlock Text="关 / 流畅 / 华丽。华丽模式使用独立光效和粒子，不会与模糊叠加。"
+                                               Style="{StaticResource Hint}" Margin="0,4,0,0" TextWrapping="Wrap" />
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                                    <RadioButton x:Name="MotionOff" Style="{StaticResource TabItem}" GroupName="MotionMode"
+                                                 Content="关" Tag="off" Checked="AnimationMode_Checked" Margin="0,0,8,0" />
+                                    <RadioButton x:Name="MotionSmooth" Style="{StaticResource TabItem}" GroupName="MotionMode"
+                                                 Content="流畅" Tag="smooth" Checked="AnimationMode_Checked" Margin="0,0,8,0" />
+                                    <RadioButton x:Name="MotionFancy" Style="{StaticResource TabItem}" GroupName="MotionMode"
+                                                 Content="华丽" Tag="fancy" Checked="AnimationMode_Checked" />
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+
+                        <Border Style="{StaticResource SettingRow}">
+                            <Grid>
+                                <StackPanel>
                                     <TextBlock Text="高级视觉效果" FontSize="12.5" FontWeight="SemiBold" />
-                                    <TextBlock Text="页面切换使用 BitmapCache 与模糊过渡；更华丽，但会增加显存 / 内存占用，默认关闭。"
+                                    <TextBlock Text="页面切换使用 BitmapCache 与模糊过渡；会增加显存 / 内存占用，默认关闭。华丽动画不会叠加模糊。"
                                                Style="{StaticResource Hint}" Margin="0,4,0,0" TextWrapping="Wrap" />
                                 </StackPanel>
                                 <CheckBox x:Name="VisualEffectsCheck" Style="{StaticResource Switch}"

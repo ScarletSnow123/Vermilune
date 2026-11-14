@@ -231,6 +231,8 @@
             </Border>
         </Border>
 
+        <Canvas x:Name="FxCanvas" Panel.ZIndex="70" IsHitTestVisible="False" ClipToBounds="True" />
+
         <!-- 无边框缩放 -->
         <Thumb x:Name="ThumbLeft" Width="6" HorizontalAlignment="Left" VerticalAlignment="Stretch"
                Style="{StaticResource InvisibleThumb}" Cursor="SizeWE" Tag="L" DragDelta="Resize_DragDelta" Panel.ZIndex="80" />
