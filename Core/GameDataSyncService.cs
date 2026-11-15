@@ -6,6 +6,7 @@ public sealed record DataSyncSelection(
     GameSettingsScope OptionsScope,
     bool Xaero,
     bool JourneyMap,
+    bool Shaderpacks,
     IReadOnlyList<string> CustomPaths);
 
 public sealed record DataSyncResult(int TargetsChanged, int FilesCopied, IReadOnlyList<string> Errors);
@@ -46,6 +47,7 @@ public static class GameDataSyncService
             var paths = new List<string>();
             if (selection.Xaero) paths.AddRange(XaeroPaths);
             if (selection.JourneyMap) paths.Add("journeymap");
+            if (selection.Shaderpacks) paths.Add("shaderpacks");
             paths.AddRange(selection.CustomPaths);
             foreach (var relative in paths.Distinct(StringComparer.OrdinalIgnoreCase))
             {

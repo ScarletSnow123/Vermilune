@@ -44,6 +44,7 @@ public partial class SyncPage : UserControl, IPage
             SyncPacksCheck.IsChecked = ((GameSettingsScope)s.SyncOptionsScope).HasFlag(GameSettingsScope.ResourcePacks);
             SyncXaeroCheck.IsChecked = s.SyncXaero;
             SyncJourneyCheck.IsChecked = s.SyncJourneyMap;
+            SyncShadersCheck.IsChecked = s.SyncShaderpacks;
             _paths.Clear();
             foreach (var path in s.SyncCustomPaths) _paths.Add(path);
             SyncStatusText.Text = versions.Count < 2 ? "至少需要两个实例" : "";
@@ -65,6 +66,7 @@ public partial class SyncPage : UserControl, IPage
         BuildScope(),
         SyncXaeroCheck.IsChecked == true,
         SyncJourneyCheck.IsChecked == true,
+        SyncShadersCheck.IsChecked == true,
         _paths.ToList());
 
     private void SaveState()
@@ -76,6 +78,7 @@ public partial class SyncPage : UserControl, IPage
         s.SyncOptionsScope = (int)BuildScope();
         s.SyncXaero = SyncXaeroCheck.IsChecked == true;
         s.SyncJourneyMap = SyncJourneyCheck.IsChecked == true;
+        s.SyncShaderpacks = SyncShadersCheck.IsChecked == true;
         s.SyncCustomPaths = _paths.ToList();
         LauncherApp.I.Save();
     }
@@ -151,7 +154,7 @@ public partial class SyncPage : UserControl, IPage
         SaveState();
         var selection = BuildSelection();
         if (selection.OptionsScope == GameSettingsScope.None && !selection.Xaero && !selection.JourneyMap &&
-            selection.CustomPaths.Count == 0)
+            !selection.Shaderpacks && selection.CustomPaths.Count == 0)
         {
             SyncStatusText.Text = "至少勾选一项同步内容";
             return;

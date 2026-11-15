@@ -746,6 +746,7 @@ public partial class LaunchPage : UserControl, IPage, INotifyPropertyChanged
                         (GameSettingsScope)app.Settings.SyncOptionsScope,
                         app.Settings.SyncXaero,
                         app.Settings.SyncJourneyMap,
+                        app.Settings.SyncShaderpacks,
                         app.Settings.SyncCustomPaths);
                     try
                     {

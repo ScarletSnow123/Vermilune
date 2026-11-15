@@ -105,6 +105,7 @@ public sealed class AppSettings
     public int SyncOptionsScope { get; set; } = (int)GameSettingsScope.Keybinds;
     public bool SyncXaero { get; set; }
     public bool SyncJourneyMap { get; set; }
+    public bool SyncShaderpacks { get; set; }
     public List<string> SyncCustomPaths { get; set; } = new();
     /// <summary>动画强度：off / smooth / fancy。</summary>
     public string AnimationMode { get; set; } = "smooth";

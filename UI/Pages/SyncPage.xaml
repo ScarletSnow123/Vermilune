@@ -57,7 +57,9 @@
                         <WrapPanel Margin="0,10,0,0">
                             <CheckBox x:Name="SyncXaeroCheck" Content="Xaero 小地图 / 世界地图缓存" Margin="0,0,18,0"
                                       Checked="SyncItem_Changed" Unchecked="SyncItem_Changed" />
-                            <CheckBox x:Name="SyncJourneyCheck" Content="JourneyMap 缓存"
+                            <CheckBox x:Name="SyncJourneyCheck" Content="JourneyMap 缓存" Margin="0,0,18,0"
+                                      Checked="SyncItem_Changed" Unchecked="SyncItem_Changed" />
+                            <CheckBox x:Name="SyncShadersCheck" Content="光影包"
                                       Checked="SyncItem_Changed" Unchecked="SyncItem_Changed" />
                         </WrapPanel>
                         <TextBlock Text="地图缓存可能很大，第一次同步会慢一些&#10;只按文件覆盖，不保证所有地图 Mod 版本格式完全兼容"
