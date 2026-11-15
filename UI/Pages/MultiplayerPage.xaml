@@ -199,6 +199,8 @@
                         </Border>
                         <TextBlock Text="创建房间前先开好本机服务端；加入房间后把显示的本机地址填进多人游戏"
                                    Style="{StaticResource MutedText}" Margin="0,7,0,0" TextWrapping="Wrap" />
+                        <TextBlock Text="VoxLink CLI 1.0.2 可能被服务端拒绝；失败时改用 OpenFrp / FRP"
+                                   Style="{StaticResource MutedText}" Margin="0,4,0,0" TextWrapping="Wrap" />
                     </StackPanel>
                 </Border>
 

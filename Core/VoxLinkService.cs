@@ -130,7 +130,11 @@ public sealed class VoxLinkService : IDisposable
             if (node is null) return;
             if (node["ok"]?.GetValue<bool>() == false)
             {
-                LastError = node["message"]?.GetValue<string>() ?? node["error"]?.GetValue<string>() ?? "VoxLink 返回错误";
+                var message = node["message"]?.GetValue<string>() ?? node["error"]?.GetValue<string>() ?? "VoxLink 返回错误";
+                if (message.Contains("forcibly closed", StringComparison.OrdinalIgnoreCase) ||
+                    node["code"]?.GetValue<string>() == "NETWORK")
+                    message = "VoxLink 服务端拒绝了当前客户端（CLI 1.0.2 可能已过期）。可以改用 OpenFrp / FRP，或等 VoxLink 更新 CLI。\n原始错误：" + message;
+                LastError = message;
                 Status = "失败";
                 _ready?.TrySetException(new InvalidOperationException(LastError));
                 Changed?.Invoke();
