@@ -40,8 +40,6 @@ public partial class ResourceBrowser : UserControl
     {
         EnsureInitialized();
         RefreshTargets();
-        if (InternalBanner is not null)
-            InternalBanner.Visibility = LauncherApp.I.Settings.ShowInternalBanner ? Visibility.Visible : Visibility.Collapsed;
         if (!_searched) _ = SearchAsync(true);
     }
 

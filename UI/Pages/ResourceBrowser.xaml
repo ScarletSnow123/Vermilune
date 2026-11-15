@@ -58,12 +58,6 @@
 
         <!-- 内部版提醒 + 换源提示 -->
         <StackPanel Grid.Row="1" Margin="0,10,0,2">
-            <Border x:Name="InternalBanner" Visibility="Collapsed"
-                    Background="#33FF5A5A" BorderBrush="#77FF5A5A" BorderThickness="1"
-                    CornerRadius="8" Padding="12,7" Margin="0,0,0,6">
-                <TextBlock Text="内部版本：CurseForge 搜索能用，别外传"
-                           Foreground="#FFFF7070" FontSize="10.5" FontWeight="SemiBold" />
-            </Border>
             <Border Background="#22E5B567" BorderBrush="#66E5B567" BorderThickness="1"
                     CornerRadius="8" Padding="12,7">
                 <TextBlock Text="提示：如果搜不到某些 Mod，换换下载源试试"
