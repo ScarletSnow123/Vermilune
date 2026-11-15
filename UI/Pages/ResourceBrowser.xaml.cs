@@ -123,11 +123,22 @@ public partial class ResourceBrowser : UserControl
         _ = SearchAsync(false);
     }
 
-    private static async Task<List<ResourceProject>> SafeSearch(Func<Task<List<ResourceProject>>> action)
+    private static async Task<List<ResourceProject>> SafeSearch(
+        Func<CancellationToken, Task<List<ResourceProject>>> action, CancellationToken outer)
     {
-        try { return await action(); }
-        catch (OperationCanceledException) { throw; }
-        catch (Exception ex) { Log.Warn("来源搜索失败：" + ex.Message); return new(); }
+        using var sourceTimeout = CancellationTokenSource.CreateLinkedTokenSource(outer);
+        sourceTimeout.CancelAfter(TimeSpan.FromSeconds(12));
+        try { return await action(sourceTimeout.Token); }
+        catch (OperationCanceledException) when (!outer.IsCancellationRequested)
+        {
+            Log.Warn("来源搜索超时");
+            return new();
+        }
+        catch (Exception ex)
+        {
+            Log.Warn("来源搜索失败：" + ex.Message);
+            return new();
+        }
     }
 
     private async Task SearchAsync(bool reset)
@@ -157,7 +168,7 @@ public partial class ResourceBrowser : UserControl
         }
 
         using var timeout = CancellationTokenSource.CreateLinkedTokenSource(_searchCts.Token);
-        timeout.CancelAfter(TimeSpan.FromSeconds(15));
+        timeout.CancelAfter(TimeSpan.FromSeconds(25));
         var startedAt = Environment.TickCount64;
         SearchBusyBar.Visibility = Visibility.Visible;
         await Dispatcher.Yield(DispatcherPriority.Render);
@@ -187,10 +198,10 @@ public partial class ResourceBrowser : UserControl
             {
                 var tasks = new List<Task<List<ResourceProject>>>
                 {
-                    SafeSearch(() => LauncherApp.I.Modrinth.SearchAsync(_type, searchQuery, mc, loader, 0, timeout.Token))
+                    SafeSearch(token => LauncherApp.I.Modrinth.SearchAsync(_type, searchQuery, mc, loader, 0, token), timeout.Token)
                 };
                 if (LauncherApp.I.CurseForge.HasKey)
-                    tasks.Add(SafeSearch(() => LauncherApp.I.CurseForge.SearchAsync(_type, searchQuery, mc, loader, 0, timeout.Token)));
+                    tasks.Add(SafeSearch(token => LauncherApp.I.CurseForge.SearchAsync(_type, searchQuery, mc, loader, 0, token), timeout.Token));
                 var results = await Task.WhenAll(tasks);
                 foreach (var part in results) list.AddRange(part);
                 list = list.OrderByDescending(x => x.Downloads).ToList();
@@ -273,7 +284,7 @@ public partial class ResourceBrowser : UserControl
         _versionCts = new CancellationTokenSource();
         InstallStatus.Text = append ? "正在加载更多版本…" : "正在加载版本…";
         using var timeout = CancellationTokenSource.CreateLinkedTokenSource(_versionCts.Token);
-        timeout.CancelAfter(TimeSpan.FromSeconds(15));
+        timeout.CancelAfter(TimeSpan.FromSeconds(25));
         try
         {
             var mc = McCombo.SelectedItem as string;
