@@ -14,10 +14,12 @@ public partial class MultiplayerPage : UserControl, IPage
     private readonly System.Windows.Threading.DispatcherTimer _serverTimer;
     private bool _checkingPort;
     private bool _suppressFrpOpen;
+    private bool _uiReady;
 
     public MultiplayerPage()
     {
         InitializeComponent();
+        _uiReady = true;
         _serverTimer = new System.Windows.Threading.DispatcherTimer { Interval = TimeSpan.FromSeconds(2) };
         _serverTimer.Tick += async (_, _) => await CheckServerPortAsync();
         LauncherApp.I.Server.LogReceived += line => Dispatcher.BeginInvoke(new Action(() => AppendServerLog(line)));
@@ -70,10 +72,51 @@ public partial class MultiplayerPage : UserControl, IPage
         UpdateAddress();
     }
 
+    private void Mode_Changed(object sender, RoutedEventArgs e)
+    {
+        if (!_uiReady || ServerCard is null) return;
+        var tag = (sender as RadioButton)?.Tag?.ToString() ?? "server";
+        var frp = tag == "frp";
+        var vox = tag == "vox";
+        if (frp)
+        {
+            UseFrpCheck.IsChecked = true;
+            UseFrpCheck.Visibility = Visibility.Visible;
+        }
+        else
+        {
+            UseFrpCheck.IsChecked = false;
+            UseFrpCheck.Visibility = Visibility.Collapsed;
+        }
+        FrpPanel.Visibility = frp ? Visibility.Visible : Visibility.Collapsed;
+        VoxCard.Visibility = vox ? Visibility.Visible : Visibility.Collapsed;
+        AddressCard.Visibility = vox ? Visibility.Collapsed : Visibility.Visible;
+        HelpCard.Visibility = Visibility.Collapsed;
+        if (!frp && LauncherApp.I.Frp.IsRunning) LauncherApp.I.Frp.Stop();
+        if (!vox && LauncherApp.I.Vox.IsRunning) LauncherApp.I.Vox.Stop();
+        UpdateModeLayout();
+        UpdateVoxState();
+    }
+
+    private void UpdateModeLayout()
+    {
+        if (ServerCard is null) return;
+        var tag = ModeFrp.IsChecked == true ? "frp" : ModeVox.IsChecked == true ? "vox" : "server";
+        var voxHost = (VoxModeCombo.SelectedItem as ComboBoxItem)?.Tag?.ToString() != "join";
+        ServerCard.Visibility = tag == "vox" && !voxHost ? Visibility.Collapsed : Visibility.Visible;
+        VoxCard.Visibility = tag == "vox" ? Visibility.Visible : Visibility.Collapsed;
+        AddressCard.Visibility = tag == "vox" || !LauncherApp.I.Server.IsRunning
+            ? Visibility.Collapsed
+            : Visibility.Visible;
+        HelpCard.Visibility = Visibility.Collapsed;
+    }
+
     private void UseFrp_Checked(object sender, RoutedEventArgs e)
     {
         if (FrpPanel is not null)
-            FrpPanel.Visibility = UseFrpCheck.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;
+            FrpPanel.Visibility = UseFrpCheck.IsChecked == true && ModeFrp.IsChecked == true
+                ? Visibility.Visible
+                : Visibility.Collapsed;
     }
 
     private void FrpProvider_Changed(object sender, SelectionChangedEventArgs e)
@@ -129,6 +172,7 @@ public partial class MultiplayerPage : UserControl, IPage
         VoxJoinPanel.Visibility = host ? Visibility.Collapsed : Visibility.Visible;
         VoxPortPanel.Visibility = host ? Visibility.Visible : Visibility.Collapsed;
         VoxStartButton.Content = host ? "创建 VoxLink 房间" : "加入 VoxLink 房间";
+        UpdateModeLayout();
         UpdateVoxState();
     }
 
@@ -285,6 +329,8 @@ public partial class MultiplayerPage : UserControl, IPage
             await LauncherApp.I.Server.StartAsync(version, s.ServerMemoryMb, s.ServerPort, true,
                 ServerWhitelistCheck.IsChecked == true, progress, CancellationToken.None);
             ServerStopButton.IsEnabled = true;
+            ServerLogPanel.Visibility = Visibility.Visible;
+            AddressCard.Visibility = Visibility.Visible;
             VoxPortBox.Text = s.ServerPort.ToString();
             UpdateVoxState();
             _serverTimer.Start();
@@ -326,6 +372,8 @@ public partial class MultiplayerPage : UserControl, IPage
         await LauncherApp.I.Server.StopAsync();
         ServerStartButton.IsEnabled = true;
         ServerStatusText.Text = "服务器关了";
+        ServerLogPanel.Visibility = Visibility.Collapsed;
+        AddressCard.Visibility = Visibility.Collapsed;
         UpdateAddress();
     }
 
@@ -361,6 +409,7 @@ public partial class MultiplayerPage : UserControl, IPage
 
     private void AppendServerLog(string line)
     {
+        ServerLogPanel.Visibility = Visibility.Visible;
         if (ServerLogText.Text == "服务端日志会显示在这里…") ServerLogText.Text = "";
         var lines = (ServerLogText.Text + "\n" + line).Split('\n');
         ServerLogText.Text = string.Join("\n", lines.TakeLast(40));
@@ -374,12 +423,14 @@ public partial class MultiplayerPage : UserControl, IPage
         var address = server.PublicAddress ?? server.LocalAddress;
         if (!server.IsRunning)
         {
+            AddressCard.Visibility = Visibility.Collapsed;
             AddressText.Text = "开服后这里显示地址";
             Ipv6Text.Visibility = Visibility.Collapsed;
             CopyIpv6Button.Visibility = Visibility.Collapsed;
             MappingCallout.Visibility = Visibility.Collapsed;
             return;
         }
+        AddressCard.Visibility = ModeVox.IsChecked == true ? Visibility.Collapsed : Visibility.Visible;
 
         var s = LauncherApp.I.Settings;
         var frpActive = s.UseFrp && LauncherApp.I.Frp.IsRunning;

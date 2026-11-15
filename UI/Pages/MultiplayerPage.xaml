@@ -12,12 +12,20 @@
             <TextBlock Text="联机" Style="{StaticResource PageTitle}" />
             <TextBlock Text="在自己电脑上一键开个小服，朋友拿地址就能进"
                        Style="{StaticResource PageSubtitle}" />
+            <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
+                <RadioButton x:Name="ModeServer" Style="{StaticResource TabItem}" GroupName="MultiplayerMode"
+                             Content="自己开服" Tag="server" IsChecked="True" Checked="Mode_Changed" />
+                <RadioButton x:Name="ModeFrp" Style="{StaticResource TabItem}" GroupName="MultiplayerMode"
+                             Content="FRP 中继" Tag="frp" Checked="Mode_Changed" />
+                <RadioButton x:Name="ModeVox" Style="{StaticResource TabItem}" GroupName="MultiplayerMode"
+                             Content="VoxLink" Tag="vox" Checked="Mode_Changed" />
+            </StackPanel>
         </StackPanel>
 
         <ScrollViewer x:Name="PageScroll" Grid.Row="1" Margin="0,14,0,0" VerticalScrollBarVisibility="Auto"
                       HorizontalScrollBarVisibility="Disabled" PanningMode="VerticalOnly">
             <StackPanel Margin="0,0,10,30">
-                <Border Style="{StaticResource Card}">
+                <Border x:Name="ServerCard" Style="{StaticResource Card}">
                     <StackPanel>
                         <TextBlock Text="一键开服" Style="{StaticResource SectionTitle}" />
                         <TextBlock Text="服务端跑在你自己电脑上&#10;原版和 Fabric 都能一键准备"
@@ -52,7 +60,7 @@
                         <CheckBox x:Name="ServerWhitelistCheck" Content="开白名单（要自己去 whitelist.json 加人）"
                                   FontSize="10.5" Foreground="{DynamicResource TextMutedBrush}" Margin="0,6,0,0" />
 
-                        <CheckBox x:Name="UseFrpCheck" Content="用 FRP 中继转发"
+                        <CheckBox x:Name="UseFrpCheck" Content="用 FRP 中继转发" Visibility="Collapsed"
                                   FontSize="10.5" Foreground="{DynamicResource TextMutedBrush}" Margin="0,10,0,0"
                                   Checked="UseFrp_Checked" Unchecked="UseFrp_Checked" />
                         <StackPanel x:Name="FrpPanel" Visibility="Collapsed" Margin="0,8,0,0">
@@ -132,8 +140,8 @@
                                        VerticalAlignment="Center" Margin="14,0,0,0" />
                         </StackPanel>
 
-                        <Border Background="{DynamicResource HomeLogInnerBrush}" CornerRadius="4"
-                                Margin="0,10,0,0" Padding="7,5">
+                        <Border x:Name="ServerLogPanel" Background="{DynamicResource HomeLogInnerBrush}" CornerRadius="4"
+                                Margin="0,10,0,0" Padding="7,5" Visibility="Collapsed">
                             <ScrollViewer x:Name="ServerLogScroll" Height="96" VerticalScrollBarVisibility="Hidden"
                                           IsHitTestVisible="False">
                                 <TextBlock x:Name="ServerLogText" Text="服务端日志会显示在这里…"
@@ -145,7 +153,7 @@
                     </StackPanel>
                 </Border>
 
-                <Border Style="{StaticResource Card}" Margin="0,12,0,0">
+                <Border x:Name="VoxCard" Style="{StaticResource Card}" Margin="0,12,0,0" Visibility="Collapsed">
                     <StackPanel>
                         <TextBlock Text="VoxLink 房间码" Style="{StaticResource SectionTitle}" />
                         <TextBlock Text="不用公网 IP&#10;房主创建房间拿到 6 位房号，朋友加入后把本机地址填进游戏"
@@ -203,7 +211,7 @@
                     </StackPanel>
                 </Border>
 
-                <Border Style="{StaticResource Card}" Margin="0,12,0,0">
+                <Border x:Name="AddressCard" Style="{StaticResource Card}" Margin="0,12,0,0">
                     <StackPanel>
                         <TextBlock Text="地址" Style="{StaticResource SectionTitle}" />
                         <TextBlock x:Name="AddressText" Text="开服后这里显示地址"
@@ -246,7 +254,7 @@
                     </StackPanel>
                 </Border>
 
-                <Border Style="{StaticResource Card}" Margin="0,12,0,0">
+                <Border x:Name="HelpCard" Style="{StaticResource Card}" Margin="0,12,0,0" Visibility="Collapsed">
                     <StackPanel>
                         <TextBlock Text="怎么用" Style="{StaticResource SectionTitle}" />
                         <TextBlock Text="1. 选个原版或 Fabric 实例，设好内存和端口" Style="{StaticResource MutedText}" Margin="0,8,0,0" />
