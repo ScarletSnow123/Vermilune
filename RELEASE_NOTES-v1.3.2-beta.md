@@ -48,6 +48,12 @@
 - 无 API Key 时自动使用 CurseForge 镜像
 - 文件缺少 downloadUrl 时补查 download-url 接口
 
+## CurseForge
+
+- 公开版无 Key 时默认使用公共镜像，不再强制用户申请 Key
+- 文件没有 downloadUrl 时补查 download-url 接口
+- CDN 地址先探测再下载，受限文件提示手动补入
+
 ## 版本
 
 - v1.3.2-beta

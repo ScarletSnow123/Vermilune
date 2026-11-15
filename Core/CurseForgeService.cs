@@ -146,7 +146,7 @@ public sealed class CurseForgeService
                     Name = node["displayName"]?.GetValue<string>() ?? fileName,
                     VersionNumber = node["displayName"]?.GetValue<string>() ?? "",
                     FileName = fileName,
-                    Url = DownloadUrl(id, fileName, node["downloadUrl"]?.GetValue<string>()),
+                    Url = node["downloadUrl"]?.GetValue<string>() ?? "",
                     Sha1 = node["hashes"] is JsonArray hashes
                         ? hashes.OfType<JsonObject>().FirstOrDefault(x => x["algo"]?.GetValue<int>() == 1)?["value"]?.GetValue<string>() ?? ""
                         : "",
@@ -188,8 +188,7 @@ public sealed class CurseForgeService
             Name = o["displayName"]?.GetValue<string>() ?? fileName,
             VersionNumber = o["displayName"]?.GetValue<string>() ?? "",
             FileName = fileName,
-            Url = DownloadUrl(id, fileName, await ResolveDownloadUrlAsync(modId, fileId,
-                o["downloadUrl"]?.GetValue<string>(), ct)),
+            Url = await ResolveDownloadUrlAsync(modId, fileId, fileName, o["downloadUrl"]?.GetValue<string>(), ct) ?? "",
             Sha1 = o["hashes"] is JsonArray hashes
                 ? hashes.OfType<JsonObject>().FirstOrDefault(x => x["algo"]?.GetValue<int>() == 1)?["value"]?.GetValue<string>() ?? ""
                 : "",
@@ -226,12 +225,24 @@ public sealed class CurseForgeService
             }
             catch { }
         }
-        if (string.IsNullOrWhiteSpace(file.Url)) return;
         var target = Path.Combine(folder, Path.GetFileName(file.FileName));
-        if (!File.Exists(target))
+        var existing = File.Exists(target) && (file.Size <= 0 || new FileInfo(target).Length == file.Size);
+        if (!existing)
         {
+            if (string.IsNullOrWhiteSpace(file.Url))
+                throw new InvalidOperationException(
+                    $"CurseForge 文件 {file.FileName} 未提供自动下载地址，请到 CurseForge 文件页手动下载后放进 {folder}");
             progress?.Report(new DownloadProgress { Stage = "下载 Mod", Detail = file.FileName });
-            await HttpService.DownloadFileAsync(file.Url, target, file.Sha1, null, ct);
+            try
+            {
+                await HttpService.DownloadFileAsync(file.Url, target, file.Sha1, null, ct);
+            }
+            catch (Exception ex) when (!ct.IsCancellationRequested)
+            {
+                if (!File.Exists(target) || (file.Size > 0 && new FileInfo(target).Length != file.Size))
+                    throw new InvalidOperationException(
+                        $"CurseForge 文件 {file.FileName} 下载失败，可能需要手动下载后放进 {folder}：{ex.Message}");
+            }
         }
         installed.Add(file.FileName);
         foreach (var dep in file.Dependencies.Where(d => d.Kind == "required"))
@@ -398,23 +409,27 @@ public sealed class CurseForgeService
         return new ResourceInstallResult { Id = id, Name = name, Path = gameDir, Files = downloaded + overrides };
     }
 
-    private async Task<string?> ResolveDownloadUrlAsync(string modId, string fileId, string? apiUrl, CancellationToken ct)
+    private async Task<string?> ResolveDownloadUrlAsync(string modId, string fileId, string fileName, string? apiUrl, CancellationToken ct)
     {
         if (!string.IsNullOrWhiteSpace(apiUrl)) return apiUrl;
         try
         {
             var root = await GetJsonAsync($"{Base}/mods/{modId}/files/{fileId}/download-url", ct);
-            return root["data"]?.GetValue<string>();
+            var resolved = root["data"]?.GetValue<string>();
+            if (!string.IsNullOrWhiteSpace(resolved)) return resolved;
+        }
+        catch { }
+
+        if (!int.TryParse(fileId, out var id) || id <= 0 || string.IsNullOrWhiteSpace(fileName)) return null;
+        var derived = $"https://edge.forgecdn.net/files/{id / 1000}/{id % 1000}/{Uri.EscapeDataString(fileName)}";
+        try
+        {
+            // CurseForge 对可公开下载的文件会 302 到实际 CDN。不要直接下载，先探测。
+            using var request = new HttpRequestMessage(HttpMethod.Head, derived);
+            using var response = await HttpService.Client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, ct);
+            return (int)response.StatusCode is >= 200 and < 400 ? derived : null;
         }
         catch { return null; }
-    }
-
-    private static string DownloadUrl(int id, string fileName, string? apiUrl)
-    {
-        if (!string.IsNullOrWhiteSpace(apiUrl)) return apiUrl;
-        var first = id / 1000;
-        var second = id % 1000;
-        return $"https://edge.forgecdn.net/files/{first}/{second}/{Uri.EscapeDataString(fileName)}";
     }
 
     private static int LoaderType(string? loader) => loader?.ToLowerInvariant() switch

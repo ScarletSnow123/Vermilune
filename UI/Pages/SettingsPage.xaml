@@ -458,7 +458,7 @@
                         <Border Style="{StaticResource SettingRow}">
                             <Grid>
                                 <StackPanel>
-                                    <TextBlock Text="CurseForge API Key" FontSize="12.5" FontWeight="SemiBold" />
+                                    <TextBlock Text="CurseForge API Key（可选）" FontSize="12.5" FontWeight="SemiBold" />
                                 </StackPanel>
                                 <StackPanel HorizontalAlignment="Right" VerticalAlignment="Center" Orientation="Horizontal">
                                     <TextBox x:Name="CurseForgeKeyBox" Width="300" Height="32" Style="{StaticResource InputBox}"
