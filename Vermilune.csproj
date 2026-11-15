@@ -35,22 +35,6 @@
     <Resource Include="Assets\VermiluneIcon.png" />
   </ItemGroup>
 
-  <ItemGroup Condition="'$(VERMILUNE_CURSEFORGE_API_KEY)' != ''">
-    <EmbeddedResource Include="$(IntermediateOutputPath)curseforge.key"
-                      LogicalName="Vermilune.Secrets.CurseForgeKey" />
-  </ItemGroup>
-
-  <!-- 私有 CurseForge Key：从环境变量注入到 exe 资源，不写进源码。 -->
-  <Target Name="EmbedPrivateSecrets" BeforeTargets="PrepareResources"
-          Condition="'$(VERMILUNE_CURSEFORGE_API_KEY)' != ''">
-    <PropertyGroup>
-      <_CurseForgeSecretFile>$(IntermediateOutputPath)curseforge.key</_CurseForgeSecretFile>
-    </PropertyGroup>
-    <WriteLinesToFile File="$(_CurseForgeSecretFile)"
-                      Lines="$(VERMILUNE_CURSEFORGE_API_KEY)"
-                      Overwrite="true" WriteOnlyWhenDifferent="true" />
-  </Target>
-
   <ItemGroup>
     <PackageReference Include="Open.Nat" Version="2.1.0" />
     <PackageReference Include="System.Management" Version="10.0.15" />

@@ -54,6 +54,11 @@
 - 文件没有 downloadUrl 时补查 download-url 接口
 - CDN 地址先探测再下载，受限文件提示手动补入
 
+## 构建
+
+- 移除内部 CurseForge Key 注入和内部构建逻辑
+- 公开版只保留用户 Key + 公共镜像
+
 ## 版本
 
 - v1.3.2-beta
