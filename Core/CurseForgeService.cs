@@ -31,7 +31,7 @@ public sealed class CurseForgeService
         get
         {
             var configured = LauncherApp.I.Settings.CurseForgeApiKey;
-            return string.IsNullOrWhiteSpace(configured) ? EmbeddedSecrets.CurseForgeKey : configured.Trim();
+            return string.IsNullOrWhiteSpace(configured) ? "" : configured.Trim();
         }
     }
 
