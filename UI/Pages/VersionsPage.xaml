@@ -408,6 +408,8 @@
                                            Style="{StaticResource MutedText}" Margin="0,7,0,0" />
                                 <StackPanel Orientation="Horizontal" Margin="0,11,0,0">
                                     <Button Style="{StaticResource ButtonBase}" Height="32" Content="重命名" Click="Rename_Click" Margin="0,0,8,0" />
+                                    <Button Style="{StaticResource ButtonBase}" Height="32" Content="备份实例" Click="BackupInstance_Click" Margin="0,0,8,0" />
+                                    <Button Style="{StaticResource ButtonBase}" Height="32" Content="恢复备份" Click="RestoreInstance_Click" Margin="0,0,8,0" />
                                     <Button Style="{StaticResource DangerButton}" Height="32" Content="删掉这个版本" Click="Delete_Click" />
                                 </StackPanel>
                             </StackPanel>

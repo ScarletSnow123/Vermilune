@@ -98,3 +98,5 @@ Assets/                 # 图标与主页插图
 参考 PCL 的实现与 `Assets` 中的第三方素材不在 MIT 授权范围内，详见 [NOTICE](NOTICE)。PCL 使用《PCL 分发有限许可》，并非标准开源许可证；涉及相关部分时请阅读并遵守 [PCL 的许可要求](https://github.com/Meloong-Git/PCL/blob/master/LICENCE)。
 
 - 跨版本同步游戏设置、Xaero / JourneyMap 缓存和自定义数据
+
+- 实例备份 / 恢复与诊断包导出

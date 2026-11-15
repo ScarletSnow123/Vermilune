@@ -6,6 +6,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using Microsoft.Win32;
 using Vermilune.Core;
 using Vermilune.UI.Dialogs;
 
@@ -530,6 +531,68 @@ public partial class VersionsPage : UserControl, IPage
         _pendingSelect = newName;
         ReloadVersions();
         LauncherApp.I.Notify("已复制版本", $"{old} → {newName}");
+    }
+
+    private async void BackupInstance_Click(object sender, RoutedEventArgs e)
+    {
+        if (_selected is null) return;
+        Directory.CreateDirectory(InstanceBackupService.BackupRoot);
+        var safe = string.Concat(_selected.Id.Select(c => Path.GetInvalidFileNameChars().Contains(c) ? '_' : c));
+        var dialog = new SaveFileDialog
+        {
+            Title = "备份实例",
+            Filter = "Vermilune 备份|*.zip",
+            InitialDirectory = InstanceBackupService.BackupRoot,
+            FileName = $"{safe}-{DateTime.Now:yyyyMMdd-HHmm}.zip"
+        };
+        if (dialog.ShowDialog(Window.GetWindow(this)) != true) return;
+        try
+        {
+            var result = await InstanceBackupService.CreateAsync(_selected, dialog.FileName,
+                new Progress<string>(text => SaveStatus.Text = text));
+            SaveStatus.Text = $"备份完成：{result.Files} 个文件";
+            LauncherApp.I.Notify("实例已备份", dialog.FileName);
+        }
+        catch (Exception ex)
+        {
+            SaveStatus.Text = "备份失败";
+            MessageDialog.Show(Window.GetWindow(this), "备份失败", ex.Message, "知道了", danger: true);
+        }
+    }
+
+    private async void RestoreInstance_Click(object sender, RoutedEventArgs e)
+    {
+        if (_selected is null) return;
+        if (LauncherApp.I.Launch.IsRunning &&
+            string.Equals(LauncherApp.I.Launch.CurrentVersionId, _selected.Id, StringComparison.OrdinalIgnoreCase))
+        {
+            MessageDialog.Show(Window.GetWindow(this), "游戏正在运行", "先把游戏关了，再恢复备份", "知道了", danger: true);
+            return;
+        }
+        var dialog = new OpenFileDialog
+        {
+            Title = "选择实例备份",
+            Filter = "Vermilune 备份|*.zip",
+            InitialDirectory = Directory.Exists(InstanceBackupService.BackupRoot)
+                ? InstanceBackupService.BackupRoot
+                : AppPaths.DataDir
+        };
+        if (dialog.ShowDialog(Window.GetWindow(this)) != true) return;
+        if (!MessageDialog.Show(Window.GetWindow(this), "恢复备份",
+                "备份里的存档、配置、Mods 和资源包会覆盖当前实例中的同名文件，确定继续吗？",
+                "恢复", "取消")) return;
+        try
+        {
+            var count = await InstanceBackupService.RestoreAsync(_selected, dialog.FileName);
+            SaveStatus.Text = $"已恢复 {count} 个文件";
+            LauncherApp.I.Notify("备份已恢复", _selected.DisplayName);
+            ReloadVersions();
+        }
+        catch (Exception ex)
+        {
+            SaveStatus.Text = "恢复失败";
+            MessageDialog.Show(Window.GetWindow(this), "恢复失败", ex.Message, "知道了", danger: true);
+        }
     }
 
     private void Rename_Click(object sender, RoutedEventArgs e)
