@@ -2,6 +2,8 @@ using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
+using System.Windows.Input;
+using System.Windows.Controls.Primitives;
 using Vermilune.Core;
 using Vermilune.UI.Dialogs;
 
@@ -97,6 +99,28 @@ public partial class MultiplayerPage : UserControl, IPage
         }
     }
 
+    private void Page_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+    {
+        if (e.ChangedButton != MouseButton.Left) return;
+        if (FindAncestor<ButtonBase>(e.OriginalSource as DependencyObject) is not null ||
+            FindAncestor<TextBoxBase>(e.OriginalSource as DependencyObject) is not null ||
+            FindAncestor<ComboBox>(e.OriginalSource as DependencyObject) is not null ||
+            FindAncestor<ScrollBar>(e.OriginalSource as DependencyObject) is not null ||
+            FindAncestor<ListBox>(e.OriginalSource as DependencyObject) is not null)
+            return;
+        Window.GetWindow(this)?.DragMove();
+    }
+
+    private static T? FindAncestor<T>(DependencyObject? node) where T : DependencyObject
+    {
+        while (node is not null)
+        {
+            if (node is T match) return match;
+            node = VisualTreeHelper.GetParent(node);
+        }
+        return null;
+    }
+
     private void VoxMode_Changed(object sender, SelectionChangedEventArgs e)
     {
         if (VoxHostPanel is null) return;
@@ -104,13 +128,15 @@ public partial class MultiplayerPage : UserControl, IPage
         VoxHostPanel.Visibility = host ? Visibility.Visible : Visibility.Collapsed;
         VoxJoinPanel.Visibility = host ? Visibility.Collapsed : Visibility.Visible;
         VoxPortPanel.Visibility = host ? Visibility.Visible : Visibility.Collapsed;
-        VoxStartButton.Content = host ? "创建房间" : "加入房间";
+        VoxStartButton.Content = host ? "创建 VoxLink 房间" : "加入 VoxLink 房间";
+        UpdateVoxState();
     }
 
     private void UpdateVoxState()
     {
         var vox = LauncherApp.I.Vox;
-        VoxStartButton.IsEnabled = !vox.IsRunning;
+        var host = (VoxModeCombo.SelectedItem as ComboBoxItem)?.Tag?.ToString() != "join";
+        VoxStartButton.IsEnabled = !vox.IsRunning && (!host || LauncherApp.I.Server.IsRunning);
         VoxStopButton.IsEnabled = vox.IsRunning;
         VoxStatusText.Text = vox.Status ?? (vox.IsRunning ? "运行中" : "未启动");
         if (vox.IsHostRoom && !string.IsNullOrWhiteSpace(vox.RoomCode))
@@ -259,6 +285,8 @@ public partial class MultiplayerPage : UserControl, IPage
             await LauncherApp.I.Server.StartAsync(version, s.ServerMemoryMb, s.ServerPort, true,
                 ServerWhitelistCheck.IsChecked == true, progress, CancellationToken.None);
             ServerStopButton.IsEnabled = true;
+            VoxPortBox.Text = s.ServerPort.ToString();
+            UpdateVoxState();
             _serverTimer.Start();
             if (s.UseFrp)
             {
@@ -292,6 +320,8 @@ public partial class MultiplayerPage : UserControl, IPage
         ServerStopButton.IsEnabled = false;
         _serverTimer.Stop();
         LauncherApp.I.Frp.Stop();
+        if (LauncherApp.I.Vox.IsHostRoom) LauncherApp.I.Vox.Stop();
+        UpdateVoxState();
         ServerStatusText.Text = "正在关闭服务器…";
         await LauncherApp.I.Server.StopAsync();
         ServerStartButton.IsEnabled = true;
