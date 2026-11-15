@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 using Vermilune.Core;
 using Vermilune.UI.Dialogs;
 
@@ -77,6 +78,12 @@ public partial class SyncPage : UserControl, IPage
         s.SyncJourneyMap = SyncJourneyCheck.IsChecked == true;
         s.SyncCustomPaths = _paths.ToList();
         LauncherApp.I.Save();
+    }
+
+    private void SyncPathsList_PreviewMouseWheel(object sender, MouseWheelEventArgs e)
+    {
+        PageScroll.ScrollToVerticalOffset(PageScroll.VerticalOffset - e.Delta);
+        e.Handled = true;
     }
 
     private void AutoSync_Changed(object sender, RoutedEventArgs e) => SaveState();
