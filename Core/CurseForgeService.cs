@@ -8,6 +8,7 @@ namespace Vermilune.Core;
 public sealed class CurseForgeService
 {
     private const int GameId = 432;
+    private const string MirrorBase = "https://mod.mcimirror.top/curseforge/v1";
 
     private static string Proxy
     {
@@ -19,8 +20,11 @@ public sealed class CurseForgeService
     }
 
     private static bool UseProxy => !string.IsNullOrWhiteSpace(Proxy);
+    private static bool UseMirror => !UseProxy && string.IsNullOrWhiteSpace(Key);
 
-    private static string Base => UseProxy ? Proxy + "/v1" : "https://api.curseforge.com/v1";
+    private static string Base => UseProxy
+        ? Proxy + "/v1"
+        : UseMirror ? MirrorBase : "https://api.curseforge.com/v1";
 
     private static string Key
     {
@@ -31,7 +35,7 @@ public sealed class CurseForgeService
         }
     }
 
-    public bool HasKey => UseProxy || !string.IsNullOrWhiteSpace(Key);
+    public bool HasKey => UseProxy || UseMirror || !string.IsNullOrWhiteSpace(Key);
 
     private static HttpRequestMessage Request(string url)
     {
@@ -41,7 +45,7 @@ public sealed class CurseForgeService
             var token = LauncherApp.I.Settings.CurseForgeProxyToken.Trim();
             if (token.Length > 0) request.Headers.Add("x-vermilune-token", token);
         }
-        else
+        else if (!UseMirror)
         {
             request.Headers.Add("x-api-key", Key);
         }
@@ -184,7 +188,8 @@ public sealed class CurseForgeService
             Name = o["displayName"]?.GetValue<string>() ?? fileName,
             VersionNumber = o["displayName"]?.GetValue<string>() ?? "",
             FileName = fileName,
-            Url = DownloadUrl(id, fileName, o["downloadUrl"]?.GetValue<string>()),
+            Url = DownloadUrl(id, fileName, await ResolveDownloadUrlAsync(modId, fileId,
+                o["downloadUrl"]?.GetValue<string>(), ct)),
             Sha1 = o["hashes"] is JsonArray hashes
                 ? hashes.OfType<JsonObject>().FirstOrDefault(x => x["algo"]?.GetValue<int>() == 1)?["value"]?.GetValue<string>() ?? ""
                 : "",
@@ -211,7 +216,17 @@ public sealed class CurseForgeService
     private async Task InstallRecursiveAsync(ResourceFileInfo file, string folder, HashSet<string> seen,
         IProgress<DownloadProgress>? progress, CancellationToken ct, List<string> installed, int depth = 0)
     {
-        if (depth > 5 || string.IsNullOrWhiteSpace(file.Url)) return;
+        if (depth > 5) return;
+        if (!string.IsNullOrWhiteSpace(file.ProjectId) && !string.IsNullOrWhiteSpace(file.Id))
+        {
+            try
+            {
+                var resolved = await GetFileAsync(file.ProjectId, file.Id, ct);
+                if (resolved is not null) file = resolved;
+            }
+            catch { }
+        }
+        if (string.IsNullOrWhiteSpace(file.Url)) return;
         var target = Path.Combine(folder, Path.GetFileName(file.FileName));
         if (!File.Exists(target))
         {
@@ -381,6 +396,17 @@ public sealed class CurseForgeService
         progress?.Report(new DownloadProgress { Stage = "整合包安装完成", Current = 1, Total = 1, Detail = name });
         Log.Info($"本地 CurseForge 整合包安装完成：{name} → {id}，文件 {downloaded}，覆盖 {overrides}");
         return new ResourceInstallResult { Id = id, Name = name, Path = gameDir, Files = downloaded + overrides };
+    }
+
+    private async Task<string?> ResolveDownloadUrlAsync(string modId, string fileId, string? apiUrl, CancellationToken ct)
+    {
+        if (!string.IsNullOrWhiteSpace(apiUrl)) return apiUrl;
+        try
+        {
+            var root = await GetJsonAsync($"{Base}/mods/{modId}/files/{fileId}/download-url", ct);
+            return root["data"]?.GetValue<string>();
+        }
+        catch { return null; }
     }
 
     private static string DownloadUrl(int id, string fileName, string? apiUrl)

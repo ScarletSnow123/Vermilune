@@ -43,6 +43,11 @@
 - 版本页新增实例备份与恢复，打包存档、Mods、配置、资源包和地图缓存
 - 更多页新增诊断包导出，包含启动日志、游戏日志与环境信息
 
+## CurseForge
+
+- 无 API Key 时自动使用 CurseForge 镜像
+- 文件缺少 downloadUrl 时补查 download-url 接口
+
 ## 版本
 
 - v1.3.2-beta
