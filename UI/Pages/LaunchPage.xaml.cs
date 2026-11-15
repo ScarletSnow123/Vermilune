@@ -736,6 +736,27 @@ public partial class LaunchPage : UserControl, IPage, INotifyPropertyChanged
         SetStatus("正在检查运行环境…", LaunchState.Preparing);
         try
         {
+            if (app.Settings.AutoSyncData)
+            {
+                var source = app.Versions.Versions.FirstOrDefault(v => v.Id == app.Settings.SyncSourceVersionId)
+                             ?? app.Versions.Versions.FirstOrDefault(v => v.Id != version.Id);
+                if (source is not null && source.Id != version.Id)
+                {
+                    var selection = new DataSyncSelection(
+                        (GameSettingsScope)app.Settings.SyncOptionsScope,
+                        app.Settings.SyncXaero,
+                        app.Settings.SyncJourneyMap,
+                        app.Settings.SyncCustomPaths);
+                    try
+                    {
+                        await Task.Run(() => GameDataSyncService.Apply(source, new[] { version }, selection), _cts.Token);
+                    }
+                    catch (Exception ex)
+                    {
+                        Log.Warn("启动前自动同步失败：" + ex.Message);
+                    }
+                }
+            }
             await app.Launch.LaunchAsync(options, _cts.Token);
             if (_state == LaunchState.Running)
             {

@@ -98,6 +98,14 @@ public sealed class AppSettings
     public double BackgroundImageOpacity { get; set; } = 0.34;
     /// <summary>场景类壁纸是否播放自带的低清 preview.gif；关闭时使用拆包高清静帧。</summary>
     public bool WallpaperSceneAnimated { get; set; }
+
+    /// <summary>启动游戏前自动把源实例的数据同步到当前实例。</summary>
+    public bool AutoSyncData { get; set; }
+    public string SyncSourceVersionId { get; set; } = "";
+    public int SyncOptionsScope { get; set; } = (int)GameSettingsScope.Keybinds;
+    public bool SyncXaero { get; set; }
+    public bool SyncJourneyMap { get; set; }
+    public List<string> SyncCustomPaths { get; set; } = new();
     /// <summary>动画强度：off / smooth / fancy。</summary>
     public string AnimationMode { get; set; } = "smooth";
 
@@ -173,6 +181,15 @@ public sealed class AppSettings
             BackgroundMode = "default";
         ServerMemoryMb = Math.Clamp(ServerMemoryMb, 1024, 16384);
         ServerPort = Math.Clamp(ServerPort, 1024, 65535);
+        SyncOptionsScope = Math.Clamp(SyncOptionsScope, 0, (int)GameSettingsScope.All);
+        SyncCustomPaths ??= new List<string>();
+        SyncCustomPaths = SyncCustomPaths
+            .Where(x => !string.IsNullOrWhiteSpace(x))
+            .Select(x => x.Trim().Replace('/', '\\').TrimStart('\\'))
+            .Where(x => !x.Contains("..", StringComparison.Ordinal))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .Take(80)
+            .ToList();
         FrpServerPort = Math.Clamp(FrpServerPort, 1, 65535);
         FrpRemotePort = Math.Clamp(FrpRemotePort, 1, 65535);
         BackgroundImageOpacity = Math.Clamp(BackgroundImageOpacity, 0.0, 1.0);

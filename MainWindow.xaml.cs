@@ -602,6 +602,7 @@ public partial class MainWindow : Window
             "download" => new DownloadPage(),
             "versions" => new VersionsPage(),
             "multiplayer" => new MultiplayerPage(),
+            "sync" => new SyncPage(),
             "settings" => new SettingsPage(),
             "error" => new ErrorPage(),
             "more" => new MorePage(),
@@ -615,6 +616,7 @@ public partial class MainWindow : Window
         NavDownload.IsChecked = key == "download";
         NavVersions.IsChecked = key == "versions";
         NavMultiplayer.IsChecked = key == "multiplayer";
+        NavSync.IsChecked = key == "sync";
         NavSettings.IsChecked = key == "settings";
         NavError.IsChecked = key == "error";
         NavMore.IsChecked = key == "more";
