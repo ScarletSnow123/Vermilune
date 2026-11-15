@@ -147,6 +147,63 @@
 
                 <Border Style="{StaticResource Card}" Margin="0,12,0,0">
                     <StackPanel>
+                        <TextBlock Text="VoxLink 房间码" Style="{StaticResource SectionTitle}" />
+                        <TextBlock Text="不用公网 IP&#10;房主创建房间拿到 6 位房号，朋友加入后把本机地址填进游戏"
+                                   Style="{StaticResource MutedText}" Margin="0,6,0,0" TextWrapping="Wrap" />
+                        <Grid Margin="0,12,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="180" />
+                                <ColumnDefinition Width="12" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="12" />
+                                <ColumnDefinition Width="110" />
+                            </Grid.ColumnDefinitions>
+                            <StackPanel>
+                                <TextBlock Text="模式" Style="{StaticResource FormLabel}" />
+                                <ComboBox x:Name="VoxModeCombo" Height="34" SelectionChanged="VoxMode_Changed">
+                                    <ComboBoxItem Content="创建房间" Tag="host" />
+                                    <ComboBoxItem Content="加入房间" Tag="join" />
+                                </ComboBox>
+                            </StackPanel>
+                            <StackPanel x:Name="VoxHostPanel" Grid.Column="2">
+                                <TextBlock Text="房间名" Style="{StaticResource FormLabel}" />
+                                <TextBox x:Name="VoxRoomNameBox" Style="{StaticResource InputBox}" Height="34" />
+                            </StackPanel>
+                            <StackPanel x:Name="VoxJoinPanel" Grid.Column="2" Visibility="Collapsed">
+                                <TextBlock Text="6 位房间码" Style="{StaticResource FormLabel}" />
+                                <TextBox x:Name="VoxCodeBox" Style="{StaticResource InputBox}" Height="34" MaxLength="6" />
+                            </StackPanel>
+                            <StackPanel x:Name="VoxPortPanel" Grid.Column="4">
+                                <TextBlock Text="本地端口" Style="{StaticResource FormLabel}" />
+                                <TextBox x:Name="VoxPortBox" Style="{StaticResource InputBox}" Height="34" />
+                            </StackPanel>
+                        </Grid>
+                        <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
+                            <Button x:Name="VoxStartButton" Style="{StaticResource PrimaryButton}" Height="34"
+                                    Content="创建房间" Click="VoxStart_Click" />
+                            <Button x:Name="VoxStopButton" Style="{StaticResource ButtonBase}" Height="34"
+                                    Content="停止" Margin="8,0,0,0" IsEnabled="False" Click="VoxStop_Click" />
+                            <TextBlock x:Name="VoxStatusText" Style="{StaticResource MutedText}"
+                                       VerticalAlignment="Center" Margin="12,0,0,0" Text="未启动" />
+                        </StackPanel>
+                        <Border Background="{DynamicResource HomeLogInnerBrush}" CornerRadius="4"
+                                Margin="0,9,0,0" Padding="8,6">
+                            <StackPanel>
+                                <TextBlock x:Name="VoxResultText" Text=""
+                                           FontFamily="{DynamicResource MonoFont}" FontSize="14"
+                                           Foreground="{DynamicResource AccentBrush}" />
+                                <Button x:Name="VoxCopyButton" Style="{StaticResource ButtonBase}" Height="30"
+                                        Content="复制" HorizontalAlignment="Left" Margin="0,7,0,0"
+                                        Visibility="Collapsed" Click="VoxCopy_Click" />
+                            </StackPanel>
+                        </Border>
+                        <TextBlock Text="创建房间前先开好本机服务端；加入房间后把显示的本机地址填进多人游戏"
+                                   Style="{StaticResource MutedText}" Margin="0,7,0,0" TextWrapping="Wrap" />
+                    </StackPanel>
+                </Border>
+
+                <Border Style="{StaticResource Card}" Margin="0,12,0,0">
+                    <StackPanel>
                         <TextBlock Text="地址" Style="{StaticResource SectionTitle}" />
                         <TextBlock x:Name="AddressText" Text="开服后这里显示地址"
                                    FontFamily="{DynamicResource MonoFont}" FontSize="16"

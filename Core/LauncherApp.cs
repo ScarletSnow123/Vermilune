@@ -19,6 +19,7 @@ public sealed class LauncherApp
     public MinecraftServerService Server { get; } = new();
     public UpnpService Upnp { get; } = new();
     public FrpService Frp { get; } = new();
+    public VoxLinkService Vox { get; } = new();
     public ModrinthService Modrinth { get; } = new();
     public CurseForgeService CurseForge { get; } = new();
     public CrashAnalysis? LastAnalysis { get; set; }

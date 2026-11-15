@@ -19,6 +19,7 @@ public partial class MultiplayerPage : UserControl, IPage
         _serverTimer = new System.Windows.Threading.DispatcherTimer { Interval = TimeSpan.FromSeconds(2) };
         _serverTimer.Tick += async (_, _) => await CheckServerPortAsync();
         LauncherApp.I.Server.LogReceived += line => Dispatcher.BeginInvoke(new Action(() => AppendServerLog(line)));
+        LauncherApp.I.Vox.Changed += () => Dispatcher.BeginInvoke(new Action(UpdateVoxState));
         LauncherApp.I.Server.Ready += () => Dispatcher.BeginInvoke(new Action(() =>
         {
             ServerStatusText.Text = "服务端好了";
@@ -57,6 +58,12 @@ public partial class MultiplayerPage : UserControl, IPage
         ServerStartButton.IsEnabled = !LauncherApp.I.Server.IsRunning;
         ServerStopButton.IsEnabled = LauncherApp.I.Server.IsRunning;
         ServerStatusText.Text = LauncherApp.I.Server.IsRunning ? "服务端运行中" : "没启动";
+        if (VoxModeCombo.SelectedIndex < 0) VoxModeCombo.SelectedIndex = 0;
+        if (string.IsNullOrWhiteSpace(VoxRoomNameBox.Text))
+            VoxRoomNameBox.Text = LauncherApp.I.CurrentVersion?.DisplayName ?? "Vermilune 房间";
+        if (string.IsNullOrWhiteSpace(VoxPortBox.Text))
+            VoxPortBox.Text = s.ServerPort.ToString();
+        UpdateVoxState();
         if (LauncherApp.I.Server.IsRunning) _serverTimer.Start();
         UpdateAddress();
     }
@@ -88,6 +95,109 @@ public partial class MultiplayerPage : UserControl, IPage
         {
             Log.Warn("打开 OpenFrp 控制台失败：" + ex.Message);
         }
+    }
+
+    private void VoxMode_Changed(object sender, SelectionChangedEventArgs e)
+    {
+        if (VoxHostPanel is null) return;
+        var host = (VoxModeCombo.SelectedItem as ComboBoxItem)?.Tag?.ToString() != "join";
+        VoxHostPanel.Visibility = host ? Visibility.Visible : Visibility.Collapsed;
+        VoxJoinPanel.Visibility = host ? Visibility.Collapsed : Visibility.Visible;
+        VoxPortPanel.Visibility = host ? Visibility.Visible : Visibility.Collapsed;
+        VoxStartButton.Content = host ? "创建房间" : "加入房间";
+    }
+
+    private void UpdateVoxState()
+    {
+        var vox = LauncherApp.I.Vox;
+        VoxStartButton.IsEnabled = !vox.IsRunning;
+        VoxStopButton.IsEnabled = vox.IsRunning;
+        VoxStatusText.Text = vox.Status ?? (vox.IsRunning ? "运行中" : "未启动");
+        if (vox.IsHostRoom && !string.IsNullOrWhiteSpace(vox.RoomCode))
+        {
+            VoxResultText.Text = "房间码：" + vox.RoomCode;
+            VoxCopyButton.Visibility = Visibility.Visible;
+        }
+        else if (!string.IsNullOrWhiteSpace(vox.BridgeAddress))
+        {
+            VoxResultText.Text = "本机地址：" + vox.BridgeAddress;
+            VoxCopyButton.Visibility = Visibility.Visible;
+        }
+        else if (!string.IsNullOrWhiteSpace(vox.RoomCode))
+        {
+            VoxResultText.Text = "房间码：" + vox.RoomCode;
+            VoxCopyButton.Visibility = Visibility.Visible;
+        }
+        else
+        {
+            VoxResultText.Text = "";
+            VoxCopyButton.Visibility = Visibility.Collapsed;
+        }
+    }
+
+    private async void VoxStart_Click(object sender, RoutedEventArgs e)
+    {
+        var host = (VoxModeCombo.SelectedItem as ComboBoxItem)?.Tag?.ToString() != "join";
+        var progress = new Progress<DownloadProgress>(p =>
+            VoxStatusText.Text = p.Stage + (string.IsNullOrWhiteSpace(p.Detail) ? "" : " · " + p.Detail));
+        VoxStartButton.IsEnabled = false;
+        try
+        {
+            if (host)
+            {
+                if (!LauncherApp.I.Server.IsRunning)
+                {
+                    VoxStatusText.Text = "先点上面的「一键开服」";
+                    VoxStartButton.IsEnabled = true;
+                    return;
+                }
+                if (!int.TryParse(VoxPortBox.Text.Trim(), out var port)) port = 25565;
+                var name = string.IsNullOrWhiteSpace(VoxRoomNameBox.Text.Trim())
+                    ? "Vermilune 房间"
+                    : VoxRoomNameBox.Text.Trim();
+                VoxStatusText.Text = "正在创建房间…";
+                await LauncherApp.I.Vox.StartHostAsync(name, port, progress, CancellationToken.None);
+            }
+            else
+            {
+                var code = VoxCodeBox.Text.Trim().ToUpperInvariant();
+                if (code.Length != 6)
+                {
+                    VoxStatusText.Text = "房间码要 6 位";
+                    VoxStartButton.IsEnabled = true;
+                    return;
+                }
+                VoxStatusText.Text = "正在加入房间…";
+                await LauncherApp.I.Vox.JoinAsync(code, progress, CancellationToken.None);
+            }
+            UpdateVoxState();
+        }
+        catch (Exception ex)
+        {
+            VoxStatusText.Text = "失败：" + ex.Message;
+            VoxStartButton.IsEnabled = true;
+            MessageDialog.Show(Window.GetWindow(this), "VoxLink 失败", ex.Message, "知道了", danger: true);
+        }
+    }
+
+    private void VoxStop_Click(object sender, RoutedEventArgs e)
+    {
+        LauncherApp.I.Vox.Stop();
+        UpdateVoxState();
+    }
+
+    private void VoxCopy_Click(object sender, RoutedEventArgs e)
+    {
+        var text = VoxResultText.Text?.Trim() ?? "";
+        if (text.Length == 0) return;
+        try
+        {
+            var separator = text.Contains('：') ? text.IndexOf('：') : text.IndexOf(':');
+            var value = separator >= 0 ? text[(separator + 1)..].Trim() : text;
+            Clipboard.SetText(value);
+            LauncherApp.I.Notify("已复制", value);
+        }
+        catch { }
     }
 
     private async void StartServer_Click(object sender, RoutedEventArgs e)

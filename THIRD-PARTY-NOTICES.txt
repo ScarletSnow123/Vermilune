@@ -21,3 +21,7 @@ Used to extract a high-resolution still image from Wallpaper Engine scene packag
 Microsoft WebView2 (Microsoft Software License Terms)
 https://learn.microsoft.com/microsoft-edge/webview2/
 Used to render Wallpaper Engine web wallpapers inside a hidden capture window.
+
+VoxLink (third-party room-code networking service)
+https://github.com/AUGUHDAR/VoxLink-app
+The VoxLink CLI client is downloaded on demand when the user enables VoxLink rooms.

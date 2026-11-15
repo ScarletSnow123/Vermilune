@@ -48,6 +48,7 @@ public partial class MainWindow : Window
                 Closed += (_, _) =>
         {
             LauncherApp.I.Frp.Stop();
+            LauncherApp.I.Vox.Stop();
             LauncherApp.I.Server.Dispose();
             _webRenderer?.Dispose();
             _gifTimer?.Stop();
