@@ -11,6 +11,7 @@ public partial class ResourceBrowser : UserControl
 {
     private ResourceType _type = ResourceType.Modpack;
     private ResourceSource _source = ResourceSource.Modrinth;
+    private bool _allSources = true;
     private readonly List<ResourceProject> _projects = new();
     private List<ResourceFileInfo> _files = new();
     private ResourceProject? _selected;
@@ -29,6 +30,7 @@ public partial class ResourceBrowser : UserControl
     private string? _snapshotLoader;
     private ResourceType _snapshotType;
     private ResourceSource _snapshotSource;
+    private bool _snapshotAll;
 
     public ResourceBrowser()
     {
@@ -102,7 +104,8 @@ public partial class ResourceBrowser : UserControl
     private void Source_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
         if (!_initialized || SourceCombo is null) return;
-        _source = SourceCombo.SelectedIndex == 1 ? ResourceSource.CurseForge : ResourceSource.Modrinth;
+        _allSources = SourceCombo.SelectedIndex == 0;
+        _source = SourceCombo.SelectedIndex == 2 ? ResourceSource.CurseForge : ResourceSource.Modrinth;
         var needKey = _source == ResourceSource.CurseForge && !LauncherApp.I.CurseForge.HasKey;
         KeyButton.Visibility = needKey ? Visibility.Visible : Visibility.Collapsed;
         _ = SearchAsync(true);
@@ -120,6 +123,13 @@ public partial class ResourceBrowser : UserControl
         _ = SearchAsync(false);
     }
 
+    private static async Task<List<ResourceProject>> SafeSearch(Func<Task<List<ResourceProject>>> action)
+    {
+        try { return await action(); }
+        catch (OperationCanceledException) { throw; }
+        catch (Exception ex) { Log.Warn("来源搜索失败：" + ex.Message); return new(); }
+    }
+
     private async Task SearchAsync(bool reset)
     {
         // 快速切换资源类型时，取消上一次搜索，只让最后一次请求更新界面。
@@ -132,10 +142,11 @@ public partial class ResourceBrowser : UserControl
         if (mc == "全部版本") mc = null;
         var loader = SelectedLoader();
         if (!reset && (query != _snapshotQuery || mc != _snapshotMc || loader != _snapshotLoader ||
-                       _type != _snapshotType || _source != _snapshotSource))
+                       _type != _snapshotType || _source != _snapshotSource || _allSources != _snapshotAll))
             reset = true;
+        if (_allSources) reset = true;
 
-        if (_source == ResourceSource.CurseForge && !LauncherApp.I.CurseForge.HasKey)
+        if (!_allSources && _source == ResourceSource.CurseForge && !LauncherApp.I.CurseForge.HasKey)
         {
             SearchStatus.Text = "";
             KeyButton.Visibility = Visibility.Visible;
@@ -160,6 +171,7 @@ public partial class ResourceBrowser : UserControl
                 _snapshotLoader = loader;
                 _snapshotType = _type;
                 _snapshotSource = _source;
+                _snapshotAll = _allSources;
                 _projects.Clear();
                 _selected = null;
                 DetailTitle.Text = "选择一个项目";
@@ -170,9 +182,25 @@ public partial class ResourceBrowser : UserControl
             }
             SearchStatus.Text = "搜索中…";
             var searchQuery = await ChineseSearch.ResolveAsync(query, timeout.Token);
-            var list = _source == ResourceSource.Modrinth
-                ? await LauncherApp.I.Modrinth.SearchAsync(_type, searchQuery, mc, loader, _offset, timeout.Token)
-                : await LauncherApp.I.CurseForge.SearchAsync(_type, searchQuery, mc, loader, _offset, timeout.Token);
+            var list = new List<ResourceProject>();
+            if (_allSources)
+            {
+                var tasks = new List<Task<List<ResourceProject>>>
+                {
+                    SafeSearch(() => LauncherApp.I.Modrinth.SearchAsync(_type, searchQuery, mc, loader, 0, timeout.Token))
+                };
+                if (LauncherApp.I.CurseForge.HasKey)
+                    tasks.Add(SafeSearch(() => LauncherApp.I.CurseForge.SearchAsync(_type, searchQuery, mc, loader, 0, timeout.Token)));
+                var results = await Task.WhenAll(tasks);
+                foreach (var part in results) list.AddRange(part);
+                list = list.OrderByDescending(x => x.Downloads).ToList();
+            }
+            else
+            {
+                list = _source == ResourceSource.Modrinth
+                    ? await LauncherApp.I.Modrinth.SearchAsync(_type, searchQuery, mc, loader, _offset, timeout.Token)
+                    : await LauncherApp.I.CurseForge.SearchAsync(_type, searchQuery, mc, loader, _offset, timeout.Token);
+            }
             if (version != _searchVersion) return;
             _projects.AddRange(list);
             _offset = _projects.Count;
@@ -183,7 +211,7 @@ public partial class ResourceBrowser : UserControl
                 : $"{_projects.Count} 个结果";
             EmptyText.Visibility = _projects.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
             EmptyText.Text = "没有找到匹配的项目";
-            LoadMoreButton.Visibility = list.Count >= 20 ? Visibility.Visible : Visibility.Collapsed;
+            LoadMoreButton.Visibility = !_allSources && list.Count >= 20 ? Visibility.Visible : Visibility.Collapsed;
             if (reset && _projects.Count > 0) ProjectList.SelectedIndex = 0;
             _searched = true;
         }
@@ -252,7 +280,7 @@ public partial class ResourceBrowser : UserControl
             if (mc == "全部版本") mc = null;
             var loader = SelectedLoader();
             List<ResourceFileInfo> files;
-            if (_source == ResourceSource.Modrinth)
+            if (project.Source == ResourceSource.Modrinth)
             {
                 files = await LauncherApp.I.Modrinth.GetFilesAsync(project, mc, loader, timeout.Token);
             }
@@ -271,7 +299,7 @@ public partial class ResourceBrowser : UserControl
             else VersionCombo.SelectedIndex = _files.Count > 0 ? 0 : -1;
             InstallStatus.Text = _files.Count == 0 ? "没有找到与当前筛选条件兼容的版本" : $"{_files.Count} 个可用版本";
             InstallButton.IsEnabled = _files.Count > 0 && !_installing;
-            _versionHasMore = _source == ResourceSource.CurseForge && files.Count >= 50 && _files.Count < 500;
+            _versionHasMore = project.Source == ResourceSource.CurseForge && files.Count >= 50 && _files.Count < 500;
             LoadMoreVersionsButton.Visibility = _versionHasMore ? Visibility.Visible : Visibility.Collapsed;
             LoadMoreVersionsButton.IsEnabled = true;
         }
@@ -329,7 +357,7 @@ public partial class ResourceBrowser : UserControl
             try
             {
                 var progress = new Progress<DownloadProgress>(UpdateProgress);
-                var result = _source == ResourceSource.Modrinth
+                var result = _selected.Source == ResourceSource.Modrinth
                     ? await LauncherApp.I.Modrinth.InstallModpackAsync(_selected, file, progress, _cts.Token)
                     : await LauncherApp.I.CurseForge.InstallModpackAsync(_selected, file, progress, _cts.Token);
                 LauncherApp.I.ReloadVersions();
@@ -364,7 +392,7 @@ public partial class ResourceBrowser : UserControl
         try
         {
             var progress = new Progress<DownloadProgress>(UpdateProgress);
-            var result = _source == ResourceSource.Modrinth
+            var result = _selected.Source == ResourceSource.Modrinth
                 ? (_type == ResourceType.Mod
                     ? await LauncherApp.I.Modrinth.InstallModAsync(_selected, file, target, progress, _cts.Token)
                     : await LauncherApp.I.Modrinth.InstallResourceAsync(_selected, file, target, _type, progress, _cts.Token))
@@ -429,7 +457,7 @@ public partial class ResourceBrowser : UserControl
     private void OpenWebsite_Click(object sender, RoutedEventArgs e)
     {
         if (_selected is not null && !string.IsNullOrWhiteSpace(_selected.WebsiteUrl)) Shell.OpenUrl(_selected.WebsiteUrl);
-        else if (_selected is not null && _source == ResourceSource.Modrinth)
+        else if (_selected is not null && _selected.Source == ResourceSource.Modrinth)
             Shell.OpenUrl("https://modrinth.com/" + (_type == ResourceType.Modpack ? "modpack" : _type == ResourceType.ResourcePack ? "resourcepack" : _type == ResourceType.Shader ? "shader" : "mod") + "/" + _selected.Slug);
         else if (_selected is not null)
             Shell.OpenUrl("https://www.curseforge.com/minecraft/" + (_type == ResourceType.Modpack ? "modpacks" : _type == ResourceType.ResourcePack ? "texture-packs" : _type == ResourceType.Shader ? "shaders" : "mc-mods") + "/" + _selected.Slug);
