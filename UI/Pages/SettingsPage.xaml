@@ -240,6 +240,48 @@
                     </StackPanel>
                 </Border>
 
+                <!-- 游戏设置同步 -->
+                <Border Style="{StaticResource Card}" Margin="0,12,0,0">
+                    <StackPanel>
+                        <TextBlock Text="游戏设置同步" Style="{StaticResource SectionHeader}" />
+                        <TextBlock Text="把一个实例的按键、语言、资源包和画面选项同步到其他版本&#10;同步前会备份目标实例的 options.txt"
+                                   Style="{StaticResource Hint}" />
+                        <Grid Margin="0,12,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="12" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <StackPanel>
+                                <TextBlock Text="源实例" Style="{StaticResource Hint}" />
+                                <ComboBox x:Name="SyncSourceCombo" Height="32" Margin="0,4,0,0"
+                                          DisplayMemberPath="DisplayName" />
+                            </StackPanel>
+                            <StackPanel Grid.Column="2">
+                                <TextBlock Text="目标实例" Style="{StaticResource Hint}" />
+                                <ComboBox x:Name="SyncTargetCombo" Height="32" Margin="0,4,0,0"
+                                          DisplayMemberPath="DisplayName" />
+                            </StackPanel>
+                        </Grid>
+                        <WrapPanel Margin="0,10,0,0">
+                            <CheckBox x:Name="SyncKeybindsCheck" Content="按键设置" IsChecked="True" Margin="0,0,14,0" />
+                            <CheckBox x:Name="SyncGameCheck" Content="游戏 / 画面设置" Margin="0,0,14,0" />
+                            <CheckBox x:Name="SyncLangCheck" Content="语言" Margin="0,0,14,0" />
+                            <CheckBox x:Name="SyncPacksCheck" Content="资源包" />
+                        </WrapPanel>
+                        <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
+                            <Button Style="{StaticResource PrimaryButton}" Height="32" Content="同步到目标"
+                                    Click="SyncOne_Click" />
+                            <Button Style="{StaticResource ButtonBase}" Height="32" Content="同步到所有其他版本"
+                                    Margin="8,0,0,0" Click="SyncAll_Click" />
+                            <TextBlock x:Name="SyncStatusText" Style="{StaticResource Hint}"
+                                       VerticalAlignment="Center" Margin="12,0,0,0" />
+                        </StackPanel>
+                        <TextBlock Text="游戏运行时不要同步，退出游戏后设置才会稳定写回 options.txt"
+                                   Style="{StaticResource Hint}" Margin="0,8,0,0" />
+                    </StackPanel>
+                </Border>
+
                 <!-- 启动 -->
                 <Border Style="{StaticResource Card}" Margin="0,12,0,0">
                     <StackPanel>

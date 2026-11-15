@@ -63,6 +63,18 @@ public partial class SettingsPage : UserControl, IPage
             CustomBackgroundPanel.Visibility = bgMode == "custom" ? Visibility.Visible : Visibility.Collapsed;
             SceneWallpaperRow.Visibility = bgMode == "wallpaper" ? Visibility.Visible : Visibility.Collapsed;
             SceneAnimatedCheck.IsChecked = s.WallpaperSceneAnimated;
+            var versions = LauncherApp.I.Versions.Versions.ToList();
+            var sourceId = (SyncSourceCombo.SelectedItem as VersionInfo)?.Id;
+            var targetId = (SyncTargetCombo.SelectedItem as VersionInfo)?.Id;
+            SyncSourceCombo.ItemsSource = versions;
+            SyncTargetCombo.ItemsSource = versions;
+            SyncSourceCombo.SelectedItem = versions.FirstOrDefault(v => v.Id == sourceId)
+                                          ?? versions.FirstOrDefault(v => v.Id == LauncherApp.I.CurrentVersion?.Id)
+                                          ?? versions.FirstOrDefault();
+            SyncTargetCombo.SelectedItem = versions.FirstOrDefault(v => v.Id == targetId)
+                                          ?? versions.FirstOrDefault(v => v.Id != (SyncSourceCombo.SelectedItem as VersionInfo)?.Id)
+                                          ?? versions.FirstOrDefault();
+            SyncStatusText.Text = versions.Count == 0 ? "还没有可用实例" : "";
             BgPathText.Text = bgMode switch
             {
                 "wallpaper" => "跟随 Wallpaper Engine 当前壁纸；未检测到时自动隐藏背景",
@@ -214,6 +226,85 @@ public partial class SettingsPage : UserControl, IPage
         LauncherApp.I.Notify("背景已更新", LauncherApp.I.Settings.WallpaperSceneAnimated
             ? "场景壁纸使用动态预览（低清）"
             : "场景壁纸使用高清静帧");
+    }
+
+    private GameSettingsScope SyncScope()
+    {
+        var scope = GameSettingsScope.None;
+        if (SyncKeybindsCheck.IsChecked == true) scope |= GameSettingsScope.Keybinds;
+        if (SyncGameCheck.IsChecked == true) scope |= GameSettingsScope.Game;
+        if (SyncLangCheck.IsChecked == true) scope |= GameSettingsScope.Language;
+        if (SyncPacksCheck.IsChecked == true) scope |= GameSettingsScope.ResourcePacks;
+        return scope;
+    }
+
+    private void SyncOne_Click(object sender, RoutedEventArgs e)
+    {
+        if (SyncSourceCombo.SelectedItem is not VersionInfo source ||
+            SyncTargetCombo.SelectedItem is not VersionInfo target)
+        {
+            SyncStatusText.Text = "先选源实例和目标实例";
+            return;
+        }
+        if (source.Id == target.Id)
+        {
+            SyncStatusText.Text = "源和目标不能是同一个实例";
+            return;
+        }
+        var scope = SyncScope();
+        if (scope == GameSettingsScope.None)
+        {
+            SyncStatusText.Text = "至少勾一项要同步的内容";
+            return;
+        }
+        try
+        {
+            var result = GameSettingsService.Apply(source, new[] { target }, scope);
+            SyncStatusText.Text = result.TargetCount > 0
+                ? $"已同步到「{target.DisplayName}」"
+                : "目标已经是这些设置，没有变化";
+            LauncherApp.I.Notify("游戏设置已同步", target.DisplayName);
+        }
+        catch (Exception ex)
+        {
+            SyncStatusText.Text = "同步失败：" + ex.Message;
+            MessageDialog.Show(Window.GetWindow(this), "同步失败", ex.Message, "知道了", danger: true);
+        }
+    }
+
+    private void SyncAll_Click(object sender, RoutedEventArgs e)
+    {
+        if (SyncSourceCombo.SelectedItem is not VersionInfo source)
+        {
+            SyncStatusText.Text = "先选源实例";
+            return;
+        }
+        var scope = SyncScope();
+        if (scope == GameSettingsScope.None)
+        {
+            SyncStatusText.Text = "至少勾一项要同步的内容";
+            return;
+        }
+        var targets = LauncherApp.I.Versions.Versions.Where(v => v.Id != source.Id).ToList();
+        if (targets.Count == 0)
+        {
+            SyncStatusText.Text = "没有其他实例";
+            return;
+        }
+        if (!MessageDialog.Show(Window.GetWindow(this), "同步到所有版本",
+                $"会把「{source.DisplayName}」的设置同步到另外 {targets.Count} 个实例，确定吗？",
+                "开始同步", "取消")) return;
+        try
+        {
+            var result = GameSettingsService.Apply(source, targets, scope);
+            SyncStatusText.Text = $"已同步 {result.TargetCount} 个实例";
+            LauncherApp.I.Notify("游戏设置已同步", $"{result.TargetCount} 个实例");
+        }
+        catch (Exception ex)
+        {
+            SyncStatusText.Text = "同步失败：" + ex.Message;
+            MessageDialog.Show(Window.GetWindow(this), "同步失败", ex.Message, "知道了", danger: true);
+        }
     }
 
     private void BackgroundMode_Checked(object sender, RoutedEventArgs e)
