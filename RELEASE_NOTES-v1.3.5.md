@@ -1,0 +1,4 @@
+- Forge / NeoForge 下载和部署器内部地址增加 BMCLAPI 回退，修复 502
+- 资源搜索支持完整 Minecraft 版本清单，并默认同时搜索 Modrinth 与 CurseForge
+- CurseForge 公开版保持可搜可下：无 Key 走公共镜像，有 Key 走官方 API
+- 保留联机页、跨版本同步、实例备份恢复和诊断包功能

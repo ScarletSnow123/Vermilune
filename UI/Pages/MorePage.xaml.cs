@@ -23,7 +23,7 @@ public partial class MorePage : UserControl, IPage
     {
         try
         {
-            EnvText.Text = $"Vermilune 1.3.4\n.NET {Environment.Version}\n{Environment.OSVersion}\n数据目录：{AppPaths.DataDir}";
+            EnvText.Text = $"Vermilune 1.3.5\n.NET {Environment.Version}\n{Environment.OSVersion}\n数据目录：{AppPaths.DataDir}";
         }
         catch { }
     }
