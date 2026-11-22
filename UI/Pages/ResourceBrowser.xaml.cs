@@ -58,6 +58,31 @@ public partial class ResourceBrowser : UserControl
         TargetCombo.ItemsSource = versions;
         TargetCombo.SelectedItem = LauncherApp.I.CurrentVersion ?? versions.FirstOrDefault();
         UpdateTypeUi();
+        _ = LoadAllMcVersionsAsync();
+    }
+
+    private async Task LoadAllMcVersionsAsync()
+    {
+        try
+        {
+            var manifest = await LauncherApp.I.Downloads.GetVersionManifestAsync(false, CancellationToken.None);
+            if (manifest.Count == 0) return;
+            var selected = McCombo.SelectedItem as string;
+            var installed = LauncherApp.I.Versions.Versions.Select(v => v.MinecraftVersion)
+                .Where(x => !string.IsNullOrWhiteSpace(x)).ToList();
+            var all = manifest.OrderByDescending(v => v.ReleaseTime).Select(v => v.Id).ToList();
+            var list = new List<string> { "全部版本" };
+            list.AddRange(all);
+            list.AddRange(installed.Where(x => !all.Contains(x, StringComparer.OrdinalIgnoreCase)));
+            McCombo.ItemsSource = list;
+            McCombo.SelectedItem = !string.IsNullOrWhiteSpace(selected) && list.Contains(selected)
+                ? selected
+                : "全部版本";
+        }
+        catch (Exception ex)
+        {
+            Log.Warn("加载完整 Minecraft 版本列表失败：" + ex.Message);
+        }
     }
 
     private void TargetCombo_DropDownOpened(object sender, EventArgs e) => RefreshTargets();
