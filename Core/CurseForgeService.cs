@@ -56,12 +56,25 @@ public sealed class CurseForgeService
     private async Task<JsonObject> GetJsonAsync(string url, CancellationToken ct)
     {
         if (!HasKey) throw new InvalidOperationException("CurseForge 搜索需要 API Key。请到「设置 → 下载」填写。");
-        using var request = Request(url);
-        using var response = await HttpService.Client.SendAsync(request, ct);
-        var text = await response.Content.ReadAsStringAsync(ct);
-        if (!response.IsSuccessStatusCode)
-            throw new InvalidOperationException($"CurseForge 返回 {(int)response.StatusCode}：{text[..Math.Min(200, text.Length)]}");
-        return JsonNode.Parse(text) as JsonObject ?? new JsonObject();
+        Exception? last = null;
+        for (var attempt = 0; attempt < 3; attempt++)
+        {
+            try
+            {
+                using var request = Request(url);
+                using var response = await HttpService.Client.SendAsync(request, ct);
+                var text = await response.Content.ReadAsStringAsync(ct);
+                if (response.IsSuccessStatusCode)
+                    return JsonNode.Parse(text) as JsonObject ?? new JsonObject();
+                last = new InvalidOperationException($"CurseForge 返回 {(int)response.StatusCode}");
+                if ((int)response.StatusCode is not (429 or 500 or 502 or 503 or 504)) break;
+            }
+            catch (OperationCanceledException) { throw; }
+            catch (Exception ex) { last = ex; }
+            if (attempt < 2) await Task.Delay(350 * (attempt + 1), ct);
+        }
+        throw new InvalidOperationException("CurseForge 服务暂时不可用，请稍后重试" +
+            (last is null ? "" : "：" + last.Message));
     }
 
     public async Task<List<ResourceProject>> SearchAsync(ResourceType type, string query, string? mcVersion,

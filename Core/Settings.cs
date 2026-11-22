@@ -194,8 +194,9 @@ public sealed class AppSettings
         FrpRemotePort = Math.Clamp(FrpRemotePort, 1, 65535);
         BackgroundImageOpacity = Math.Clamp(BackgroundImageOpacity, 0.0, 1.0);
         CurseForgeApiKey = (CurseForgeApiKey ?? "").Trim();
-        CurseForgeProxyUrl = (CurseForgeProxyUrl ?? "").Trim().TrimEnd('/');
-        CurseForgeProxyToken = (CurseForgeProxyToken ?? "").Trim();
+        // 公开构建不再使用内部中转；清掉旧配置，避免残留地址返回 502。
+        CurseForgeProxyUrl = "";
+        CurseForgeProxyToken = "";
         MemoryMb = Math.Clamp(MemoryMb, 512, 65536);
         WindowWidth = Math.Clamp(WindowWidth, 920, 4096);
         WindowHeight = Math.Clamp(WindowHeight, 560, 2400);
