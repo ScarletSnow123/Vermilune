@@ -533,6 +533,22 @@ public partial class VersionsPage : UserControl, IPage
         LauncherApp.I.Notify("已复制版本", $"{old} → {newName}");
     }
 
+    private void ChangeDisplayName_Click(object sender, RoutedEventArgs e)
+    {
+        if (_selected is null) return;
+        var name = PromptDialog.Show(Window.GetWindow(this), "修改显示名称",
+            "只改列表里显示的名字，不改版本文件夹", _selected.DisplayName,
+            "例如：我的整合包", value => string.IsNullOrWhiteSpace(value) ? "名称不能为空" : null);
+        if (string.IsNullOrWhiteSpace(name)) return;
+        var inst = InstanceStore.Load(_selected.Id);
+        inst.DisplayName = name.Trim();
+        InstanceStore.Save(_selected.Id, inst);
+        LauncherApp.I.ReloadVersions();
+        _pendingSelect = _selected.Id;
+        ReloadVersions();
+        LauncherApp.I.Notify("显示名称已修改", name.Trim());
+    }
+
     private async void BackupInstance_Click(object sender, RoutedEventArgs e)
     {
         if (_selected is null) return;
