@@ -80,7 +80,10 @@ public sealed class CurseForgeService
             try
             {
                 using var request = Request(url);
-                using var response = await (UseMirror ? MirrorClient : HttpService.Client).SendAsync(request, ct);
+                var client = UseMirror && LauncherApp.I.Settings.CurseForgeMirrorBypassProxy
+                    ? MirrorClient
+                    : HttpService.Client;
+                using var response = await client.SendAsync(request, ct);
                 var text = await response.Content.ReadAsStringAsync(ct);
                 if (response.IsSuccessStatusCode)
                     return JsonNode.Parse(text) as JsonObject ?? new JsonObject();
@@ -457,8 +460,10 @@ public sealed class CurseForgeService
         {
             // CurseForge 对可公开下载的文件会 302 到实际 CDN。不要直接下载，先探测。
             using var request = new HttpRequestMessage(HttpMethod.Head, derived);
-            using var response = await (UseMirror ? MirrorClient : HttpService.Client)
-                .SendAsync(request, HttpCompletionOption.ResponseHeadersRead, ct);
+            var client = UseMirror && LauncherApp.I.Settings.CurseForgeMirrorBypassProxy
+                    ? MirrorClient
+                    : HttpService.Client;
+            using var response = await client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, ct);
             return (int)response.StatusCode is >= 200 and < 400 ? derived : null;
         }
         catch { return null; }

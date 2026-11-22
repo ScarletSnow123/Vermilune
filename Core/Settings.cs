@@ -144,6 +144,8 @@ public sealed class AppSettings
     public bool OptimizeJvm { get; set; } = true;
     public string DownloadSource { get; set; } = "auto"; // auto | official | bmclapi
     public string CurseForgeApiKey { get; set; } = "";
+    /// <summary>镜像请求是否绕过系统代理。开着 Clash / V2Ray 时关闭可能返回 502。</summary>
+    public bool CurseForgeMirrorBypassProxy { get; set; } = true;
     public string CurseForgeProxyUrl { get; set; } = "";
     public string CurseForgeProxyToken { get; set; } = "";
     public const string DefaultMicrosoftClientId = "c36a9fb6-4f2a-41ff-90bd-ae7cc92031eb";

@@ -114,6 +114,7 @@ public partial class SettingsPage : UserControl, IPage
             SourceCombo.ItemsSource = new[] { "自动（官方优先）", "Mojang 官方", "BMCLAPI 镜像" };
             SourceCombo.SelectedIndex = s.DownloadSource switch { "official" => 1, "bmclapi" => 2, _ => 0 };
             CurseForgeKeyBox.Text = s.CurseForgeApiKey;
+            MirrorBypassProxyCheck.IsChecked = s.CurseForgeMirrorBypassProxy;
             CurseForgeProxyBox.Text = s.CurseForgeProxyUrl;
             CurseForgeProxyTokenBox.Text = s.CurseForgeProxyToken;
             McPathText.Text = LauncherApp.I.MinecraftDir;
@@ -571,6 +572,13 @@ public partial class SettingsPage : UserControl, IPage
         LauncherApp.I.Settings.CurseForgeApiKey = CurseForgeKeyBox.Text.Trim();
         LauncherApp.I.Save();
         LauncherApp.I.Notify("CurseForge Key", string.IsNullOrEmpty(LauncherApp.I.Settings.CurseForgeApiKey) ? "已清空" : "已保存");
+    }
+
+    private void MirrorBypassProxy_Changed(object sender, RoutedEventArgs e)
+    {
+        if (_loading) return;
+        LauncherApp.I.Settings.CurseForgeMirrorBypassProxy = MirrorBypassProxyCheck.IsChecked == true;
+        LauncherApp.I.Save();
     }
 
     private void SaveCurseForgeProxy_Click(object sender, RoutedEventArgs e)
