@@ -300,6 +300,7 @@ public sealed class VersionService
             }
 
             var inst = InstanceStore.Load(oldId);
+            inst.DisplayName = newId;
             InstanceStore.Save(newId, inst);
             InstanceStore.Delete(oldId);
             return (true, "");
