@@ -1,5 +1,6 @@
 using System.IO;
 using System.IO.Compression;
+using System.Net;
 using System.Net.Http;
 using System.Text.Json.Nodes;
 
@@ -9,6 +10,23 @@ public sealed class CurseForgeService
 {
     private const int GameId = 432;
     private const string MirrorBase = "https://mod.mcimirror.top/curseforge/v1";
+
+    // 镜像在国内直连更稳定；不要让 Clash / V2Ray 的系统代理把它带走。
+    private static readonly HttpClient MirrorClient = CreateMirrorClient();
+
+    private static HttpClient CreateMirrorClient()
+    {
+        var handler = new HttpClientHandler
+        {
+            UseProxy = false,
+            AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate | DecompressionMethods.Brotli,
+            MaxConnectionsPerServer = 16
+        };
+        var client = new HttpClient(handler) { Timeout = TimeSpan.FromSeconds(30) };
+        client.DefaultRequestHeaders.UserAgent.ParseAdd("Vermilune/1.3.5");
+        client.DefaultRequestHeaders.Accept.ParseAdd("application/json");
+        return client;
+    }
 
     private static string Proxy
     {
@@ -62,7 +80,7 @@ public sealed class CurseForgeService
             try
             {
                 using var request = Request(url);
-                using var response = await HttpService.Client.SendAsync(request, ct);
+                using var response = await (UseMirror ? MirrorClient : HttpService.Client).SendAsync(request, ct);
                 var text = await response.Content.ReadAsStringAsync(ct);
                 if (response.IsSuccessStatusCode)
                     return JsonNode.Parse(text) as JsonObject ?? new JsonObject();
@@ -439,7 +457,8 @@ public sealed class CurseForgeService
         {
             // CurseForge 对可公开下载的文件会 302 到实际 CDN。不要直接下载，先探测。
             using var request = new HttpRequestMessage(HttpMethod.Head, derived);
-            using var response = await HttpService.Client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, ct);
+            using var response = await (UseMirror ? MirrorClient : HttpService.Client)
+                .SendAsync(request, HttpCompletionOption.ResponseHeadersRead, ct);
             return (int)response.StatusCode is >= 200 and < 400 ? derived : null;
         }
         catch { return null; }
