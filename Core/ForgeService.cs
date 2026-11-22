@@ -65,6 +65,27 @@ public sealed class ForgeService
             catch (Exception ex) { Log.Warn("Forge maven 版本获取失败：" + ex.Message); }
         }
 
+        if (result.Count == 0)
+        {
+            try
+            {
+                var bmcl = await HttpService.GetStringAsync(
+                    $"https://bmclapi2.bangbang93.com/forge/minecraft/{Uri.EscapeDataString(mcVersion)}", ct);
+                if (JsonNode.Parse(bmcl) is JsonArray versions)
+                {
+                    foreach (var node in versions.OfType<JsonObject>())
+                    {
+                        var fv = node["version"]?.GetValue<string>() ?? "";
+                        if (string.IsNullOrWhiteSpace(fv)) continue;
+                        if (!result.Any(x => x.ForgeVersion == fv))
+                            result.Add(new ForgeVersionInfo { ForgeVersion = fv });
+                    }
+                    if (result.Count > 0) result[0] = new ForgeVersionInfo { ForgeVersion = result[0].ForgeVersion, Latest = true };
+                }
+            }
+            catch (Exception ex) { Log.Warn("BMCLAPI Forge 版本获取失败：" + ex.Message); }
+        }
+
         // Maven 返回顺序通常由旧到新，倒序以便展示最新
         result = result
             .OrderByDescending(x => x.Recommended)
@@ -74,6 +95,28 @@ public sealed class ForgeService
 
         lock (CacheLock) Cache[mcVersion] = (result, DateTime.UtcNow);
         return result;
+    }
+
+    private static async Task DownloadFirstAsync(IEnumerable<string> urls, string target, CancellationToken ct)
+    {
+        Exception? last = null;
+        foreach (var url in urls)
+        {
+            try
+            {
+                if (File.Exists(target)) File.Delete(target);
+                await HttpService.DownloadFileAsync(url, target, "", null, ct, 2);
+                if (File.Exists(target) && new FileInfo(target).Length > 1024 * 100) return;
+            }
+            catch (Exception ex)
+            {
+                last = ex;
+                Log.Warn($"Forge 部署器下载失败（{url}）：{ex.Message}");
+                try { if (File.Exists(target)) File.Delete(target); } catch { }
+            }
+        }
+        throw new InvalidOperationException("Forge 部署器下载失败，官方源和 BMCLAPI 镜像都不可用" +
+            (last is null ? "" : "：" + last.Message));
     }
 
     private static Version ParseForgeVersion(string v)
@@ -100,9 +143,15 @@ public sealed class ForgeService
         if (!File.Exists(installer) || new FileInfo(installer).Length < 1024 * 100)
         {
             progress?.Report(new DownloadProgress { Stage = "下载 Forge 部署器", Detail = $"Forge {forgeVersion}" });
-            await HttpService.DownloadFileAsync(installerUrl, installer, "", null, ct, 3);
+            await DownloadFirstAsync(new[]
+            {
+                installerUrl,
+                $"https://bmclapi2.bangbang93.com/maven/net/minecraftforge/forge/{mcVersion}-{forgeVersion}/forge-{mcVersion}-{forgeVersion}-installer.jar",
+                $"https://files.minecraftforge.net/maven/net/minecraftforge/forge/{mcVersion}-{forgeVersion}/forge-{mcVersion}-{forgeVersion}-installer.jar"
+            }, installer, ct);
         }
 
+        installer = PrepareMirroredInstaller(installer, $"forge-{mcVersion}-{forgeVersion}");
         var start = DateTime.UtcNow;
         var runInstaller = await PrepareOfflineMappingsAsync(mcVersion, forgeVersion, mcDir, installer, progress, ct);
         progress?.Report(new DownloadProgress { Stage = "运行 Forge 部署器", Detail = "正在写入 libraries 与版本 JSON，可能需要几分钟" });
@@ -265,9 +314,14 @@ public sealed class ForgeService
         if (!File.Exists(installer) || new FileInfo(installer).Length < 1024 * 100)
         {
             progress?.Report(new DownloadProgress { Stage = "下载 NeoForge 部署器", Detail = "NeoForge " + neoVersion });
-            await HttpService.DownloadFileAsync(installerUrl, installer, "", null, ct, 3);
+            await DownloadFirstAsync(new[]
+            {
+                installerUrl,
+                $"https://bmclapi2.bangbang93.com/maven/net/neoforged/neoforge/{neoVersion}/neoforge-{neoVersion}-installer.jar"
+            }, installer, ct);
         }
 
+        installer = PrepareMirroredInstaller(installer, $"neoforge-{neoVersion}");
         var start = DateTime.UtcNow;
         progress?.Report(new DownloadProgress { Stage = "运行 NeoForge 部署器", Detail = "正在写入 libraries 与版本 JSON，可能需要几分钟" });
         var psi = new ProcessStartInfo
@@ -321,6 +375,43 @@ public sealed class ForgeService
             throw new InvalidOperationException("NeoForge 部署器已结束，但没有找到生成的版本 JSON。");
         progress?.Report(new DownloadProgress { Stage = "NeoForge 部署完成", Current = 1, Total = 1, Detail = candidate });
         return candidate;
+    }
+
+    private static string PrepareMirroredInstaller(string installer, string baseName)
+    {
+        try
+        {
+            var target = Path.Combine(Path.GetDirectoryName(installer)!, baseName + "-installer-mirror.jar");
+            if (File.Exists(target) && new FileInfo(target).Length > 1024 * 100) return target;
+            using var source = ZipFile.OpenRead(installer);
+            using var output = ZipFile.Open(target, ZipArchiveMode.Create);
+            foreach (var entry in source.Entries)
+            {
+                if (string.IsNullOrWhiteSpace(entry.Name)) continue;
+                var newEntry = output.CreateEntry(entry.FullName, CompressionLevel.Fastest);
+                using var input = entry.Open();
+                using var dest = newEntry.Open();
+                if (entry.Name.EndsWith(".json", StringComparison.OrdinalIgnoreCase))
+                {
+                    using var reader = new StreamReader(input, Encoding.UTF8);
+                    var text = reader.ReadToEnd();
+                    text = text
+                        .Replace("https://maven.minecraftforge.net", "https://bmclapi2.bangbang93.com/maven", StringComparison.OrdinalIgnoreCase)
+                        .Replace("https://files.minecraftforge.net/maven", "https://bmclapi2.bangbang93.com/maven", StringComparison.OrdinalIgnoreCase)
+                        .Replace("http://files.minecraftforge.net/maven", "https://bmclapi2.bangbang93.com/maven", StringComparison.OrdinalIgnoreCase)
+                        .Replace("https://maven.neoforged.net/releases", "https://bmclapi2.bangbang93.com/maven", StringComparison.OrdinalIgnoreCase);
+                    using var writer = new StreamWriter(dest, new UTF8Encoding(false));
+                    writer.Write(text);
+                }
+                else input.CopyTo(dest);
+            }
+            return target;
+        }
+        catch (Exception ex)
+        {
+            Log.Warn("Forge 部署器镜像改写失败：" + ex.Message);
+            return installer;
+        }
     }
 
     private async Task<string> PrepareOfflineMappingsAsync(string mcVersion, string forgeVersion, string mcDir,
