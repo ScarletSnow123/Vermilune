@@ -61,6 +61,11 @@ public partial class MorePage : UserControl, IPage
         }
     }
 
+    private async void CheckUpdates_Click(object sender, RoutedEventArgs e)
+    {
+        if (App.Window is not null) await App.Window.CheckForUpdatesAsync(false);
+    }
+
     private void CopyEnv_Click(object sender, RoutedEventArgs e)
     {
         try

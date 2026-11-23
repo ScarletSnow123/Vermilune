@@ -23,6 +23,7 @@ public partial class MainWindow : Window
     private string _currentPage = "launch";
     private bool _isMaximized;
     private bool _ready;
+    private bool _checkingUpdate;
     private bool _updatingSliders;
     private bool _closeForGame;
     private Rect _restoreBounds;
@@ -101,6 +102,34 @@ public partial class MainWindow : Window
 
         NavigateTo("launch");
         UpdateTitleStatus();
+        _ = CheckForUpdatesAsync(true);
+    }
+
+    public async Task CheckForUpdatesAsync(bool silent)
+    {
+        if (_checkingUpdate) return;
+        _checkingUpdate = true;
+        try
+        {
+            var update = await UpdateService.CheckAsync();
+            if (update is null)
+            {
+                if (!silent) LauncherApp.I.Notify("检查更新", "已经是最新版本 " + UpdateService.CurrentVersion);
+                return;
+            }
+            var notes = (update.Notes ?? "").Trim();
+            if (notes.Length > 700) notes = notes[..700] + "…";
+            var text = $"当前版本：{UpdateService.CurrentVersion}\n新版本：{update.Version}\n\n" +
+                       (string.IsNullOrWhiteSpace(notes) ? "打开下载页获取新版本" : notes);
+            if (MessageDialog.Show(this, "发现新版本", text, "打开下载页", "以后再说"))
+                Shell.OpenUrl(update.Url);
+        }
+        catch (Exception ex)
+        {
+            Log.Warn("检查更新失败：" + ex.Message);
+            if (!silent) LauncherApp.I.Notify("检查更新失败", "网络不可用或 GitHub API 被拦截");
+        }
+        finally { _checkingUpdate = false; }
     }
 
     private void OnSettingsChanged()

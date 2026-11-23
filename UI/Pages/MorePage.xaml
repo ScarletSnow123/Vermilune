@@ -68,6 +68,8 @@
                                         HorizontalAlignment="Left" Margin="0,7,0,0" Click="GoError_Click" />
                                 <Button Style="{StaticResource ButtonBase}" Height="32" Content="导出诊断包"
                                         HorizontalAlignment="Left" Margin="0,7,0,0" Click="ExportDiagnostics_Click" />
+                                <Button Style="{StaticResource ButtonBase}" Height="32" Content="检查更新"
+                                        HorizontalAlignment="Left" Margin="0,7,0,0" Click="CheckUpdates_Click" />
                             </StackPanel>
                         </StackPanel>
                     </Border>

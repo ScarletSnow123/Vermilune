@@ -1,8 +1,0 @@
-- Forge / NeoForge 下载和部署器内部地址增加 BMCLAPI 回退，修复 502
-- 资源搜索支持完整 Minecraft 版本清单，并默认同时搜索 Modrinth 与 CurseForge
-- CurseForge 公开版保持可搜可下：无 Key 走公共镜像，有 Key 走官方 API
-- 保留联机页、跨版本同步、实例备份恢复和诊断包功能
-- 移除旧 CurseForge 内部中转配置，避免残留地址返回 502
-- CurseForge 镜像请求自动绕过系统代理，避免 Clash / V2Ray 与镜像冲突
-- 设置中可切换「镜像绕过系统代理」，方便配合 Clash / V2Ray
-- 修复版本重命名后列表仍显示旧名称
