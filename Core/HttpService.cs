@@ -8,7 +8,7 @@ namespace Vermilune.Core;
 
 public static class HttpService
 {
-    public const string UserAgent = "Vermilune/1.3.5";
+    public const string UserAgent = "Vermilune/1.3.6";
     public static readonly HttpClient Client = CreateClient();
     public static string Source { get; set; } = "auto"; // auto | official | bmclapi
 

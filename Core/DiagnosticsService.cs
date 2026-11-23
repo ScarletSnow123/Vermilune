@@ -47,7 +47,7 @@ public static class DiagnosticsService
 
             var sb = new StringBuilder();
             sb.AppendLine("Vermilune diagnostics");
-            sb.AppendLine("Version: 1.3.5");
+            sb.AppendLine("Version: 1.3.6");
             sb.AppendLine("OS: " + Environment.OSVersion);
             sb.AppendLine(".NET: " + Environment.Version);
             sb.AppendLine("64-bit: " + Environment.Is64BitProcess);
