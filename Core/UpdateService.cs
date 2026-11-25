@@ -8,7 +8,7 @@ public sealed record UpdateInfo(string Version, string Title, string Url, string
 
 public static class UpdateService
 {
-    private const string Repo = "ScarletSnow123/Vermilune";
+    private const string Repo = "ScarletSnow123/Vermilune-Launcher";
 
     public static string CurrentVersion
     {

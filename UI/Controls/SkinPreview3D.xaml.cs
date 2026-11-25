@@ -50,6 +50,19 @@ public partial class SkinPreview3D : UserControl
     private int _frameWidth;
     private int _frameHeight;
 
+    public static readonly DependencyProperty ShowHintProperty = DependencyProperty.Register(
+        nameof(ShowHint), typeof(bool), typeof(SkinPreview3D),
+        new PropertyMetadata(true, (d, _) =>
+        {
+            if (d is SkinPreview3D preview) preview.Hint.Visibility = preview.ShowHint ? Visibility.Visible : Visibility.Collapsed;
+        }));
+
+    public bool ShowHint
+    {
+        get => (bool)GetValue(ShowHintProperty);
+        set => SetValue(ShowHintProperty, value);
+    }
+
     public SkinPreview3D()
     {
         InitializeComponent();

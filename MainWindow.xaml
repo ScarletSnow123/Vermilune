@@ -116,6 +116,15 @@
                                         <TextBlock Text="启动" FontSize="10.5" Margin="0,4,0,0" HorizontalAlignment="Center" />
                                     </StackPanel>
                                 </RadioButton>
+                                <RadioButton x:Name="NavSettings" Style="{StaticResource NavItem}" GroupName="Nav"
+                                             Tag="settings" Checked="Nav_Checked" ToolTip="设置">
+                                    <StackPanel HorizontalAlignment="Center">
+                                        <Path Data="{DynamicResource IconTune}" Width="18" Height="18" Stretch="Uniform"
+                                              Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=RadioButton}}"
+                                              StrokeThickness="1.6" Fill="Transparent" HorizontalAlignment="Center" />
+                                        <TextBlock Text="设置" FontSize="10.5" Margin="0,4,0,0" HorizontalAlignment="Center" />
+                                    </StackPanel>
+                                </RadioButton>
                                 <RadioButton x:Name="NavDownload" Style="{StaticResource NavItem}" GroupName="Nav"
                                              Tag="download" Checked="Nav_Checked" ToolTip="下载">
                                     <StackPanel HorizontalAlignment="Center">
@@ -152,15 +161,6 @@
                                         <TextBlock Text="同步" FontSize="10.5" Margin="0,4,0,0" HorizontalAlignment="Center" />
                                     </StackPanel>
                                 </RadioButton>
-                                <RadioButton x:Name="NavSettings" Style="{StaticResource NavItem}" GroupName="Nav"
-                                             Tag="settings" Checked="Nav_Checked" ToolTip="设置">
-                                    <StackPanel HorizontalAlignment="Center">
-                                        <Path Data="{DynamicResource IconTune}" Width="18" Height="18" Stretch="Uniform"
-                                              Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=RadioButton}}"
-                                              StrokeThickness="1.6" Fill="Transparent" HorizontalAlignment="Center" />
-                                        <TextBlock Text="设置" FontSize="10.5" Margin="0,4,0,0" HorizontalAlignment="Center" />
-                                    </StackPanel>
-                                </RadioButton>
                                 <RadioButton x:Name="NavError" Style="{StaticResource NavItem}" GroupName="Nav"
                                              Tag="error" Checked="Nav_Checked" ToolTip="报错分析">
                                     <StackPanel HorizontalAlignment="Center">
@@ -184,7 +184,7 @@
                             </StackPanel>
 
                             <StackPanel Grid.Row="1" Margin="0,0,0,14" HorizontalAlignment="Center">
-                                <TextBlock x:Name="RailVersion" Text="v1.3.7" FontSize="9.5"
+                                <TextBlock x:Name="RailVersion" Text="v1.3.8" FontSize="9.5"
                                            Foreground="{DynamicResource TextMutedBrush}" HorizontalAlignment="Center" />
                             </StackPanel>
                         </Grid>

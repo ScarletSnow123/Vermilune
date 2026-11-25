@@ -21,6 +21,7 @@ public partial class MainWindow : Window
     private readonly Dictionary<string, UserControl> _pages = new(StringComparer.OrdinalIgnoreCase);
     private readonly DispatcherTimer _toastTimer;
     private string _currentPage = "launch";
+    private string _currentHomeLayout = "classic";
     private bool _isMaximized;
     private bool _ready;
     private bool _checkingUpdate;
@@ -63,6 +64,7 @@ public partial class MainWindow : Window
     {
         _ready = true;
         var s = LauncherApp.I.Settings;
+        _currentHomeLayout = s.HomeLayout;
         try
         {
             var work = SystemParameters.WorkArea;
@@ -91,7 +93,7 @@ public partial class MainWindow : Window
         BgOpacitySlider.Value = s.BackgroundImageOpacity * 100;
         _updatingSliders = false;
         OpacityValue.Text = $"{s.UiOpacity * 100:0}%";
-        RailVersion.Text = "v1.3.7";
+        RailVersion.Text = "v1.3.8";
 
         LauncherApp.I.SettingsChanged += OnSettingsChanged;
         LauncherApp.I.VersionsChanged += OnVersionsChanged;
@@ -136,6 +138,13 @@ public partial class MainWindow : Window
     {
         Dispatcher.BeginInvoke(new Action(() =>
         {
+            var layout = LauncherApp.I.Settings.HomeLayout;
+            if (!string.Equals(layout, _currentHomeLayout, StringComparison.OrdinalIgnoreCase))
+            {
+                _currentHomeLayout = layout;
+                _pages.Remove("launch");
+                if (string.Equals(_currentPage, "launch", StringComparison.OrdinalIgnoreCase)) NavigateTo("launch");
+            }
             ApplyTheme();
             UpdateTitleStatus();
         }));
@@ -423,6 +432,8 @@ public partial class MainWindow : Window
     {
         if (string.IsNullOrWhiteSpace(key)) key = "launch";
         key = key.ToLowerInvariant();
+        if (key == "launch" && _pages.TryGetValue(key, out var cached) && !HomePageMatches(cached))
+            _pages.Remove(key);
         if (!_pages.TryGetValue(key, out var page))
         {
             page = CreatePage(key);
@@ -615,19 +626,29 @@ public partial class MainWindow : Window
         var version = LauncherApp.I.Versions.Find(versionId);
         if (version is null) return;
         NavigateTo("launch");
-        if (_pages.TryGetValue("launch", out var page) && page is LaunchPage lp)
+        if (_pages.TryGetValue("launch", out var page))
         {
-            lp.SelectedVersion = version;
-            LauncherApp.I.SetCurrentVersion(version.Id);
-            _ = lp.LaunchSelectedAsync(version);
+            if (page is LaunchPage lp)
+            {
+                lp.SelectedVersion = version;
+                LauncherApp.I.SetCurrentVersion(version.Id);
+                _ = lp.LaunchSelectedAsync(version);
+            }
         }
+    }
+
+    private static bool HomePageMatches(UserControl page)
+    {
+        var modern = string.Equals(LauncherApp.I.Settings.HomeLayout, "modern", StringComparison.OrdinalIgnoreCase);
+        return modern ? page is ModernHomePage : page is LaunchPage;
     }
 
     private UserControl CreatePage(string key)
     {
         return key switch
         {
-            "launch" => new LaunchPage(),
+            "launch" => string.Equals(LauncherApp.I.Settings.HomeLayout, "modern", StringComparison.OrdinalIgnoreCase)
+                ? new ModernHomePage() : new LaunchPage(),
             "download" => new DownloadPage(),
             "versions" => new VersionsPage(),
             "multiplayer" => new MultiplayerPage(),

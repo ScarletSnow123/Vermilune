@@ -724,7 +724,7 @@ public partial class LaunchPage : UserControl, IPage, INotifyPropertyChanged
             ProcessPriority = app.Settings.ProcessPriority,
             IpProtocol = app.Settings.IpProtocol,
             LauncherName = "Vermilune",
-            LauncherVersion = "1.3.1"
+            LauncherVersion = UpdateService.CurrentVersion
         };
 
         _cts?.Dispose();
@@ -920,12 +920,14 @@ public partial class LaunchPage : UserControl, IPage, INotifyPropertyChanged
         if (AccountDialog.Show(Window.GetWindow(this))) RefreshState();
     }
 
-    private void CancelLaunch_Click(object sender, RoutedEventArgs e)
+    public void CancelLaunch()
     {
         try { _cts?.Cancel(); } catch { }
         if (_state == LaunchState.Running) LauncherApp.I.Launch.Cancel();
         SetStatus("正在取消启动…", _state);
     }
+
+    private void CancelLaunch_Click(object sender, RoutedEventArgs e) => CancelLaunch();
 
     private void ManageVersion_Click(object sender, RoutedEventArgs e) => App.Window?.NavigateTo("versions");
     private HomeCardStyle GetHomeStyle(string key)
@@ -1795,6 +1797,13 @@ public partial class LaunchPage : UserControl, IPage, INotifyPropertyChanged
     {
         if (SelectedVersion is not null) App.Window?.NavigateToVersions(SelectedVersion.Id);
         else App.Window?.NavigateTo("versions");
+    }
+
+    private void OpenInstanceResources_Click(object sender, RoutedEventArgs e)
+    {
+        if (SelectedVersion is null) return;
+        var dialog = new InstanceResourcesDialog(SelectedVersion) { Owner = Window.GetWindow(this) };
+        dialog.ShowDialog();
     }
 
     private void OpenVersionFolder_Click(object sender, RoutedEventArgs e)

@@ -65,7 +65,7 @@ public sealed class WebWallpaperRenderer : IDisposable
             finally { _view.CoreWebView2.NavigationCompleted -= OnNavigation; }
 
             _ready = true;
-            _timer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(80) };
+            _timer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(100) };
             _timer.Tick += async (_, _) => await CaptureAsync();
             _timer.Start();
             await CaptureAsync();

@@ -22,7 +22,11 @@ public partial class SettingsPage : UserControl, IPage
         Loaded += (_, _) => LoadSettings();
     }
 
-    public void OnShown() => LoadSettings();
+    public void OnShown()
+    {
+        LoadSettings();
+        Dispatcher.BeginInvoke(new Action(() => SettingsScroll.ScrollToTop()), System.Windows.Threading.DispatcherPriority.Loaded);
+    }
     public void RefreshState() => LoadSettings();
 
     private void BuildAccentSwatches()
@@ -52,6 +56,8 @@ public partial class SettingsPage : UserControl, IPage
         try
         {
             var s = LauncherApp.I.Settings;
+            HomeLayoutClassic.IsChecked = !string.Equals(s.HomeLayout, "modern", StringComparison.OrdinalIgnoreCase);
+            HomeLayoutModern.IsChecked = string.Equals(s.HomeLayout, "modern", StringComparison.OrdinalIgnoreCase);
             AccentHexBox.Text = s.Accent;
             SyncRgbFromHex(s.Accent);
             OpacitySlider.Value = Math.Clamp(s.UiOpacity * 100, 30, 100);
@@ -63,18 +69,7 @@ public partial class SettingsPage : UserControl, IPage
             CustomBackgroundPanel.Visibility = bgMode == "custom" ? Visibility.Visible : Visibility.Collapsed;
             SceneWallpaperRow.Visibility = bgMode == "wallpaper" ? Visibility.Visible : Visibility.Collapsed;
             SceneAnimatedCheck.IsChecked = s.WallpaperSceneAnimated;
-            var versions = LauncherApp.I.Versions.Versions.ToList();
-            var sourceId = (SyncSourceCombo.SelectedItem as VersionInfo)?.Id;
-            var targetId = (SyncTargetCombo.SelectedItem as VersionInfo)?.Id;
-            SyncSourceCombo.ItemsSource = versions;
-            SyncTargetCombo.ItemsSource = versions;
-            SyncSourceCombo.SelectedItem = versions.FirstOrDefault(v => v.Id == sourceId)
-                                          ?? versions.FirstOrDefault(v => v.Id == LauncherApp.I.CurrentVersion?.Id)
-                                          ?? versions.FirstOrDefault();
-            SyncTargetCombo.SelectedItem = versions.FirstOrDefault(v => v.Id == targetId)
-                                          ?? versions.FirstOrDefault(v => v.Id != (SyncSourceCombo.SelectedItem as VersionInfo)?.Id)
-                                          ?? versions.FirstOrDefault();
-            SyncStatusText.Text = versions.Count == 0 ? "还没有可用实例" : "";
+
             BgPathText.Text = bgMode switch
             {
                 "wallpaper" => "跟随 Wallpaper Engine 当前壁纸；未检测到时自动隐藏背景",
@@ -229,83 +224,23 @@ public partial class SettingsPage : UserControl, IPage
             : "场景壁纸使用高清静帧");
     }
 
-    private GameSettingsScope SyncScope()
+    private void SettingsTab_Checked(object sender, RoutedEventArgs e)
     {
-        var scope = GameSettingsScope.None;
-        if (SyncKeybindsCheck.IsChecked == true) scope |= GameSettingsScope.Keybinds;
-        if (SyncGameCheck.IsChecked == true) scope |= GameSettingsScope.Game;
-        if (SyncLangCheck.IsChecked == true) scope |= GameSettingsScope.Language;
-        if (SyncPacksCheck.IsChecked == true) scope |= GameSettingsScope.ResourcePacks;
-        return scope;
+        if (PanelAppearance is null) return;
+        var tag = (sender as RadioButton)?.Tag?.ToString() ?? "appearance";
+        PanelAppearance.Visibility = tag == "appearance" ? Visibility.Visible : Visibility.Collapsed;
+        PanelLaunch.Visibility = tag == "launch" ? Visibility.Visible : Visibility.Collapsed;
+        PanelDownload.Visibility = tag == "download" ? Visibility.Visible : Visibility.Collapsed;
+        PanelData.Visibility = tag == "data" ? Visibility.Visible : Visibility.Collapsed;
+        SettingsScroll.ScrollToTop();
     }
 
-    private void SyncOne_Click(object sender, RoutedEventArgs e)
+    private void HomeLayout_Changed(object sender, RoutedEventArgs e)
     {
-        if (SyncSourceCombo.SelectedItem is not VersionInfo source ||
-            SyncTargetCombo.SelectedItem is not VersionInfo target)
-        {
-            SyncStatusText.Text = "先选源实例和目标实例";
-            return;
-        }
-        if (source.Id == target.Id)
-        {
-            SyncStatusText.Text = "源和目标不能是同一个实例";
-            return;
-        }
-        var scope = SyncScope();
-        if (scope == GameSettingsScope.None)
-        {
-            SyncStatusText.Text = "至少勾一项要同步的内容";
-            return;
-        }
-        try
-        {
-            var result = GameSettingsService.Apply(source, new[] { target }, scope);
-            SyncStatusText.Text = result.TargetCount > 0
-                ? $"已同步到「{target.DisplayName}」"
-                : "目标已经是这些设置，没有变化";
-            LauncherApp.I.Notify("游戏设置已同步", target.DisplayName);
-        }
-        catch (Exception ex)
-        {
-            SyncStatusText.Text = "同步失败：" + ex.Message;
-            MessageDialog.Show(Window.GetWindow(this), "同步失败", ex.Message, "知道了", danger: true);
-        }
-    }
-
-    private void SyncAll_Click(object sender, RoutedEventArgs e)
-    {
-        if (SyncSourceCombo.SelectedItem is not VersionInfo source)
-        {
-            SyncStatusText.Text = "先选源实例";
-            return;
-        }
-        var scope = SyncScope();
-        if (scope == GameSettingsScope.None)
-        {
-            SyncStatusText.Text = "至少勾一项要同步的内容";
-            return;
-        }
-        var targets = LauncherApp.I.Versions.Versions.Where(v => v.Id != source.Id).ToList();
-        if (targets.Count == 0)
-        {
-            SyncStatusText.Text = "没有其他实例";
-            return;
-        }
-        if (!MessageDialog.Show(Window.GetWindow(this), "同步到所有版本",
-                $"会把「{source.DisplayName}」的设置同步到另外 {targets.Count} 个实例，确定吗？",
-                "开始同步", "取消")) return;
-        try
-        {
-            var result = GameSettingsService.Apply(source, targets, scope);
-            SyncStatusText.Text = $"已同步 {result.TargetCount} 个实例";
-            LauncherApp.I.Notify("游戏设置已同步", $"{result.TargetCount} 个实例");
-        }
-        catch (Exception ex)
-        {
-            SyncStatusText.Text = "同步失败：" + ex.Message;
-            MessageDialog.Show(Window.GetWindow(this), "同步失败", ex.Message, "知道了", danger: true);
-        }
+        if (_loading) return;
+        var tag = (sender as RadioButton)?.Tag?.ToString() ?? "classic";
+        LauncherApp.I.Settings.HomeLayout = tag == "modern" ? "modern" : "classic";
+        LauncherApp.I.Save();
     }
 
     private void BackgroundMode_Checked(object sender, RoutedEventArgs e)

@@ -316,6 +316,8 @@
                         <StackPanel Orientation="Horizontal" Margin="0,5,0,0">
                             <Button Style="{StaticResource SoftLink}" Content="打开目录" Click="OpenVersionFolder_Click" />
                             <TextBlock Text="·" Foreground="{DynamicResource TextMutedBrush}" Margin="7,0" />
+                            <Button Style="{StaticResource SoftLink}" Content="实例资源" Click="OpenInstanceResources_Click" />
+                            <TextBlock Text="·" Foreground="{DynamicResource TextMutedBrush}" Margin="7,0" />
                             <Button Style="{StaticResource SoftLink}" Content="刷新" Click="RefreshHome_Click" />
                         </StackPanel>
                     </StackPanel>
@@ -333,7 +335,7 @@
                 <Button Style="{StaticResource SoftLink}" Content="版本管理" FontSize="11" Click="ManageVersion_Click" Margin="0,0,10,0" />
                 <Button Style="{StaticResource SoftLink}" Content="设置" FontSize="11" Click="OpenSettings_Click" Margin="0,0,10,0" />
                 <Button Style="{StaticResource SoftLink}" Content="资源站点" FontSize="11" Click="ToggleSites_Click" Margin="0,0,10,0" />
-                <Button Style="{StaticResource SoftLink}" Content="自定义" FontSize="11" Click="CustomizeHome_Click" />
+                <Button x:Name="QuickCustomizeButton" Style="{StaticResource SoftLink}" Content="自定义" FontSize="11" Click="CustomizeHome_Click" />
             </WrapPanel>
         </StackPanel>
 

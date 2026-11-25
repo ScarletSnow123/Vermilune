@@ -25,6 +25,7 @@
     <Grid Margin="24,0,24,20">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
@@ -41,14 +42,42 @@
                     VerticalAlignment="Center" Click="OpenDataFolder_Click" />
         </Grid>
 
-        <ScrollViewer Grid.Row="1" Margin="0,14,0,0" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+        <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,12,0,0">
+            <RadioButton x:Name="TabAppearance" Style="{StaticResource TabItem}" GroupName="SettingsTab"
+                         Content="外观" Tag="appearance" IsChecked="True" Checked="SettingsTab_Checked" />
+            <RadioButton x:Name="TabLaunch" Style="{StaticResource TabItem}" GroupName="SettingsTab"
+                         Content="启动" Tag="launch" Checked="SettingsTab_Checked" />
+            <RadioButton x:Name="TabDownload" Style="{StaticResource TabItem}" GroupName="SettingsTab"
+                         Content="下载" Tag="download" Checked="SettingsTab_Checked" />
+            <RadioButton x:Name="TabData" Style="{StaticResource TabItem}" GroupName="SettingsTab"
+                         Content="数据" Tag="data" Checked="SettingsTab_Checked" />
+        </StackPanel>
+
+        <ScrollViewer x:Name="SettingsScroll" Grid.Row="2" Margin="0,12,0,0" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
             <StackPanel Margin="0,0,10,30">
 
                 <!-- 外观 -->
+                <StackPanel x:Name="PanelAppearance">
                 <Border Style="{StaticResource Card}">
                     <StackPanel>
                         <TextBlock Text="外观" Style="{StaticResource SectionHeader}" />
                         <TextBlock Text="强调色、界面不透明度与背景图" Style="{StaticResource Hint}" />
+                        <Border Style="{StaticResource SettingRow}">
+                            <Grid>
+                                <StackPanel>
+                                    <TextBlock Text="主页样式" FontSize="12.5" FontWeight="SemiBold" />
+                                    <TextBlock Text="旧版为可自定义主页；新版为 v1.3.0 之前的三列主页"
+                                               Style="{StaticResource Hint}" Margin="0,4,0,0" TextWrapping="Wrap" />
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                                    <RadioButton x:Name="HomeLayoutClassic" Style="{StaticResource TabItem}" GroupName="HomeLayout"
+                                                 Content="旧版" Tag="classic" Checked="HomeLayout_Changed" />
+                                    <RadioButton x:Name="HomeLayoutModern" Style="{StaticResource TabItem}" GroupName="HomeLayout"
+                                                 Content="新版" Tag="modern" Checked="HomeLayout_Changed" />
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+
                         <Border Style="{StaticResource SettingRow}" Margin="0,12,0,0">
                             <Grid>
                                 <StackPanel>
@@ -240,49 +269,10 @@
                     </StackPanel>
                 </Border>
 
-                <!-- 游戏设置同步 -->
-                <Border Style="{StaticResource Card}" Margin="0,12,0,0">
-                    <StackPanel>
-                        <TextBlock Text="游戏设置同步" Style="{StaticResource SectionHeader}" />
-                        <TextBlock Text="把一个实例的按键、语言、资源包和画面选项同步到其他版本&#10;同步前会备份目标实例的 options.txt"
-                                   Style="{StaticResource Hint}" />
-                        <Grid Margin="0,12,0,0">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="12" />
-                                <ColumnDefinition Width="*" />
-                            </Grid.ColumnDefinitions>
-                            <StackPanel>
-                                <TextBlock Text="源实例" Style="{StaticResource Hint}" />
-                                <ComboBox x:Name="SyncSourceCombo" Height="32" Margin="0,4,0,0"
-                                          DisplayMemberPath="DisplayName" />
-                            </StackPanel>
-                            <StackPanel Grid.Column="2">
-                                <TextBlock Text="目标实例" Style="{StaticResource Hint}" />
-                                <ComboBox x:Name="SyncTargetCombo" Height="32" Margin="0,4,0,0"
-                                          DisplayMemberPath="DisplayName" />
-                            </StackPanel>
-                        </Grid>
-                        <WrapPanel Margin="0,10,0,0">
-                            <CheckBox x:Name="SyncKeybindsCheck" Content="按键设置" IsChecked="True" Margin="0,0,14,0" />
-                            <CheckBox x:Name="SyncGameCheck" Content="游戏 / 画面设置" Margin="0,0,14,0" />
-                            <CheckBox x:Name="SyncLangCheck" Content="语言" Margin="0,0,14,0" />
-                            <CheckBox x:Name="SyncPacksCheck" Content="资源包" />
-                        </WrapPanel>
-                        <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
-                            <Button Style="{StaticResource PrimaryButton}" Height="32" Content="同步到目标"
-                                    Click="SyncOne_Click" />
-                            <Button Style="{StaticResource ButtonBase}" Height="32" Content="同步到所有其他版本"
-                                    Margin="8,0,0,0" Click="SyncAll_Click" />
-                            <TextBlock x:Name="SyncStatusText" Style="{StaticResource Hint}"
-                                       VerticalAlignment="Center" Margin="12,0,0,0" />
-                        </StackPanel>
-                        <TextBlock Text="游戏运行时不要同步，退出游戏后设置才会稳定写回 options.txt"
-                                   Style="{StaticResource Hint}" Margin="0,8,0,0" />
-                    </StackPanel>
-                </Border>
+                </StackPanel>
 
                 <!-- 启动 -->
+                <StackPanel x:Name="PanelLaunch" Visibility="Collapsed">
                 <Border Style="{StaticResource Card}" Margin="0,12,0,0">
                     <StackPanel>
                         <TextBlock Text="启动" Style="{StaticResource SectionHeader}" />
@@ -440,7 +430,10 @@
                     </StackPanel>
                 </Border>
 
+                </StackPanel>
+
                 <!-- 下载 -->
+                <StackPanel x:Name="PanelDownload" Visibility="Collapsed">
                 <Border Style="{StaticResource Card}" Margin="0,12,0,0">
                     <StackPanel>
                         <TextBlock Text="下载" Style="{StaticResource SectionHeader}" />
@@ -526,7 +519,10 @@
                     </StackPanel>
                 </Border>
 
+                </StackPanel>
+
                 <!-- 数据 -->
+                <StackPanel x:Name="PanelData" Visibility="Collapsed">
                 <Border Style="{StaticResource Card}" Margin="0,12,0,0">
                     <StackPanel>
                         <TextBlock Text="游戏目录" Style="{StaticResource SectionHeader}" />
@@ -563,6 +559,7 @@
                         </StackPanel>
                     </StackPanel>
                 </Border>
+                </StackPanel>
             </StackPanel>
         </ScrollViewer>
     </Grid>

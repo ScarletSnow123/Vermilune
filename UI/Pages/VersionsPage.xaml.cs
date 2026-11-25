@@ -533,6 +533,13 @@ public partial class VersionsPage : UserControl, IPage
         LauncherApp.I.Notify("已复制版本", $"{old} → {newName}");
     }
 
+    private void InstanceResources_Click(object sender, RoutedEventArgs e)
+    {
+        if (_selected is null) return;
+        var dialog = new InstanceResourcesDialog(_selected) { Owner = Window.GetWindow(this) };
+        dialog.ShowDialog();
+    }
+
     private void ChangeDisplayName_Click(object sender, RoutedEventArgs e)
     {
         if (_selected is null) return;

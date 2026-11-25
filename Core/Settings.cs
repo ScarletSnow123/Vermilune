@@ -126,6 +126,7 @@ public sealed class AppSettings
     public bool ShowHomeFeatured { get; set; } = true;
     public bool ShowHomeStats { get; set; } = true;
     public bool ShowHome3D { get; set; } = true;
+    public string HomeLayout { get; set; } = "classic";
     public bool ShowCardBorders { get; set; } = true;
     public Dictionary<string, HomeCardOffset> HomeOffsets { get; set; } = new();
     public List<HomeWidgetConfig> HomeWidgets { get; set; } = new();
@@ -173,6 +174,7 @@ public sealed class AppSettings
         if (AnimationMode is not ("off" or "smooth" or "fancy")) AnimationMode = "smooth";
         if (string.IsNullOrWhiteSpace(AvatarStyle)) AvatarStyle = "minimal";
         if (!string.Equals(AvatarStyle, "side", StringComparison.OrdinalIgnoreCase)) AvatarStyle = "minimal";
+        HomeLayout = string.Equals(HomeLayout, "modern", StringComparison.OrdinalIgnoreCase) ? "modern" : "classic";
         HomeOffsets ??= new();
         HomeWidgets ??= new();
         HomeStyles ??= new();

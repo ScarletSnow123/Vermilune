@@ -199,28 +199,44 @@
                                     <TextBlock Text="实例信息" Style="{StaticResource SectionTitle}" />
                                     <Border Style="{StaticResource SettingRow}" Margin="0,10,0,0">
                                         <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto" />
+                                                <ColumnDefinition Width="*" />
+                                            </Grid.ColumnDefinitions>
                                             <TextBlock Text="Minecraft" Style="{StaticResource Label}" />
-                                            <TextBlock x:Name="OvMc" Text="—" HorizontalAlignment="Right" FontSize="12" />
+                                            <TextBlock x:Name="OvMc" Text="—" HorizontalAlignment="Right" FontSize="12"  TextTrimming="CharacterEllipsis" Grid.Column="1" Margin="10,0,0,0" />
                                         </Grid>
                                     </Border>
                                     <Border Style="{StaticResource SettingRow}">
                                         <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto" />
+                                                <ColumnDefinition Width="*" />
+                                            </Grid.ColumnDefinitions>
                                             <TextBlock Text="加载器" Style="{StaticResource Label}" />
-                                            <TextBlock x:Name="OvLoader" Text="—" HorizontalAlignment="Right" FontSize="12" />
+                                            <TextBlock x:Name="OvLoader" Text="—" HorizontalAlignment="Right" FontSize="12"  TextTrimming="CharacterEllipsis" Grid.Column="1" Margin="10,0,0,0" />
                                         </Grid>
                                     </Border>
                                     <Border Style="{StaticResource SettingRow}">
                                         <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto" />
+                                                <ColumnDefinition Width="*" />
+                                            </Grid.ColumnDefinitions>
                                             <TextBlock Text="建议 Java" Style="{StaticResource Label}" />
-                                            <TextBlock x:Name="OvJava" Text="—" HorizontalAlignment="Right" FontSize="12" />
+                                            <TextBlock x:Name="OvJava" Text="—" HorizontalAlignment="Right" FontSize="12"  TextTrimming="CharacterEllipsis" Grid.Column="1" Margin="10,0,0,0" />
                                         </Grid>
                                     </Border>
                                     <Border Style="{StaticResource SettingRow}" BorderThickness="0">
                                         <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto" />
+                                                <ColumnDefinition Width="*" />
+                                            </Grid.ColumnDefinitions>
                                             <TextBlock Text="游戏目录" Style="{StaticResource Label}" />
                                             <TextBlock x:Name="OvGameDir" Text="—" HorizontalAlignment="Right" FontSize="10.5"
-                                                       TextTrimming="CharacterEllipsis" MaxWidth="300"
-                                                       ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}" />
+                                                       TextTrimming="CharacterEllipsis"
+                                                       ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"  Grid.Column="1" Margin="10,0,0,0" />
                                         </Grid>
                                     </Border>
                                     <Button Style="{StaticResource ButtonBase}" Height="32" Content="打开版本目录"
@@ -233,26 +249,42 @@
                                     <TextBlock Text="运行状态" Style="{StaticResource SectionTitle}" />
                                     <Border Style="{StaticResource SettingRow}" Margin="0,10,0,0">
                                         <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto" />
+                                                <ColumnDefinition Width="*" />
+                                            </Grid.ColumnDefinitions>
                                             <TextBlock Text="Mod 数量" Style="{StaticResource Label}" />
-                                            <TextBlock x:Name="OvMods" Text="0" HorizontalAlignment="Right" FontSize="12" />
+                                            <TextBlock x:Name="OvMods" Text="0" HorizontalAlignment="Right" FontSize="12"  TextTrimming="CharacterEllipsis" Grid.Column="1" Margin="10,0,0,0" />
                                         </Grid>
                                     </Border>
                                     <Border Style="{StaticResource SettingRow}">
                                         <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto" />
+                                                <ColumnDefinition Width="*" />
+                                            </Grid.ColumnDefinitions>
                                             <TextBlock Text="内存分配" Style="{StaticResource Label}" />
-                                            <TextBlock x:Name="OvMemory" Text="4096 MB" HorizontalAlignment="Right" FontSize="12" />
+                                            <TextBlock x:Name="OvMemory" Text="4096 MB" HorizontalAlignment="Right" FontSize="12"  TextTrimming="CharacterEllipsis" Grid.Column="1" Margin="10,0,0,0" />
                                         </Grid>
                                     </Border>
                                     <Border Style="{StaticResource SettingRow}">
                                         <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto" />
+                                                <ColumnDefinition Width="*" />
+                                            </Grid.ColumnDefinitions>
                                             <TextBlock Text="上次启动" Style="{StaticResource Label}" />
-                                            <TextBlock x:Name="OvLast" Text="从未" HorizontalAlignment="Right" FontSize="12" />
+                                            <TextBlock x:Name="OvLast" Text="从未" HorizontalAlignment="Right" FontSize="12"  TextTrimming="CharacterEllipsis" Grid.Column="1" Margin="10,0,0,0" />
                                         </Grid>
                                     </Border>
                                     <Border Style="{StaticResource SettingRow}" BorderThickness="0">
                                         <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto" />
+                                                <ColumnDefinition Width="*" />
+                                            </Grid.ColumnDefinitions>
                                             <TextBlock Text="全局隔离" Style="{StaticResource Label}" />
-                                            <TextBlock x:Name="OvIsolate" Text="开启" HorizontalAlignment="Right" FontSize="12" />
+                                            <TextBlock x:Name="OvIsolate" Text="开启" HorizontalAlignment="Right" FontSize="12"  TextTrimming="CharacterEllipsis" Grid.Column="1" Margin="10,0,0,0" />
                                         </Grid>
                                     </Border>
                                     <Button Style="{StaticResource SoftButton}" Height="32" Content="转到修改"
@@ -409,6 +441,7 @@
                                 <StackPanel Orientation="Horizontal" Margin="0,11,0,0">
                                     <Button Style="{StaticResource ButtonBase}" Height="32" Content="重命名" Click="Rename_Click" Margin="0,0,8,0" />
                                     <Button Style="{StaticResource ButtonBase}" Height="32" Content="改显示名" Click="ChangeDisplayName_Click" Margin="0,0,8,0" />
+                                    <Button Style="{StaticResource ButtonBase}" Height="32" Content="实例资源" Click="InstanceResources_Click" Margin="0,0,8,0" />
                                     <Button Style="{StaticResource ButtonBase}" Height="32" Content="备份实例" Click="BackupInstance_Click" Margin="0,0,8,0" />
                                     <Button Style="{StaticResource ButtonBase}" Height="32" Content="恢复备份" Click="RestoreInstance_Click" Margin="0,0,8,0" />
                                     <Button Style="{StaticResource DangerButton}" Height="32" Content="删掉这个版本" Click="Delete_Click" />
