@@ -95,7 +95,7 @@ public partial class MainWindow : Window
         BgOpacitySlider.Value = s.BackgroundImageOpacity * 100;
         _updatingSliders = false;
         OpacityValue.Text = $"{s.UiOpacity * 100:0}%";
-        RailVersion.Text = "v1.3.9";
+        RailVersion.Text = "v1.3.8";
 
         LauncherApp.I.SettingsChanged += OnSettingsChanged;
         LauncherApp.I.VersionsChanged += OnVersionsChanged;
