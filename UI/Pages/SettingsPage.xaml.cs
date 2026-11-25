@@ -70,6 +70,7 @@ public partial class SettingsPage : UserControl, IPage
             SceneWallpaperRow.Visibility = bgMode == "wallpaper" ? Visibility.Visible : Visibility.Collapsed;
             SceneAnimatedCheck.IsChecked = s.WallpaperSceneAnimated;
 
+            RandomBackgroundCheck.IsChecked = s.RandomCustomBackground;
             BgPathText.Text = bgMode switch
             {
                 "wallpaper" => "跟随 Wallpaper Engine 当前壁纸；未检测到时自动隐藏背景",
@@ -264,6 +265,7 @@ public partial class SettingsPage : UserControl, IPage
         var s = LauncherApp.I.Settings;
         s.BackgroundImage = dialog.FileName;
         s.BackgroundMode = "custom";
+        s.RandomCustomBackground = false;
         s.BackgroundImageOpacity = Math.Max(0.2, s.BackgroundImageOpacity);
         LauncherApp.I.Save();
         LauncherApp.I.RaiseSettingsChanged();
@@ -285,6 +287,32 @@ public partial class SettingsPage : UserControl, IPage
         BackgroundService.EnsureFolder();
         Shell.OpenFolder(BackgroundService.Folder);
         LauncherApp.I.Notify("背景文件夹已打开", "把图片或视频放进去后点「刷新」即可使用");
+    }
+
+    private void RandomBackground_Changed(object sender, RoutedEventArgs e)
+    {
+        if (_loading) return;
+        LauncherApp.I.Settings.RandomCustomBackground = RandomBackgroundCheck.IsChecked == true;
+        LauncherApp.I.Save();
+    }
+
+    private void RandomBackground_Click(object sender, RoutedEventArgs e)
+    {
+        var s = LauncherApp.I.Settings;
+        var picked = BackgroundService.PickRandom(s.BackgroundImage);
+        if (string.IsNullOrWhiteSpace(picked))
+        {
+            MessageDialog.Show(Window.GetWindow(this), "没有找到背景图片",
+                "把 png / jpg / gif / mp4 / webm 放进背景文件夹，再点随机", "知道了", danger: true);
+            return;
+        }
+        s.BackgroundImage = picked;
+        s.BackgroundMode = "custom";
+        s.RandomCustomBackground = true;
+        RandomBackgroundCheck.IsChecked = true;
+        LauncherApp.I.Save();
+        LauncherApp.I.RaiseSettingsChanged();
+        BgPathText.Text = "当前：" + picked;
     }
 
     private void RefreshBackground_Click(object sender, RoutedEventArgs e)

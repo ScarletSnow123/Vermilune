@@ -255,6 +255,8 @@
                                                 Margin="6,0,0,0" Click="OpenBackgroundFolder_Click" />
                                         <Button Style="{StaticResource ButtonBase}" Height="30" Content="刷新"
                                                 Margin="6,0,0,0" Click="RefreshBackground_Click" />
+                                        <Button Style="{StaticResource ButtonBase}" Height="30" Content="随机"
+                                                Margin="6,0,0,0" Click="RandomBackground_Click" />
                                         <Button Style="{StaticResource GhostButton}" Height="30" Content="清除" Margin="6,0,0,0"
                                                 Click="ClearBackground_Click" />
                                     </StackPanel>
@@ -262,6 +264,9 @@
                                         <TextBlock Text="背景亮度" Style="{StaticResource Hint}" VerticalAlignment="Center" Margin="0,0,8,0" />
                                         <Slider x:Name="BgOpacitySlider" Width="120" Minimum="0" Maximum="100"
                                                 ValueChanged="BgOpacitySlider_ValueChanged" />
+                                        <CheckBox x:Name="RandomBackgroundCheck" Content="每次启动随机" FontSize="10.5"
+                                                  Margin="12,0,0,0" VerticalAlignment="Center"
+                                                  Checked="RandomBackground_Changed" Unchecked="RandomBackground_Changed" />
                                     </StackPanel>
                                 </StackPanel>
                             </Grid>

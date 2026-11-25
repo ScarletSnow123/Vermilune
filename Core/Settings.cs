@@ -96,6 +96,7 @@ public sealed class AppSettings
     public string BackgroundMode { get; set; } = "default"; // default | custom | wallpaper
     public string BackgroundImage { get; set; } = "";
     public double BackgroundImageOpacity { get; set; } = 0.34;
+    public bool RandomCustomBackground { get; set; } = true;
     /// <summary>场景类壁纸是否播放自带的低清 preview.gif；关闭时使用拆包高清静帧。</summary>
     public bool WallpaperSceneAnimated { get; set; }
 

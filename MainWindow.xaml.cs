@@ -24,6 +24,7 @@ public partial class MainWindow : Window
     private string _currentHomeLayout = "classic";
     private bool _isMaximized;
     private bool _ready;
+    private bool _backgroundRolled;
     private bool _checkingUpdate;
     private bool _updatingSliders;
     private bool _closeForGame;
@@ -78,6 +79,7 @@ public partial class MainWindow : Window
         catch { }
 
         if (s.Maximized) ToggleMaximize();
+        RollRandomBackground();
         ApplyTheme();
         WallpaperEngineService.HighQualityPreviewReady += _ =>
             Dispatcher.BeginInvoke(new Action(() =>
@@ -93,7 +95,7 @@ public partial class MainWindow : Window
         BgOpacitySlider.Value = s.BackgroundImageOpacity * 100;
         _updatingSliders = false;
         OpacityValue.Text = $"{s.UiOpacity * 100:0}%";
-        RailVersion.Text = "v1.3.8";
+        RailVersion.Text = "v1.3.9";
 
         LauncherApp.I.SettingsChanged += OnSettingsChanged;
         LauncherApp.I.VersionsChanged += OnVersionsChanged;
@@ -175,6 +177,19 @@ public partial class MainWindow : Window
     private void OnLaunchExited(int code, string? crash)
     {
         Dispatcher.BeginInvoke(new Action(UpdateTitleStatus));
+    }
+
+    private void RollRandomBackground()
+    {
+        if (_backgroundRolled) return;
+        var s = LauncherApp.I.Settings;
+        if (s.BackgroundMode != "custom" || !s.RandomCustomBackground) return;
+        _backgroundRolled = true;
+        var picked = BackgroundService.PickRandom(s.BackgroundImage);
+        if (string.IsNullOrWhiteSpace(picked)) return;
+        if (string.Equals(picked, s.BackgroundImage, StringComparison.OrdinalIgnoreCase)) return;
+        s.BackgroundImage = picked;
+        LauncherApp.I.Save();
     }
 
     private void ApplyTheme()
