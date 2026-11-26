@@ -298,8 +298,7 @@
                                 <TextBlock Text="路径" Style="{StaticResource SectionTitle}" />
                                 <TextBlock x:Name="OvJsonPath" Text="—" Style="{StaticResource MonoText}"
                                            TextWrapping="Wrap" Margin="0,9,0,0" />
-                                <TextBlock Text="实例设置保存在启动器数据目录，不会改写版本 JSON"
-                                           Style="{StaticResource MutedText}" Margin="0,8,0,0" />
+                                <TextBlock Visibility="Collapsed" />
                             </StackPanel>
                         </Border>
                     </StackPanel>
@@ -312,7 +311,7 @@
                         <Grid>
                             <StackPanel>
                                 <TextBlock Text="启动参数" Style="{StaticResource SectionTitle}" />
-                                <TextBlock Text="修改会立即保存到当前实例，不影响其他版本" Style="{StaticResource RowSub}" />
+                                <TextBlock Visibility="Collapsed" />
                             </StackPanel>
                             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
                                 <TextBlock x:Name="SaveStatus" Text="" FontSize="10.5" VerticalAlignment="Center"
@@ -436,8 +435,7 @@
                         <Border Style="{StaticResource Card}" Margin="0,12,0,0">
                             <StackPanel>
                                 <TextBlock Text="维护" Style="{StaticResource SectionTitle}" />
-                                <TextBlock Text="重命名会同步修改版本 JSON 与 inheritsFrom；删除会移到回收站"
-                                           Style="{StaticResource MutedText}" Margin="0,7,0,0" />
+                                <TextBlock Visibility="Collapsed" />
                                 <StackPanel Orientation="Horizontal" Margin="0,11,0,0">
                                     <Button Style="{StaticResource ButtonBase}" Height="32" Content="重命名" Click="Rename_Click" Margin="0,0,8,0" />
                                     <Button Style="{StaticResource ButtonBase}" Height="32" Content="改显示名" Click="ChangeDisplayName_Click" Margin="0,0,8,0" />

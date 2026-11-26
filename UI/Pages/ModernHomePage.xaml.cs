@@ -4,6 +4,8 @@ using System.IO;
 using System.Runtime.CompilerServices;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
+using System.Windows.Input;
 using System.Windows.Media;
 using Vermilune.Core;
 using Vermilune.UI.Dialogs;
@@ -22,6 +24,7 @@ public partial class ModernHomePage : UserControl, IPage, INotifyPropertyChanged
     private string _avatarInitial = "P";
     private string _launchTitle = "启动游戏";
     private string _launchSub = "未选择版本";
+    private DateTime _versionPopupClosedUtc;
 
     public ObservableCollection<VersionInfo> Versions { get; } = new();
 
@@ -49,7 +52,12 @@ public partial class ModernHomePage : UserControl, IPage, INotifyPropertyChanged
     {
         InitializeComponent();
         DataContext = this;
-        Loaded += (_, _) => Refresh();
+        Loaded += (_, _) =>
+        {
+            if (Window.GetWindow(this) is { } window)
+                window.Deactivated += (_, _) => CloseVersionPopup();
+            Refresh();
+        };
         LauncherApp.I.Launch.ProgressChanged += OnProgress;
         LauncherApp.I.Launch.Exited += (_, _) => Dispatcher.BeginInvoke(new Action(Refresh));
     }
@@ -63,6 +71,7 @@ public partial class ModernHomePage : UserControl, IPage, INotifyPropertyChanged
         try
         {
             var app = LauncherApp.I;
+            EnsureHomeTextContrast(app);
             var previous = SelectedVersion?.Id ?? app.Settings.LastVersion;
             Versions.Clear();
             foreach (var version in app.Versions.Versions) Versions.Add(version);
@@ -85,10 +94,29 @@ public partial class ModernHomePage : UserControl, IPage, INotifyPropertyChanged
                 LaunchState.Running => "游戏运行中",
                 LaunchState.Preparing or LaunchState.Downloading or LaunchState.Starting => "正在准备启动…",
                 LaunchState.Failed => "启动失败",
-                _ => "选择一个版本，然后按下启动"
+                _ => ""
             };
         }
         catch (Exception ex) { Log.Warn("新版主页刷新失败：" + ex.Message); }
+    }
+
+    private static void EnsureHomeTextContrast(LauncherApp app)
+    {
+        var res = Application.Current.Resources;
+        var settings = app.Settings;
+        var hasImage = settings.BackgroundMode is "custom" or "wallpaper";
+        if (hasImage)
+        {
+            res["HomeTextBrush"] = Brushes.White;
+            res["HomeTextSubBrush"] = new SolidColorBrush(Color.FromRgb(0xE8, 0xE2, 0xEA));
+            res["HomeTextMutedBrush"] = new SolidColorBrush(Color.FromRgb(0xC8, 0xC2, 0xCC));
+        }
+        else
+        {
+            res["HomeTextBrush"] = res["TextBrush"];
+            res["HomeTextSubBrush"] = res["TextSubBrush"];
+            res["HomeTextMutedBrush"] = res["TextMutedBrush"];
+        }
     }
 
     private void UpdateVersionInfo()
@@ -179,11 +207,99 @@ public partial class ModernHomePage : UserControl, IPage, INotifyPropertyChanged
         if (_state == LaunchState.Running) LaunchProgress.Value = 100;
     }
 
-    private void VersionCombo_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    private void VersionCombo_RequestBringIntoView(object sender, RequestBringIntoViewEventArgs e)
     {
-        if (VersionCombo.SelectedItem is not VersionInfo version) return;
+        // ComboBox 在鼠标悬停到可见项边缘时会 RequestBringIntoView，
+        // 导致列表自己滚动；这里只允许键盘/点击选择时滚动。
+        if (e.TargetObject is ComboBoxItem)
+            e.Handled = true;
+    }
+
+    private void VersionButton_Click(object sender, RoutedEventArgs e)
+    {
+        // StaysOpen=False 会在点到按钮的同一瞬间先关闭弹层，
+        // 如果这里再取反就会立刻重新打开。
+        if (VersionPopup.IsOpen)
+        {
+            VersionPopup.IsOpen = false;
+            return;
+        }
+        // 只有「华丽」动画档才给版本列表加弹出动画。
+        VersionPopup.PopupAnimation = string.Equals(LauncherApp.I.Settings.AnimationMode, "fancy", StringComparison.OrdinalIgnoreCase)
+            ? PopupAnimation.Fade
+            : PopupAnimation.None;
+        VersionDismissLayer.Visibility = Visibility.Visible;
+        VersionPopup.IsOpen = true;
+    }
+
+    private void CloseVersionPopup()
+    {
+        if (VersionPopup is null || !VersionPopup.IsOpen) return;
+        VersionPopup.IsOpen = false;
+        if (VersionDismissLayer is not null) VersionDismissLayer.Visibility = Visibility.Collapsed;
+    }
+
+    private void VersionPopup_Closed(object? sender, EventArgs e)
+    {
+        _versionPopupClosedUtc = DateTime.UtcNow;
+        if (VersionDismissLayer is not null) VersionDismissLayer.Visibility = Visibility.Collapsed;
+    }
+
+    private void VersionDismissLayer_Click(object sender, MouseButtonEventArgs e)
+    {
+        var point = e.GetPosition(VersionButton);
+        var onButton = point.X >= 0 && point.Y >= 0 &&
+                       point.X <= VersionButton.ActualWidth && point.Y <= VersionButton.ActualHeight;
+        VersionPopup.IsOpen = false;
+        if (onButton) _ = FlashVersionButtonAsync();
+        e.Handled = true;
+    }
+
+    private async Task FlashVersionButtonAsync()
+    {
+        VersionButton.Opacity = 0.9;
+        await Task.Delay(110);
+        VersionButton.Opacity = 1;
+    }
+
+    private void VersionItem_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is not Button { Tag: VersionInfo version }) return;
         SelectedVersion = version;
         LauncherApp.I.SetCurrentVersion(version.Id);
+        VersionPopup.IsOpen = false;
+    }
+
+    private async void SwitchSkin_Click(object sender, RoutedEventArgs e)
+    {
+        var path = SkinPickerDialog.Show(Window.GetWindow(this));
+        if (path is null) return;
+        if (LauncherApp.I.Settings.Account.IsMicrosoft)
+        {
+            if (!await LauncherApp.I.EnsureAccountReadyAsync())
+            {
+                MessageDialog.Show(Window.GetWindow(this), "登录已失效", "先重新登录 Microsoft 账号，再传皮肤", "知道了", danger: true);
+                return;
+            }
+            try { await LauncherApp.I.Auth.UploadSkinAsync(path, LauncherApp.I.Skins.IsSlim, CancellationToken.None); }
+            catch (Exception ex) { MessageDialog.Show(Window.GetWindow(this), "上传皮肤失败", ex.Message, "关闭", danger: true); }
+        }
+        await RefreshAvatarAsync();
+    }
+
+    private async void SwitchCape_Click(object sender, RoutedEventArgs e)
+    {
+        if (!LauncherApp.I.Settings.Account.IsMicrosoft)
+        {
+            MessageDialog.Show(Window.GetWindow(this), "披风", "披风只支持 Microsoft 正版账号", "知道了");
+            return;
+        }
+        if (!await LauncherApp.I.EnsureAccountReadyAsync())
+        {
+            MessageDialog.Show(Window.GetWindow(this), "登录已失效", "先重新登录 Microsoft 账号", "知道了", danger: true);
+            return;
+        }
+        if (CapePickerDialog.Show(Window.GetWindow(this))) await RefreshAvatarAsync();
     }
 
     private void Account_Click(object sender, RoutedEventArgs e)

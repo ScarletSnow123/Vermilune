@@ -23,13 +23,20 @@ public static class ThemeManager
         var windowAlpha = hasBackgroundImage
             ? (byte)Math.Clamp((0.55 + 0.45 * opacity) * 255, 40, 255)
             : (byte)Math.Clamp(opacity * 255, 45, 255);
-        var surfaceAlpha = (byte)Math.Clamp((0.86 + 0.14 * opacity) * 255, 180, 255);
-        var surface2Alpha = (byte)Math.Clamp((0.90 + 0.10 * opacity) * 255, 200, 255);
-        var surface3Alpha = (byte)Math.Clamp((0.94 + 0.06 * opacity) * 255, 220, 255);
+        var surfaceAlpha = (byte)Math.Clamp((0.35 + 0.65 * opacity) * 255, 90, 255);
+        var surface2Alpha = (byte)Math.Clamp((0.45 + 0.55 * opacity) * 255, 110, 255);
+        var surface3Alpha = (byte)Math.Clamp((0.55 + 0.45 * opacity) * 255, 130, 255);
 
         if (light)
         {
             res["WindowBgBrush"] = Solid(Color.FromArgb(windowAlpha, 0xF3, 0xF1, 0xF5));
+            // 浅色模式有背景图时不要把底图压成白色，否则整窗会发白。
+            res["BgTintBrush"] = hasBackgroundImage
+                ? Solid(Color.FromArgb(0xFF, 0x1A, 0x17, 0x20))
+                : res["WindowBgBrush"];
+            res["HomeTextBrush"] = hasBackgroundImage ? Solid(Color.FromRgb(0xF7, 0xF4, 0xF8)) : res["TextBrush"];
+            res["HomeTextSubBrush"] = hasBackgroundImage ? Solid(Color.FromRgb(0xE0, 0xDA, 0xE4)) : res["TextSubBrush"];
+            res["HomeTextMutedBrush"] = hasBackgroundImage ? Solid(Color.FromRgb(0xBF, 0xB8, 0xC4)) : res["TextMutedBrush"];
             res["SurfaceBrush"] = Solid(Color.FromArgb(surfaceAlpha, 0xFB, 0xFA, 0xFD));
             res["Surface2Brush"] = Solid(Color.FromArgb(surface2Alpha, 0xF0, 0xEE, 0xF4));
             res["Surface3Brush"] = Solid(Color.FromArgb(surface3Alpha, 0xE7, 0xE4, 0xEC));
@@ -56,6 +63,12 @@ public static class ThemeManager
         else
         {
             res["WindowBgBrush"] = Solid(Color.FromArgb(windowAlpha, 0x0A, 0x0C, 0x0D));
+            res["BgTintBrush"] = hasBackgroundImage
+                ? Solid(Color.FromArgb(0xFF, 0x0A, 0x0C, 0x0D))
+                : res["WindowBgBrush"];
+            res["HomeTextBrush"] = res["TextBrush"];
+            res["HomeTextSubBrush"] = res["TextSubBrush"];
+            res["HomeTextMutedBrush"] = res["TextMutedBrush"];
             res["SurfaceBrush"] = Solid(Color.FromArgb(surfaceAlpha, 0x11, 0x15, 0x18));
             res["Surface2Brush"] = Solid(Color.FromArgb(surface2Alpha, 0x17, 0x1D, 0x21));
             res["Surface3Brush"] = Solid(Color.FromArgb(surface3Alpha, 0x1E, 0x26, 0x2B));

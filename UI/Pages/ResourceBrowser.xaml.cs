@@ -19,6 +19,7 @@ public partial class ResourceBrowser : UserControl
     private CancellationTokenSource? _searchCts;
     private bool _installing;
     private bool _initialized;
+    private List<string> _allMcVersions = new();
     private bool _searched;
     private int _offset;
     private CancellationTokenSource? _cts;
@@ -53,7 +54,8 @@ public partial class ResourceBrowser : UserControl
         var mcList = new List<string> { "全部版本" };
         mcList.AddRange(versions.Select(v => v.MinecraftVersion).Where(x => !string.IsNullOrWhiteSpace(x)).Distinct().OrderByDescending(x => x));
         var currentMc = LauncherApp.I.CurrentVersion?.MinecraftVersion;
-        McCombo.ItemsSource = mcList;
+        _allMcVersions = mcList;
+        ApplyVersionFilter();
         McCombo.SelectedItem = !string.IsNullOrWhiteSpace(currentMc) && mcList.Contains(currentMc) ? currentMc : mcList[0];
         TargetCombo.ItemsSource = versions;
         TargetCombo.SelectedItem = LauncherApp.I.CurrentVersion ?? versions.FirstOrDefault();
@@ -74,7 +76,8 @@ public partial class ResourceBrowser : UserControl
             var list = new List<string> { "全部版本" };
             list.AddRange(all);
             list.AddRange(installed.Where(x => !all.Contains(x, StringComparer.OrdinalIgnoreCase)));
-            McCombo.ItemsSource = list;
+            _allMcVersions = list;
+            ApplyVersionFilter();
             McCombo.SelectedItem = !string.IsNullOrWhiteSpace(selected) && list.Contains(selected)
                 ? selected
                 : "全部版本";
@@ -83,6 +86,30 @@ public partial class ResourceBrowser : UserControl
         {
             Log.Warn("加载完整 Minecraft 版本列表失败：" + ex.Message);
         }
+    }
+
+    private void VersionSearch_TextChanged(object sender, TextChangedEventArgs e)
+    {
+        if (!_initialized) return;
+        ApplyVersionFilter();
+        if (!string.IsNullOrWhiteSpace(VersionSearchBox.Text) && McCombo.Items.Count > 0)
+            McCombo.IsDropDownOpen = true;
+    }
+
+    private void ApplyVersionFilter()
+    {
+        var selected = McCombo.SelectedItem as string;
+        var query = (VersionSearchBox.Text ?? "").Trim();
+        var list = string.IsNullOrWhiteSpace(query)
+            ? _allMcVersions
+            : _allMcVersions.Where(v => v.Contains(query, StringComparison.OrdinalIgnoreCase)).ToList();
+        McCombo.ItemsSource = list;
+        if (!string.IsNullOrEmpty(selected) && list.Contains(selected))
+            McCombo.SelectedItem = selected;
+        else if (list.Count > 0)
+            McCombo.SelectedItem = list.Contains("全部版本") ? "全部版本" : list[0];
+        else
+            McCombo.SelectedItem = null;
     }
 
     private void TargetCombo_DropDownOpened(object sender, EventArgs e) => RefreshTargets();

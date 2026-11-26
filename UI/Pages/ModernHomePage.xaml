@@ -8,11 +8,13 @@
         <converters:PathImageConverter x:Key="PathImage" />
         <Style x:Key="SoftLink" TargetType="Button" BasedOn="{StaticResource LinkButton}">
             <Setter Property="FontSize" Value="11.5" />
+            <Setter Property="Foreground" Value="{DynamicResource HomeTextSubBrush}" />
         </Style>
         <Style x:Key="Kicker" TargetType="TextBlock">
-            <Setter Property="FontFamily" Value="{DynamicResource MonoFont}" />
-            <Setter Property="FontSize" Value="9" />
-            <Setter Property="Foreground" Value="{DynamicResource TextMutedBrush}" />
+            <Setter Property="FontFamily" Value="{DynamicResource UiFont}" />
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Foreground" Value="{DynamicResource HomeTextSubBrush}" />
         </Style>
     </UserControl.Resources>
 
@@ -39,48 +41,132 @@
         <Border Grid.Row="1" />
 
         <!-- 底部左侧：当前实例 -->
-        <StackPanel Grid.Row="2" HorizontalAlignment="Left" VerticalAlignment="Bottom" MaxWidth="560">
-            <TextBlock Text="CURRENT INSTANCE // 当前实例" Style="{StaticResource Kicker}" />
+        <StackPanel Grid.Row="2" HorizontalAlignment="Left" VerticalAlignment="Bottom" MaxWidth="600">
+            <TextBlock Text="这个启动器纯娱乐的，轻点骂qwq" Style="{StaticResource Kicker}" />
             <TextBlock x:Name="InstanceTitle" Text="{Binding InstanceName}" FontFamily="{DynamicResource DisplayFont}"
+                       Foreground="{DynamicResource HomeTextBrush}"
                        FontSize="68" FontWeight="Bold" Margin="0,4,0,0" TextTrimming="CharacterEllipsis" />
-            <ComboBox x:Name="VersionCombo" Height="66" Width="560" HorizontalContentAlignment="Stretch" HorizontalAlignment="Left" Margin="0,12,0,0"
-                      ItemsSource="{Binding Versions}" SelectedItem="{Binding SelectedVersion, Mode=TwoWay}"
-                      SelectionChanged="VersionCombo_SelectionChanged" VerticalContentAlignment="Center">
-                <ComboBox.ItemTemplate>
-                    <DataTemplate>
-                        <Grid Height="50">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto" />
-                                <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="Auto" />
-                            </Grid.ColumnDefinitions>
-                            <Border Width="40" Height="40" CornerRadius="10" Background="{DynamicResource Surface2Brush}" ClipToBounds="True" Margin="0,0,12,0" VerticalAlignment="Center">
-                                <Grid>
-                                    <TextBlock Text="{Binding Initial}" FontSize="14" FontWeight="Bold"
-                                               Foreground="{DynamicResource AccentBrush}"
-                                               HorizontalAlignment="Center" VerticalAlignment="Center" />
-                                    <Image Source="{Binding IconPath, Converter={StaticResource PathImage}}"
-                                           Stretch="UniformToFill" RenderOptions.BitmapScalingMode="HighQuality" />
-                                </Grid>
+            <Grid HorizontalAlignment="Left" Margin="0,12,0,0">
+                <Button x:Name="VersionButton" Width="560" Height="72" Click="VersionButton_Click" Foreground="{DynamicResource TextBrush}"
+                        Background="{DynamicResource Surface2Brush}" BorderBrush="{DynamicResource StrokeBrush}"
+                        BorderThickness="1" Padding="10,0" HorizontalContentAlignment="Stretch" Cursor="Hand">
+                    <Button.Template>
+                        <ControlTemplate TargetType="Button">
+                            <Border x:Name="Bd" Background="{TemplateBinding Background}"
+                                    BorderBrush="{TemplateBinding BorderBrush}"
+                                    BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="9"
+                                    Padding="{TemplateBinding Padding}">
+                                <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                                  VerticalAlignment="Center" />
                             </Border>
-                            <StackPanel Grid.Column="1" Margin="0" VerticalAlignment="Center">
-                                <TextBlock Text="{Binding DisplayName}" FontSize="14" FontWeight="SemiBold"
-                                           TextTrimming="CharacterEllipsis" />
-                                <TextBlock Text="{Binding SubLine}" FontSize="11" Foreground="{DynamicResource TextMutedBrush}" />
-                            </StackPanel>
-                            <TextBlock Grid.Column="2" Text="{Binding LoaderBadge}" FontSize="11"
-                                       Foreground="{DynamicResource AccentBrush}" VerticalAlignment="Center" Margin="10,0,0,0" />
-                        </Grid>
-                    </DataTemplate>
-                </ComboBox.ItemTemplate>
-            </ComboBox>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsPressed" Value="True">
+                                    <Setter TargetName="Bd" Property="Opacity" Value="0.9" />
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Button.Template>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <Border Width="46" Height="46" CornerRadius="10" Background="{DynamicResource Surface2Brush}"
+                                ClipToBounds="True" Margin="0,0,14,0" VerticalAlignment="Center">
+                            <Grid>
+                                <TextBlock Text="{Binding SelectedVersion.Initial}" FontSize="14" FontWeight="Bold"
+                                           Foreground="{DynamicResource AccentBrush}"
+                                           HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                <Image Source="{Binding SelectedVersion.IconPath, Converter={StaticResource PathImage}}"
+                                       Stretch="UniformToFill" RenderOptions.BitmapScalingMode="HighQuality" />
+                            </Grid>
+                        </Border>
+                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                            <TextBlock Text="{Binding SelectedVersion.DisplayName, FallbackValue=选择版本}"
+                                       FontSize="17" FontWeight="SemiBold" Foreground="{DynamicResource TextBrush}"
+                                       TextTrimming="CharacterEllipsis" />
+                            <TextBlock Text="{Binding SelectedVersion.SubLine}" FontSize="13.5"
+                                       Foreground="{DynamicResource TextSubBrush}" TextTrimming="CharacterEllipsis" />
+                        </StackPanel>
+                        <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                            <TextBlock Text="{Binding SelectedVersion.LoaderBadge}" FontSize="13.5"
+                                       Foreground="{DynamicResource AccentBrush}" Margin="10,0,10,0" />
+                            <Path Data="M0,0 L5,5 L10,0 Z" Width="9" Height="5" Stretch="Fill"
+                                  Fill="{DynamicResource TextMutedBrush}" VerticalAlignment="Center" />
+                        </StackPanel>
+                    </Grid>
+                </Button>
+                <Popup x:Name="VersionPopup" PlacementTarget="{Binding ElementName=VersionButton}" Placement="Bottom"
+                       StaysOpen="True" AllowsTransparency="True" VerticalOffset="6" PopupAnimation="None" Closed="VersionPopup_Closed">
+                    <Border Width="560" MaxHeight="430" TextElement.Foreground="{DynamicResource TextBrush}"
+                            Background="{DynamicResource Surface3Brush}"
+                            BorderBrush="{DynamicResource StrokeStrongBrush}" BorderThickness="1"
+                            CornerRadius="10" Padding="4">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                            <ItemsControl ItemsSource="{Binding Versions}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Button Tag="{Binding}" Click="VersionItem_Click" Height="72"
+                                                HorizontalContentAlignment="Stretch" Cursor="Hand"
+                                                Foreground="{DynamicResource TextBrush}"
+                                                Background="Transparent" BorderThickness="0" Padding="10,0">
+                                            <Button.Template>
+                                                <ControlTemplate TargetType="Button">
+                                                    <Border x:Name="Row" Background="{TemplateBinding Background}" CornerRadius="7"
+                                                            Padding="{TemplateBinding Padding}">
+                                                        <ContentPresenter HorizontalAlignment="Stretch" VerticalAlignment="Center" />
+                                                    </Border>
+                                                    <ControlTemplate.Triggers>
+                                                        <Trigger Property="IsPressed" Value="True">
+                                                            <Setter TargetName="Row" Property="Opacity" Value="0.9" />
+                                                        </Trigger>
+                                                    </ControlTemplate.Triggers>
+                                                </ControlTemplate>
+                                            </Button.Template>
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="Auto" />
+                                                    <ColumnDefinition Width="*" />
+                                                    <ColumnDefinition Width="Auto" />
+                                                </Grid.ColumnDefinitions>
+                                                <Border Width="50" Height="50" CornerRadius="11"
+                                                        Background="{DynamicResource Surface2Brush}" ClipToBounds="True"
+                                                        Margin="0,0,14,0" VerticalAlignment="Center">
+                                                    <Grid>
+                                                        <TextBlock Text="{Binding Initial}" FontSize="13" FontWeight="Bold"
+                                                                   Foreground="{DynamicResource AccentBrush}"
+                                                                   HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                                        <Image Source="{Binding IconPath, Converter={StaticResource PathImage}}"
+                                                               Stretch="UniformToFill" RenderOptions.BitmapScalingMode="HighQuality" />
+                                                    </Grid>
+                                                </Border>
+                                                <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                                    <TextBlock Text="{Binding DisplayName}" FontSize="17" FontWeight="SemiBold"
+                                                               Foreground="{DynamicResource TextBrush}"
+                                                               TextTrimming="CharacterEllipsis" />
+                                                    <TextBlock Text="{Binding SubLine}" FontSize="13.5"
+                                                               Foreground="{DynamicResource TextSubBrush}"
+                                                               TextTrimming="CharacterEllipsis" />
+                                                </StackPanel>
+                                                <TextBlock Grid.Column="2" Text="{Binding LoaderBadge}" FontSize="13.5"
+                                                           Foreground="{DynamicResource AccentBrush}"
+                                                           VerticalAlignment="Center" Margin="10,0,0,0" />
+                                            </Grid>
+                                        </Button>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </ScrollViewer>
+                    </Border>
+                </Popup>
+            </Grid>
             <TextBlock x:Name="VersionMetaText" Text="{Binding VersionMeta}" FontSize="11.5" Margin="0,9,0,0"
-                       Foreground="{DynamicResource TextSubBrush}" TextWrapping="Wrap" />
+                       Foreground="{DynamicResource HomeTextSubBrush}" TextWrapping="Wrap" />
             <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
                 <Button Style="{StaticResource SoftLink}" Content="修改实例" Click="EditVersion_Click" Margin="0,0,14,0" />
                 <Button Style="{StaticResource SoftLink}" Content="打开目录" Click="OpenVersionFolder_Click" Margin="0,0,14,0" />
-                <Button Style="{StaticResource SoftLink}" Content="资源" Click="OpenInstanceResources_Click" Margin="0,0,14,0" />
-                <Button Style="{StaticResource SoftLink}" Content="切换账号" Click="Account_Click" />
+                <Button Style="{StaticResource SoftLink}" Content="资源" Click="OpenInstanceResources_Click" />
             </StackPanel>
         </StackPanel>
 
@@ -88,16 +174,24 @@
         <StackPanel Grid.Row="2" HorizontalAlignment="Right" VerticalAlignment="Bottom" Width="310">
             <controls:SkinPreview3D x:Name="SkinPreview" Width="220" Height="300" ShowHint="False"
                                     HorizontalAlignment="Right" Margin="0,0,-64,26" />
-            <Grid HorizontalAlignment="Right" Margin="0,0,0,12">
+            <Grid HorizontalAlignment="Right" Margin="0,0,0,6">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
                 <StackPanel VerticalAlignment="Center" HorizontalAlignment="Right" Margin="0,0,10,0">
                     <TextBlock x:Name="AccountNameText" Text="{Binding AccountName}" FontSize="20" FontWeight="SemiBold"
+                               Foreground="{DynamicResource HomeTextBrush}"
                                HorizontalAlignment="Right" TextTrimming="CharacterEllipsis" />
                     <TextBlock x:Name="AccountSubText" Text="{Binding AccountSub}" FontSize="12"
-                               Foreground="{DynamicResource TextMutedBrush}" HorizontalAlignment="Right" />
+                               Foreground="{DynamicResource HomeTextMutedBrush}" HorizontalAlignment="Right" />
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,7,0,0">
+                        <Button Style="{StaticResource SoftLink}" Content="切换皮肤" FontSize="11.5" Click="SwitchSkin_Click" />
+                        <TextBlock Text="/" Foreground="{DynamicResource HomeTextMutedBrush}" FontSize="10.5" Margin="6,0" />
+                        <Button Style="{StaticResource SoftLink}" Content="切换披风" FontSize="11.5" Click="SwitchCape_Click" />
+                    </StackPanel>
+                    <Button Content="切换账号" Style="{StaticResource SoftButton}" Height="28" Padding="12,0"
+                            HorizontalAlignment="Right" Margin="0,7,0,0" Click="Account_Click" />
                 </StackPanel>
                 <Border Grid.Column="1" Width="104" Height="104" CornerRadius="22" ClipToBounds="True"
                         Background="{DynamicResource AccentSoftBrush}">
@@ -147,12 +241,16 @@
                 </StackPanel>
             </Border>
 
-            <TextBlock x:Name="StatusText" Text="选择一个版本，然后按下启动" FontSize="10.5"
-                       Foreground="{DynamicResource TextMutedBrush}" HorizontalAlignment="Right" Margin="0,8,0,0"
+            <TextBlock x:Name="StatusText" Text="" FontSize="10.5"
+                       Foreground="{DynamicResource HomeTextMutedBrush}" HorizontalAlignment="Right" Margin="0,8,0,0"
                        TextTrimming="CharacterEllipsis" />
-            <TextBlock x:Name="DateText" Text="" FontSize="10" Foreground="{DynamicResource TextMutedBrush}"
+            <TextBlock x:Name="DateText" Text="" FontSize="10" Foreground="{DynamicResource HomeTextMutedBrush}"
                        HorizontalAlignment="Right" Margin="0,3,0,0" />
         </StackPanel>
+
+        <Border x:Name="VersionDismissLayer" Grid.RowSpan="3" Panel.ZIndex="100"
+                Background="#01000000" Visibility="Collapsed"
+                MouseLeftButtonDown="VersionDismissLayer_Click" />
     </Grid>
     </Viewbox>
 </UserControl>

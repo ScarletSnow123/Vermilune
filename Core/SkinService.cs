@@ -1,4 +1,5 @@
 using System.IO;
+using System.Security.Cryptography;
 using System.IO.Compression;
 using System.Text.Json.Nodes;
 using System.Windows.Media.Imaging;
@@ -154,13 +155,23 @@ public sealed class SkinService
         var skipped = 0;
         try
         {
+            Directory.CreateDirectory(SkinDir);
+            var known = new HashSet<string>(
+                Directory.EnumerateFiles(SkinDir)
+                    .Where(f => new[] { ".png", ".jpg", ".jpeg" }.Contains(Path.GetExtension(f), StringComparer.OrdinalIgnoreCase))
+                    .Select(HashFile)
+                    .Where(h => h.Length > 0),
+                StringComparer.OrdinalIgnoreCase);
             foreach (var file in Directory.EnumerateFiles(folder))
             {
                 var ext = Path.GetExtension(file);
                 if (!new[] { ".png", ".jpg", ".jpeg" }.Contains(ext, StringComparer.OrdinalIgnoreCase)) continue;
                 if (!ValidateSkin(file, out _)) { skipped++; continue; }
+                var hash = HashFile(file);
+                if (hash.Length > 0 && known.Contains(hash)) { skipped++; continue; }
                 var target = CopyToLibrary(file);
                 if (target is null) { skipped++; continue; }
+                if (hash.Length > 0) known.Add(hash);
                 SaveModel(target, DetectSlim(LoadBitmap(target)));
                 copied++;
             }
@@ -200,6 +211,16 @@ public sealed class SkinService
         try
         {
             Directory.CreateDirectory(SkinDir);
+            var sourceHash = HashFile(source);
+            if (sourceHash.Length > 0)
+            {
+                foreach (var existing in Directory.EnumerateFiles(SkinDir)
+                             .Where(f => new[] { ".png", ".jpg", ".jpeg" }.Contains(Path.GetExtension(f), StringComparer.OrdinalIgnoreCase)))
+                {
+                    if (string.Equals(HashFile(existing), sourceHash, StringComparison.OrdinalIgnoreCase))
+                        return existing;
+                }
+            }
             var target = Path.Combine(SkinDir, Path.GetFileName(source));
             var n = 2;
             while (File.Exists(target) && !string.Equals(Path.GetFullPath(source), Path.GetFullPath(target), StringComparison.OrdinalIgnoreCase))
@@ -209,6 +230,16 @@ public sealed class SkinService
             return target;
         }
         catch (Exception ex) { Log.Warn("复制皮肤失败：" + ex.Message); return null; }
+    }
+
+    private static string HashFile(string path)
+    {
+        try
+        {
+            using var stream = File.OpenRead(path);
+            return Convert.ToHexString(SHA256.HashData(stream));
+        }
+        catch { return ""; }
     }
 
     public void UseAccountSkin()

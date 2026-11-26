@@ -19,6 +19,34 @@
             <Setter Property="FontSize" Value="10.5" />
             <Setter Property="Foreground" Value="{DynamicResource TextMutedBrush}" />
             <Setter Property="TextWrapping" Value="Wrap" />
+            <Setter Property="Visibility" Value="Collapsed" />
+        </Style>
+        <Style x:Key="AccentSwatch" TargetType="Button">
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Bd" Background="{TemplateBinding Background}" CornerRadius="7"
+                                BorderBrush="Transparent" BorderThickness="2" />
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource StrokeStrongBrush}" />
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="Bd" Property="Opacity" Value="0.9" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="SettingNote" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="10.5" />
+            <Setter Property="Foreground" Value="{DynamicResource TextMutedBrush}" />
+            <Setter Property="TextWrapping" Value="Wrap" />
+            <Setter Property="Margin" Value="0,4,0,0" />
         </Style>
     </UserControl.Resources>
 
@@ -62,14 +90,14 @@
                     <StackPanel>
                         <TextBlock Text="外观" Style="{StaticResource SectionHeader}" />
                         <TextBlock Text="强调色、界面不透明度与背景图" Style="{StaticResource Hint}" />
-                        <Border Style="{StaticResource SettingRow}">
+                        <Border Style="{StaticResource SettingRow}" Padding="0,8">
                             <Grid>
-                                <StackPanel>
-                                    <TextBlock Text="主页样式" FontSize="12.5" FontWeight="SemiBold" />
-                                    <TextBlock Text="旧版为可自定义主页；新版为 v1.3.0 之前的三列主页"
-                                               Style="{StaticResource Hint}" Margin="0,4,0,0" TextWrapping="Wrap" />
-                                </StackPanel>
-                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="主页样式" FontSize="12.5" FontWeight="SemiBold" VerticalAlignment="Center" />
+                                <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
                                     <RadioButton x:Name="HomeLayoutClassic" Style="{StaticResource TabItem}" GroupName="HomeLayout"
                                                  Content="旧版" Tag="classic" Checked="HomeLayout_Changed" />
                                     <RadioButton x:Name="HomeLayoutModern" Style="{StaticResource TabItem}" GroupName="HomeLayout"
@@ -82,7 +110,7 @@
                             <Grid>
                                 <StackPanel>
                                     <TextBlock Text="强调色" FontSize="12.5" FontWeight="SemiBold" />
-                                    <TextBlock Text="用于按钮、选中状态与强调线" Style="{StaticResource Hint}" Margin="0,4,0,0" />
+                                    <TextBlock Text="这是预备好的主题色" Style="{StaticResource SettingNote}" />
                                 </StackPanel>
                                 <StackPanel HorizontalAlignment="Right" VerticalAlignment="Center">
                                     <WrapPanel x:Name="AccentPanel" HorizontalAlignment="Right" />
@@ -103,8 +131,8 @@
                         <Border Style="{StaticResource SettingRow}">
                             <Grid>
                                 <StackPanel>
-                                    <TextBlock Text="RGB 调试" FontSize="12.5" FontWeight="SemiBold" />
-                                    <TextBlock Text="拖动 R / G / B 直接调整强调色，适合临时配色" Style="{StaticResource Hint}" Margin="0,4,0,0" />
+                                    <TextBlock Text="自定义颜色" FontSize="12.5" FontWeight="SemiBold" />
+                                    <TextBlock Text="自定义主题色" Style="{StaticResource SettingNote}" />
                                 </StackPanel>
                                 <StackPanel HorizontalAlignment="Right" VerticalAlignment="Center">
                                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
@@ -135,8 +163,7 @@
                                         <TextBlock x:Name="OpacityValueText" Text="96%" FontSize="11" Margin="8,0,0,0"
                                                    Foreground="{DynamicResource AccentBrush}" VerticalAlignment="Center" />
                                     </StackPanel>
-                                    <TextBlock Text="降低后可以透出桌面或背景图；文字始终保持清晰" Style="{StaticResource Hint}" Margin="0,4,0,0" />
-                                </StackPanel>
+                                                                    </StackPanel>
                                 <StackPanel HorizontalAlignment="Right" VerticalAlignment="Center" Width="270">
                                     <Slider x:Name="OpacitySlider" Minimum="30" Maximum="100"
                                             ValueChanged="OpacitySlider_ValueChanged" />
@@ -148,7 +175,7 @@
                             <Grid>
                                 <StackPanel>
                                     <TextBlock Text="浅色模式" FontSize="12.5" FontWeight="SemiBold" />
-                                    <TextBlock Text="切换深色 / 浅色主题，配色和卡片会同步变化" Style="{StaticResource Hint}" Margin="0,4,0,0" />
+                                    <TextBlock Text="可能会有点闪眼睛" Style="{StaticResource SettingNote}" />
                                 </StackPanel>
                                 <CheckBox x:Name="LightModeCheck" Style="{StaticResource Switch}" HorizontalAlignment="Right"
                                           VerticalAlignment="Center" Click="LightModeCheck_Click" />
@@ -159,8 +186,7 @@
                             <Grid>
                                 <StackPanel>
                                     <TextBlock Text="动画效果" FontSize="12.5" FontWeight="SemiBold" />
-                                    <TextBlock Text="关 / 流畅 / 华丽&#10;华丽模式使用柔和过渡，可与高级模糊叠加"
-                                               Style="{StaticResource Hint}" Margin="0,4,0,0" TextWrapping="Wrap" />
+                                    <TextBlock Text="这个其实开到华丽也没多大性能开销" Style="{StaticResource SettingNote}" />
                                 </StackPanel>
                                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
                                     <RadioButton x:Name="MotionOff" Style="{StaticResource TabItem}" GroupName="MotionMode"
@@ -177,8 +203,7 @@
                             <Grid>
                                 <StackPanel>
                                     <TextBlock Text="高级视觉效果" FontSize="12.5" FontWeight="SemiBold" />
-                                    <TextBlock Text="页面切换使用 BitmapCache 与模糊过渡；会增加显存 / 内存占用，默认关闭"
-                                               Style="{StaticResource Hint}" Margin="0,4,0,0" TextWrapping="Wrap" />
+                                    <TextBlock Text="就是模糊效果啦……" Style="{StaticResource SettingNote}" />
                                 </StackPanel>
                                 <CheckBox x:Name="VisualEffectsCheck" Style="{StaticResource Switch}"
                                           HorizontalAlignment="Right" VerticalAlignment="Center"
@@ -212,8 +237,7 @@
                             <Grid>
                                 <StackPanel>
                                     <TextBlock Text="背景来源" FontSize="12.5" FontWeight="SemiBold" />
-                                    <TextBlock Text="默认纯色、自定义图片/视频，或跟随 Wallpaper Engine 当前壁纸"
-                                               Style="{StaticResource Hint}" Margin="0,4,0,0" TextWrapping="Wrap" />
+                                    <TextBlock Text="懂的都懂" Style="{StaticResource SettingNote}" />
                                 </StackPanel>
                                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
                                     <RadioButton x:Name="BgModeDefault" Style="{StaticResource TabItem}" GroupName="BackgroundMode"
@@ -231,8 +255,7 @@
                             <Grid>
                                 <StackPanel>
                                     <TextBlock Text="场景壁纸动态预览" FontSize="12.5" FontWeight="SemiBold" />
-                                    <TextBlock Text="播放壁纸自带的 preview.gif，有动画但通常只有 256×256；关闭则使用拆包出的高清静帧"
-                                               Style="{StaticResource Hint}" Margin="0,4,0,0" TextWrapping="Wrap" MaxWidth="620" />
+                                    <TextBlock Text="这个尽量不要动" Style="{StaticResource SettingNote}" />
                                 </StackPanel>
                                 <CheckBox x:Name="SceneAnimatedCheck" HorizontalAlignment="Right" VerticalAlignment="Center"
                                           Checked="SceneAnimated_Changed" Unchecked="SceneAnimated_Changed" />
@@ -282,16 +305,6 @@
                     <StackPanel>
                         <TextBlock Text="启动" Style="{StaticResource SectionHeader}" />
                         <TextBlock Text="内存会按所选版本自动分配，单个版本可在「版本 → 修改」中覆盖" Style="{StaticResource Hint}" />
-
-                        <Border Style="{StaticResource SettingRow}" Margin="0,12,0,0">
-                            <Grid>
-                                <StackPanel>
-                                    <TextBlock Text="内存自动分配" FontSize="12.5" FontWeight="SemiBold" />
-                                    <TextBlock Text="原版基础 2 GB；整合包按 Mod 数量增加，并限制在物理内存的 60% 以内"
-                                               Style="{StaticResource Hint}" Margin="0,4,0,0" TextWrapping="Wrap" />
-                                </StackPanel>
-                            </Grid>
-                        </Border>
 
                         <Border Style="{StaticResource SettingRow}">
                             <Grid>

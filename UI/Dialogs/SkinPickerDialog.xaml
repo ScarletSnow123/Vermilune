@@ -4,7 +4,8 @@
         xmlns:controls="clr-namespace:Vermilune.UI.Controls"
         Width="800" Height="560" WindowStyle="None" AllowsTransparency="True"
         Background="Transparent" ResizeMode="NoResize" ShowInTaskbar="False"
-        WindowStartupLocation="CenterOwner" FontFamily="{DynamicResource UiFont}">
+        WindowStartupLocation="CenterOwner" FontFamily="{DynamicResource UiFont}"
+        Foreground="{DynamicResource TextBrush}">
     <Border Background="{DynamicResource Surface3Brush}" BorderBrush="{DynamicResource StrokeStrongBrush}"
             BorderThickness="1" CornerRadius="0" Padding="22">
         <Border.Effect>

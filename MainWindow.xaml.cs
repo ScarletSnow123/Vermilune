@@ -95,7 +95,7 @@ public partial class MainWindow : Window
         BgOpacitySlider.Value = s.BackgroundImageOpacity * 100;
         _updatingSliders = false;
         OpacityValue.Text = $"{s.UiOpacity * 100:0}%";
-        RailVersion.Text = "v1.3.8";
+        RailVersion.Text = "v1.3.9";
 
         LauncherApp.I.SettingsChanged += OnSettingsChanged;
         LauncherApp.I.VersionsChanged += OnVersionsChanged;
@@ -106,7 +106,19 @@ public partial class MainWindow : Window
 
         NavigateTo("launch");
         UpdateTitleStatus();
+        Dispatcher.BeginInvoke(new Action(PreloadPages), DispatcherPriority.ApplicationIdle);
         _ = CheckForUpdatesAsync(true);
+    }
+
+    private void PreloadPages()
+    {
+        // 首次切页时现场构造页面会有一次短暂卡顿，利用空闲时间先建好。
+        foreach (var key in new[] { "download", "versions", "settings", "multiplayer", "sync", "error", "more" })
+        {
+            if (_pages.ContainsKey(key)) continue;
+            try { _pages[key] = CreatePage(key); }
+            catch (Exception ex) { Log.Warn("预加载页面失败 " + key + "：" + ex.Message); }
+        }
     }
 
     public async Task CheckForUpdatesAsync(bool silent)
@@ -204,16 +216,20 @@ public partial class MainWindow : Window
             backgroundPath = WallpaperEngineService.GetCurrentWallpaper();
 
         var hasBackground = !string.IsNullOrWhiteSpace(backgroundPath) && File.Exists(backgroundPath);
-        ThemeManager.Apply(s.Accent, s.UiOpacity, hasBackground,
-            string.Equals(s.UiThemeMode, "light", StringComparison.OrdinalIgnoreCase));
+        var light = string.Equals(s.UiThemeMode, "light", StringComparison.OrdinalIgnoreCase);
+        // 浅色模式仍要保留背景图，不能让它被白底完全盖住。
+        var backgroundOpacity = light && hasBackground
+            ? Math.Max(s.BackgroundImageOpacity, 0.55)
+            : s.BackgroundImageOpacity;
+        ThemeManager.Apply(s.Accent, s.UiOpacity, hasBackground, light);
         if (string.Equals(s.BackgroundMode, "wallpaper", StringComparison.OrdinalIgnoreCase))
             _lastWallpaperPath = backgroundPath ?? "";
         if (hasBackground && BackgroundService.IsVideo(backgroundPath!))
-            ApplyVideoBackground(backgroundPath!, s.BackgroundImageOpacity);
+            ApplyVideoBackground(backgroundPath!, backgroundOpacity);
         else if (hasBackground && string.Equals(Path.GetExtension(backgroundPath), ".html", StringComparison.OrdinalIgnoreCase))
-            ApplyWebBackground(backgroundPath!, s.BackgroundImageOpacity);
+            ApplyWebBackground(backgroundPath!, backgroundOpacity);
         else if (hasBackground)
-            ApplyImageBackground(backgroundPath!, s.BackgroundImageOpacity);
+            ApplyImageBackground(backgroundPath!, backgroundOpacity);
         else
             ClearBackground();
     }
@@ -513,11 +529,11 @@ public partial class MainWindow : Window
         if (mode == "smooth")
         {
             page.Opacity = 1;
-            page.BeginAnimation(OpacityProperty, new DoubleAnimation(0.82, 1, TimeSpan.FromMilliseconds(220))
+            page.BeginAnimation(OpacityProperty, new DoubleAnimation(0.94, 1, TimeSpan.FromMilliseconds(180))
             {
                 EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseOut }
             });
-            translate.BeginAnimation(TranslateTransform.YProperty, new DoubleAnimation(10, 0, TimeSpan.FromMilliseconds(240))
+            translate.BeginAnimation(TranslateTransform.YProperty, new DoubleAnimation(6, 0, TimeSpan.FromMilliseconds(220))
             {
                 EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
             });
@@ -527,7 +543,7 @@ public partial class MainWindow : Window
                 var blurMs = Math.Clamp(LauncherApp.I.Settings.BlurDelayMs, 360, 1000);
                 var blur = new BlurEffect { Radius = 0 };
                 PageHost.Effect = blur;
-                var blurIn = new DoubleAnimation(8, 0, TimeSpan.FromMilliseconds(blurMs))
+                var blurIn = new DoubleAnimation(3, 0, TimeSpan.FromMilliseconds(blurMs))
                 {
                     EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
                 };
@@ -546,18 +562,18 @@ public partial class MainWindow : Window
 
         // 华丽模式：柔和的错峰缩放与上移，不使用旋转、粒子和辉光。
         page.Opacity = 1;
-        page.BeginAnimation(OpacityProperty, new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(420))
+        page.BeginAnimation(OpacityProperty, new DoubleAnimation(0.55, 1, TimeSpan.FromMilliseconds(300))
         {
             EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
         });
         translate.Y = 0;
-        translate.BeginAnimation(TranslateTransform.YProperty, new DoubleAnimation(18, 0, TimeSpan.FromMilliseconds(420))
+        translate.BeginAnimation(TranslateTransform.YProperty, new DoubleAnimation(10, 0, TimeSpan.FromMilliseconds(300))
         {
             EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
         });
         scale.ScaleX = 1;
         scale.ScaleY = 1;
-        var scaleIn = new DoubleAnimation(0.985, 1, TimeSpan.FromMilliseconds(420))
+        var scaleIn = new DoubleAnimation(0.995, 1, TimeSpan.FromMilliseconds(300))
         {
             EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
         };
@@ -817,7 +833,7 @@ public partial class MainWindow : Window
     {
         Dispatcher.BeginInvoke(new Action(() =>
         {
-            ToastText.Text = string.IsNullOrWhiteSpace(title) ? message : $"{title} · {message}";
+            ToastText.Text = string.IsNullOrWhiteSpace(title) ? message : $"{title} - {message}";
             ToastBar.Visibility = Visibility.Visible;
             var mode = LauncherApp.I.Settings.AnimationMode;
             if (mode == "off")
@@ -1049,10 +1065,18 @@ public partial class MainWindow : Window
         if (e.Key == Key.Enter && _currentPage == "launch")
         {
             if (Keyboard.FocusedElement is TextBox or ComboBox) return;
-            if (_pages.TryGetValue("launch", out var page) && page is LaunchPage lp)
+            if (_pages.TryGetValue("launch", out var page))
             {
-                _ = lp.LaunchSelectedAsync(lp.SelectedVersion);
-                e.Handled = true;
+                if (page is LaunchPage lp)
+                {
+                    _ = lp.LaunchSelectedAsync(lp.SelectedVersion);
+                    e.Handled = true;
+                }
+                else if (page is ModernHomePage mp)
+                {
+                    mp.LaunchSelected();
+                    e.Handled = true;
+                }
             }
         }
         if (e.Key == Key.Escape) OpacityPopup.IsOpen = false;

@@ -32,40 +32,38 @@ public sealed class ForgeService
         }
 
         var result = new List<ForgeVersionInfo>();
+        string? recommended = null;
+        string? latest = null;
         try
         {
             var json = await HttpService.GetStringAsync("https://files.minecraftforge.net/net/minecraftforge/forge/promotions_slim.json", ct);
             var root = JsonNode.Parse(json) as JsonObject;
             if (root?["promos"] is JsonObject promos)
             {
-                var latest = promos[mcVersion + "-latest"]?.GetValue<string>();
-                var recommended = promos[mcVersion + "-recommended"]?.GetValue<string>();
-                if (!string.IsNullOrEmpty(recommended))
-                    result.Add(new ForgeVersionInfo { ForgeVersion = recommended, Recommended = true, Latest = latest == recommended });
-                if (!string.IsNullOrEmpty(latest) && latest != recommended)
-                    result.Add(new ForgeVersionInfo { ForgeVersion = latest, Latest = true });
+                latest = promos[mcVersion + "-latest"]?.GetValue<string>();
+                recommended = promos[mcVersion + "-recommended"]?.GetValue<string>();
             }
         }
         catch (Exception ex) { Log.Warn("Forge promotions 获取失败：" + ex.Message); }
 
-        if (result.Count == 0)
-        {
-            try
-            {
-                var xml = await HttpService.GetStringAsync("https://maven.minecraftforge.net/net/minecraftforge/forge/maven-metadata.xml", ct);
-                foreach (Match m in Regex.Matches(xml, @"<version>([^<]+)</version>"))
-                {
-                    var v = m.Groups[1].Value;
-                    if (!v.StartsWith(mcVersion + "-", StringComparison.OrdinalIgnoreCase)) continue;
-                    var fv = v[(mcVersion.Length + 1)..];
-                    if (!result.Any(x => x.ForgeVersion == fv))
-                        result.Add(new ForgeVersionInfo { ForgeVersion = fv });
-                }
-            }
-            catch (Exception ex) { Log.Warn("Forge maven 版本获取失败：" + ex.Message); }
-        }
+        var all = new SortedSet<string>(StringComparer.OrdinalIgnoreCase);
+        if (!string.IsNullOrEmpty(recommended)) all.Add(recommended);
+        if (!string.IsNullOrEmpty(latest)) all.Add(latest);
 
-        if (result.Count == 0)
+        // promotions 只给推荐/最新两个，完整列表从 Maven 拿。
+        try
+        {
+            var xml = await HttpService.GetStringAsync("https://maven.minecraftforge.net/net/minecraftforge/forge/maven-metadata.xml", ct);
+            foreach (Match m in Regex.Matches(xml, @"<version>([^<]+)</version>"))
+            {
+                var v = m.Groups[1].Value;
+                if (!v.StartsWith(mcVersion + "-", StringComparison.OrdinalIgnoreCase)) continue;
+                all.Add(v[(mcVersion.Length + 1)..]);
+            }
+        }
+        catch (Exception ex) { Log.Warn("Forge maven 版本获取失败：" + ex.Message); }
+
+        if (all.Count <= 2)
         {
             try
             {
@@ -76,21 +74,26 @@ public sealed class ForgeService
                     foreach (var node in versions.OfType<JsonObject>())
                     {
                         var fv = node["version"]?.GetValue<string>() ?? "";
-                        if (string.IsNullOrWhiteSpace(fv)) continue;
-                        if (!result.Any(x => x.ForgeVersion == fv))
-                            result.Add(new ForgeVersionInfo { ForgeVersion = fv });
+                        if (!string.IsNullOrWhiteSpace(fv)) all.Add(fv);
                     }
-                    if (result.Count > 0) result[0] = new ForgeVersionInfo { ForgeVersion = result[0].ForgeVersion, Latest = true };
                 }
             }
             catch (Exception ex) { Log.Warn("BMCLAPI Forge 版本获取失败：" + ex.Message); }
         }
 
+        foreach (var fv in all)
+            result.Add(new ForgeVersionInfo
+            {
+                ForgeVersion = fv,
+                Recommended = string.Equals(fv, recommended, StringComparison.OrdinalIgnoreCase),
+                Latest = string.Equals(fv, latest, StringComparison.OrdinalIgnoreCase)
+            });
+
         // Maven 返回顺序通常由旧到新，倒序以便展示最新
         result = result
             .OrderByDescending(x => x.Recommended)
             .ThenByDescending(x => ParseForgeVersion(x.ForgeVersion))
-            .Take(24)
+            .Take(64)
             .ToList();
 
         lock (CacheLock) Cache[mcVersion] = (result, DateTime.UtcNow);

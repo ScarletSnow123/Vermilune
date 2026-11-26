@@ -42,7 +42,7 @@ public partial class SettingsPage : UserControl, IPage
                 Background = new SolidColorBrush(ThemeManager.ParseColor(hex, Colors.Gold)),
                 ToolTip = hex,
                 Tag = hex,
-                Style = (Style)Application.Current.Resources["IconButton"]
+                Style = (Style)FindResource("AccentSwatch")
             };
             button.Click += AccentSwatch_Click;
             AccentPanel.Children.Add(button);
@@ -422,7 +422,7 @@ public partial class SettingsPage : UserControl, IPage
         LauncherApp.I.Notify("动画效果", s.AnimationMode switch
         {
             "off" => "已关闭",
-            "fancy" => "华丽模式：柔和错峰过渡，可叠加模糊",
+            "fancy" => "华丽（虽然不是很华丽……）",
             _ => "流畅模式"
         });
     }

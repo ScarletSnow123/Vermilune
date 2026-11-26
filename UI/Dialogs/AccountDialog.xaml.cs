@@ -41,6 +41,18 @@ public partial class AccountDialog : Window
             NideRoleHint.Visibility = Visibility.Visible;
         }
         BuildSavedList();
+        if (SavedList.Items.Count == 0) TabMicrosoft.IsChecked = true;
+    }
+
+    private void AccountTab_Checked(object sender, RoutedEventArgs e)
+    {
+        if (PanelSaved is null) return;
+        var tag = (sender as RadioButton)?.Tag?.ToString() ?? "saved";
+        PanelSaved.Visibility = tag == "saved" ? Visibility.Visible : Visibility.Collapsed;
+        PanelMicrosoft.Visibility = tag == "microsoft" ? Visibility.Visible : Visibility.Collapsed;
+        PanelOffline.Visibility = tag == "offline" ? Visibility.Visible : Visibility.Collapsed;
+        PanelYgg.Visibility = tag == "ygg" ? Visibility.Visible : Visibility.Collapsed;
+        PanelNide.Visibility = tag == "nide" ? Visibility.Visible : Visibility.Collapsed;
     }
 
     private sealed class SavedAccountRow

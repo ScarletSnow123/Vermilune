@@ -22,7 +22,7 @@
     </Window.Resources>
     <Grid x:Name="RootGrid">
         <!-- 不透明底色在上，背景图叠在底色之上；100% 时不会透出桌面&#10; -->
-        <Border x:Name="BgTint" CornerRadius="10" Background="{DynamicResource WindowBgBrush}" />
+        <Border x:Name="BgTint" CornerRadius="10" Background="{DynamicResource BgTintBrush}" />
         <Border x:Name="BgImageBorder" CornerRadius="10" Visibility="Collapsed">
             <Border.Background>
                 <ImageBrush x:Name="BgImageBrush" Stretch="UniformToFill" AlignmentX="Center" AlignmentY="Center" />
@@ -184,7 +184,7 @@
                             </StackPanel>
 
                             <StackPanel Grid.Row="1" Margin="0,0,0,14" HorizontalAlignment="Center">
-                                <TextBlock x:Name="RailVersion" Text="v1.3.8" FontSize="9.5"
+                                <TextBlock x:Name="RailVersion" Text="v1.3.9" FontSize="9.5"
                                            Foreground="{DynamicResource TextMutedBrush}" HorizontalAlignment="Center" />
                             </StackPanel>
                         </Grid>
