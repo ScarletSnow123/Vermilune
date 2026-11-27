@@ -576,7 +576,7 @@
         <Setter Property="Width" Value="62" />
         <Setter Property="Height" Value="56" />
         <Setter Property="Margin" Value="0,4" />
-        <Setter Property="Foreground" Value="{DynamicResource TextMutedBrush}" />
+        <Setter Property="Foreground" Value="{DynamicResource TextSubBrush}" />
         <Setter Property="Cursor" Value="Hand" />
         <Setter Property="FocusVisualStyle" Value="{x:Null}" />
         <Setter Property="Template">
@@ -611,7 +611,7 @@
         <Setter Property="Padding" Value="14,0" />
         <Setter Property="FontSize" Value="13" />
         <Setter Property="FontFamily" Value="{DynamicResource UiFont}" />
-        <Setter Property="Foreground" Value="{DynamicResource TextMutedBrush}" />
+        <Setter Property="Foreground" Value="{DynamicResource TextSubBrush}" />
         <Setter Property="Cursor" Value="Hand" />
         <Setter Property="FocusVisualStyle" Value="{x:Null}" />
         <Setter Property="Template">
