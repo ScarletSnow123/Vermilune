@@ -1,6 +1,6 @@
 # Vermilune
 
-一个使用 **.NET 10 + WPF** 编写的 Windows Minecraft 启动器，当前版本 **v1.3.9**。
+一个使用 **.NET 10 + WPF** 编写的 Windows Minecraft 启动器，当前版本 **v1.3.10**。
 
 界面、版本管理、下载、登录与皮肤预览均在本地完成。
 
@@ -18,7 +18,7 @@
 - 多账号保存与切换，不用重复登录
 - 拖入 CurseForge / Modrinth 整合包 zip 直接安装
 - Forge / Fabric / NeoForge / Quilt 安装
-- Modrinth、CurseForge 资源搜索
+- Modrinth、CurseForge 资源搜索，中文名优先显示（PCL WikiEntries / MC 百科数据快照）
 - 整合包搜索与一键安装
 - Mod 扫描、重复/前置/版本兼容检查与崩溃日志分析
 - 本地皮肤库、Steve / Alex 模型切换、3D 皮肤预览

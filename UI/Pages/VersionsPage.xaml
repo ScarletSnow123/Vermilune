@@ -182,6 +182,8 @@
                              Content="Mods" Checked="Tab_Checked" Tag="mods" />
                 <RadioButton x:Name="TabLog" Style="{StaticResource TabItem}" GroupName="VersionTabs"
                              Content="日志" Checked="Tab_Checked" Tag="log" />
+                <RadioButton x:Name="TabExport" Style="{StaticResource TabItem}" GroupName="VersionTabs"
+                             Content="导出" Checked="Tab_Checked" Tag="export" />
             </StackPanel>
 
             <Grid Grid.Row="2" Margin="0,8,0,0">
@@ -239,8 +241,6 @@
                                                        ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"  Grid.Column="1" Margin="10,0,0,0" />
                                         </Grid>
                                     </Border>
-                                    <Button Style="{StaticResource ButtonBase}" Height="32" Content="打开版本目录"
-                                            HorizontalAlignment="Left" Margin="0,12,0,0" Click="OpenFolder_Click" />
                                 </StackPanel>
                             </Border>
 
@@ -299,6 +299,26 @@
                                 <TextBlock x:Name="OvJsonPath" Text="—" Style="{StaticResource MonoText}"
                                            TextWrapping="Wrap" Margin="0,9,0,0" />
                                 <TextBlock Visibility="Collapsed" />
+                            </StackPanel>
+                        </Border>
+
+                        <Border Style="{StaticResource Card}" Margin="0,12,0,0">
+                            <StackPanel>
+                                <TextBlock Text="实例文件夹" Style="{StaticResource SectionTitle}" />
+                                <WrapPanel Margin="0,10,0,0">
+                                    <Button Style="{StaticResource ButtonBase}" Height="30" Content="Mods" Tag="mods"
+                                            Margin="0,0,8,8" Click="OpenInstanceSubDir_Click" />
+                                    <Button Style="{StaticResource ButtonBase}" Height="30" Content="光影" Tag="shaderpacks"
+                                            Margin="0,0,8,8" Click="OpenInstanceSubDir_Click" />
+                                    <Button Style="{StaticResource ButtonBase}" Height="30" Content="资源包" Tag="resourcepacks"
+                                            Margin="0,0,8,8" Click="OpenInstanceSubDir_Click" />
+                                    <Button Style="{StaticResource ButtonBase}" Height="30" Content="config" Tag="config"
+                                            Margin="0,0,8,8" Click="OpenInstanceSubDir_Click" />
+                                    <Button Style="{StaticResource ButtonBase}" Height="30" Content="saves" Tag="saves"
+                                            Margin="0,0,8,8" Click="OpenInstanceSubDir_Click" />
+                                    <Button Style="{StaticResource ButtonBase}" Height="30" Content="版本目录" Tag="root"
+                                            Margin="0,0,8,8" Click="OpenInstanceSubDir_Click" />
+                                </WrapPanel>
                             </StackPanel>
                         </Border>
                     </StackPanel>
@@ -544,6 +564,42 @@
                              TextWrapping="NoWrap" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" />
                 </Grid>
             </Grid>
+            <ScrollViewer x:Name="PanelExport" Grid.Row="2" Margin="0,10,0,0" Visibility="Collapsed"
+                          VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                <Border Style="{StaticResource Card}" Padding="18">
+                    <StackPanel>
+                        <TextBlock Text="导出整合包" Style="{StaticResource SectionTitle}" />
+                        <Grid Margin="0,14,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="10" />
+                                <ColumnDefinition Width="120" />
+                            </Grid.ColumnDefinitions>
+                            <StackPanel>
+                                <TextBlock Text="名称" Style="{StaticResource FormLabel}" />
+                                <TextBox x:Name="ExpName" Style="{StaticResource InputBox}" Height="34" Margin="0,5,0,0" />
+                            </StackPanel>
+                            <StackPanel Grid.Column="2">
+                                <TextBlock Text="版本" Style="{StaticResource FormLabel}" />
+                                <TextBox x:Name="ExpVersion" Style="{StaticResource InputBox}" Height="34" Margin="0,5,0,0" Text="1.0.0" />
+                            </StackPanel>
+                        </Grid>
+                        <TextBlock Text="内容" Style="{StaticResource FormLabel}" Margin="0,16,0,0" />
+                        <WrapPanel Margin="0,7,0,0">
+                            <CheckBox x:Name="ExpMods" Content="Mods" IsChecked="True" Margin="0,0,18,8" />
+                            <CheckBox x:Name="ExpConfig" Content="config" IsChecked="True" Margin="0,0,18,8" />
+                            <CheckBox x:Name="ExpPacks" Content="资源包" IsChecked="True" Margin="0,0,18,8" />
+                            <CheckBox x:Name="ExpShaders" Content="光影" IsChecked="True" Margin="0,0,18,8" />
+                            <CheckBox x:Name="ExpSaves" Content="存档" Margin="0,0,18,8" />
+                            <CheckBox x:Name="ExpOptions" Content="options.txt" IsChecked="True" Margin="0,0,18,8" />
+                        </WrapPanel>
+                        <TextBlock x:Name="ExpStatus" Text="" Style="{StaticResource MutedText}" Margin="0,8,0,0" TextWrapping="Wrap" />
+                        <Button x:Name="ExpButton" Style="{StaticResource PrimaryButton}" Height="36" Width="130"
+                                HorizontalAlignment="Left" Margin="0,16,0,0" Content="开始导出" Click="ExportTab_Click" />
+                    </StackPanel>
+                </Border>
+            </ScrollViewer>
+
         </Grid>
     </Grid>
 </UserControl>

@@ -13,13 +13,15 @@ public sealed class ResourceProject
     public string Id { get; init; } = "";
     public string Slug { get; init; } = "";
     public string Title { get; init; } = "";
+    public string ChineseTitle { get; set; } = "";
+    public string DisplayTitle => string.IsNullOrWhiteSpace(ChineseTitle) ? Title : ChineseTitle;
     public string Summary { get; init; } = "";
     public string Author { get; init; } = "";
     public string IconUrl { get; init; } = "";
     public long Downloads { get; init; }
     public ResourceType Type { get; init; }
     public string WebsiteUrl { get; init; } = "";
-    public string Initial => string.IsNullOrEmpty(Title) ? "?" : Title[..1].ToUpperInvariant();
+    public string Initial => string.IsNullOrEmpty(DisplayTitle) ? "?" : DisplayTitle[..1].ToUpperInvariant();
     public string DownloadsText => Downloads >= 1_000_000 ? $"{Downloads / 1_000_000.0:0.#}M" : Downloads >= 1000 ? $"{Downloads / 1000.0:0.#}K" : Downloads.ToString();
 }
 

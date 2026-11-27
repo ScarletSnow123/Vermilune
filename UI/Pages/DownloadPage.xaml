@@ -35,15 +35,21 @@
         </Grid>
 
         <!-- 标签 -->
-        <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,14,0,0">
-            <RadioButton x:Name="TabGame" Style="{StaticResource TabItem}" GroupName="DownloadTabs" Content="游戏版本"
-                         IsChecked="True" Checked="Tabs_Checked" Tag="game" />
-            <RadioButton x:Name="TabFabric" Style="{StaticResource TabItem}" GroupName="DownloadTabs" Content="Fabric"
-                         Checked="Tabs_Checked" Tag="fabric" />
-            <RadioButton x:Name="TabForge" Style="{StaticResource TabItem}" GroupName="DownloadTabs" Content="Forge / NeoForge"
-                         Checked="Tabs_Checked" Tag="forge" />
-            <RadioButton x:Name="TabResource" Style="{StaticResource TabItem}" GroupName="DownloadTabs" Content="资源 / 整合包"
-                         Checked="Tabs_Checked" Tag="resource" />
+        <StackPanel Grid.Row="1">
+            <StackPanel Orientation="Horizontal" Margin="0,14,0,0">
+                <RadioButton x:Name="TabGame" Style="{StaticResource TabItem}" GroupName="DownloadTabs" Content="MC本体"
+                             IsChecked="True" Checked="Tabs_Checked" Tag="game" />
+                <RadioButton x:Name="TabResource" Style="{StaticResource TabItem}" GroupName="DownloadTabs" Content="社区资源"
+                             Checked="Tabs_Checked" Tag="resource" />
+                <RadioButton x:Name="TabInstaller" Style="{StaticResource TabItem}" GroupName="DownloadTabs" Content="安装器"
+                             Checked="Tabs_Checked" Tag="installer" />
+                <StackPanel x:Name="InstallerSubTabs" Orientation="Horizontal" Visibility="Collapsed" Margin="18,0,0,0">
+                    <RadioButton x:Name="InstFabric" Style="{StaticResource TabItem}" GroupName="InstallerTabs" Content="Fabric"
+                                 IsChecked="True" Checked="InstallerMode_Checked" />
+                    <RadioButton x:Name="InstForge" Style="{StaticResource TabItem}" GroupName="InstallerTabs" Content="Forge / NeoForge"
+                                 Checked="InstallerMode_Checked" />
+                </StackPanel>
+            </StackPanel>
         </StackPanel>
 
         <!-- 游戏版本 -->
@@ -194,8 +200,7 @@
         </Grid>
 
         <!-- Fabric -->
-        <Grid x:Name="PanelFabric" Grid.Row="2" Margin="0,10,0,0"
-              Visibility="{Binding IsChecked, ElementName=TabFabric, Converter={StaticResource BoolToVisibility}}">
+        <Grid x:Name="PanelFabric" Grid.Row="2" Margin="0,10,0,0" Visibility="Collapsed">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="16" />
@@ -251,8 +256,7 @@
         </Grid>
 
         <!-- Forge -->
-        <Grid x:Name="PanelForge" Grid.Row="2" Margin="0,10,0,0"
-              Visibility="{Binding IsChecked, ElementName=TabForge, Converter={StaticResource BoolToVisibility}}">
+        <Grid x:Name="PanelForge" Grid.Row="2" Margin="0,10,0,0" Visibility="Collapsed">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="16" />

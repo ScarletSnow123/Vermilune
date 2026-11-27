@@ -209,8 +209,38 @@ public partial class DownloadPage : UserControl, IPage
     {
         if (PanelGame is null) return;
         var tag = (sender as RadioButton)?.Tag as string ?? "game";
-        if (tag == "forge") PopulateForgeMc();
         if (tag == "resource") ResourcePanel.OnShown();
+        if (tag == "installer")
+        {
+            InstallerSubTabs.Visibility = Visibility.Visible;
+            UpdateInstallerPanel();
+            return;
+        }
+        InstallerSubTabs.Visibility = Visibility.Collapsed;
+        PanelFabric.Visibility = Visibility.Collapsed;
+        PanelForge.Visibility = Visibility.Collapsed;
+    }
+
+    private void InstallerMode_Checked(object sender, RoutedEventArgs e)
+    {
+        if (PanelFabric is null) return;
+        if (InstForge.IsChecked == true)
+        {
+            PanelFabric.Visibility = Visibility.Collapsed;
+            PanelForge.Visibility = Visibility.Visible;
+            PopulateForgeMc();
+        }
+        else
+        {
+            PanelFabric.Visibility = Visibility.Visible;
+            PanelForge.Visibility = Visibility.Collapsed;
+        }
+    }
+
+    private void UpdateInstallerPanel()
+    {
+        if (InstForge.IsChecked == true) InstallerMode_Checked(InstForge, new RoutedEventArgs());
+        else InstallerMode_Checked(InstFabric, new RoutedEventArgs());
     }
 
     private void PopulateForgeMc()

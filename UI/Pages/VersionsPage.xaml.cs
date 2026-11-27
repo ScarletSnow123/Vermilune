@@ -182,10 +182,12 @@ public partial class VersionsPage : UserControl, IPage
         PanelModify.Visibility = tag == "modify" ? Visibility.Visible : Visibility.Collapsed;
         PanelMods.Visibility = tag == "mods" ? Visibility.Visible : Visibility.Collapsed;
         PanelLog.Visibility = tag == "log" ? Visibility.Visible : Visibility.Collapsed;
+        PanelExport.Visibility = tag == "export" ? Visibility.Visible : Visibility.Collapsed;
         if (_selected is null) return;
         if (tag == "mods") LoadMods(_selected);
         else if (tag == "log") LoadLog(_selected);
         else if (tag == "modify" && !_loading) LoadModify(_selected);
+        else if (tag == "export") FillExportDefaults();
     }
 
     private void GoModify_Click(object sender, RoutedEventArgs e) => TabModify.IsChecked = true;
@@ -491,6 +493,24 @@ public partial class VersionsPage : UserControl, IPage
         if (_selected is not null) App.Window?.LaunchVersion(_selected.Id);
     }
 
+    private void OpenInstanceSubDir_Click(object sender, RoutedEventArgs e)
+    {
+        if (_selected is null || sender is not Button { Tag: string kind }) return;
+        try
+        {
+            string dir;
+            if (kind == "mods")
+                dir = LauncherApp.I.Versions.GetModsDir(_selected.Id, _instance, LauncherApp.I.Settings.VersionIsolation);
+            else if (kind == "root")
+                dir = LauncherApp.I.Versions.GetGameDir(_selected.Id, _instance, LauncherApp.I.Settings.VersionIsolation);
+            else
+                dir = Path.Combine(LauncherApp.I.Versions.GetGameDir(_selected.Id, _instance, LauncherApp.I.Settings.VersionIsolation), kind);
+            Directory.CreateDirectory(dir);
+            Shell.OpenFolder(dir);
+        }
+        catch (Exception ex) { MessageDialog.Show(Window.GetWindow(this), "打开文件夹失败", ex.Message, "关闭", danger: true); }
+    }
+
     private void OpenFolder_Click(object sender, RoutedEventArgs e)
     {
         if (_selected is null) return;
@@ -531,6 +551,49 @@ public partial class VersionsPage : UserControl, IPage
         _pendingSelect = newName;
         ReloadVersions();
         LauncherApp.I.Notify("已复制版本", $"{old} → {newName}");
+    }
+
+    private void FillExportDefaults()
+    {
+        if (_selected is null) return;
+        ExpName.Text = _selected.DisplayName;
+    }
+
+    private async void ExportTab_Click(object sender, RoutedEventArgs e)
+    {
+        if (_selected is null) return;
+        var name = (ExpName.Text ?? "").Trim();
+        if (name.Length == 0) { ExpStatus.Text = "写个名字"; return; }
+        var dialog = new SaveFileDialog
+        {
+            Title = "导出整合包",
+            Filter = "整合包 (*.zip)|*.zip",
+            FileName = name + "-" + (ExpVersion.Text ?? "1.0.0").Trim() + ".zip",
+            InitialDirectory = AppPaths.DataDir
+        };
+        if (dialog.ShowDialog(Window.GetWindow(this)) != true) return;
+        ExpButton.IsEnabled = false;
+        ExpStatus.Text = "正在打包…";
+        try
+        {
+            var options = new ModpackExportOptions
+            {
+                Name = name,
+                Version = string.IsNullOrWhiteSpace(ExpVersion.Text) ? "1.0.0" : ExpVersion.Text.Trim(),
+                IncludeMods = ExpMods.IsChecked == true,
+                IncludeConfig = ExpConfig.IsChecked == true,
+                IncludeResourcePacks = ExpPacks.IsChecked == true,
+                IncludeShaderPacks = ExpShaders.IsChecked == true,
+                IncludeSaves = ExpSaves.IsChecked == true,
+                IncludeOptions = ExpOptions.IsChecked == true
+            };
+            var progress = new Progress<string>(p => ExpStatus.Text = "打包中：" + p);
+            var count = await ModpackExporter.ExportAsync(_selected, dialog.FileName, options, progress);
+            ExpStatus.Text = $"完成，{count} 个文件";
+            LauncherApp.I.Notify("整合包已导出", Path.GetFileName(dialog.FileName));
+        }
+        catch (Exception ex) { ExpStatus.Text = "导出失败：" + ex.Message; }
+        finally { ExpButton.IsEnabled = true; }
     }
 
     private void InstanceResources_Click(object sender, RoutedEventArgs e)

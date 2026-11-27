@@ -27,9 +27,20 @@ public sealed class AsyncImage : Image
         set => SetValue(UriProperty, value);
     }
 
+    private int _loadToken;
+
     private static void OnUriChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
     {
-        if (d is AsyncImage image) _ = image.LoadAsync(e.NewValue as string);
+        if (d is AsyncImage image) image.ScheduleLoad(e.NewValue as string);
+    }
+
+    private async void ScheduleLoad(string? url)
+    {
+        var token = ++_loadToken;
+        // 快速滚动时先跳过中间项，停稳后再真正加载图标。
+        await Task.Delay(120);
+        if (token != _loadToken) return;
+        await LoadAsync(url);
     }
 
     public static readonly DependencyProperty CropProperty = DependencyProperty.Register(
@@ -44,7 +55,7 @@ public sealed class AsyncImage : Image
 
     private static void OnCropChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
     {
-        if (d is AsyncImage image) _ = image.LoadAsync(image.Uri);
+        if (d is AsyncImage image) image.ScheduleLoad(image.Uri);
     }
 
     private async Task LoadAsync(string? url)

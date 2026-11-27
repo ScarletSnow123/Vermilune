@@ -9,7 +9,7 @@ namespace Vermilune.UI.Pages;
 
 public partial class ResourceBrowser : UserControl
 {
-    private ResourceType _type = ResourceType.Modpack;
+    private ResourceType _type = ResourceType.Mod;
     private ResourceSource _source = ResourceSource.Modrinth;
     private bool _allSources = true;
     private readonly List<ResourceProject> _projects = new();
@@ -21,6 +21,9 @@ public partial class ResourceBrowser : UserControl
     private bool _initialized;
     private List<string> _allMcVersions = new();
     private bool _searched;
+    private bool _sortByDownloads;
+    private bool _loadingMore;
+    private int _allSourceOffset;
     private int _offset;
     private CancellationTokenSource? _cts;
     private CancellationTokenSource? _versionCts;
@@ -32,10 +35,16 @@ public partial class ResourceBrowser : UserControl
     private ResourceType _snapshotType;
     private ResourceSource _snapshotSource;
     private bool _snapshotAll;
+    private readonly DispatcherTimer _loadMoreTimer = new() { Interval = TimeSpan.FromMilliseconds(320) };
 
     public ResourceBrowser()
     {
         InitializeComponent();
+        _loadMoreTimer.Tick += (_, _) =>
+        {
+            _loadMoreTimer.Stop();
+            _ = LoadMoreAsync();
+        };
         Loaded += (_, _) => { EnsureInitialized(); RefreshTargets(); };
     }
 
@@ -56,7 +65,7 @@ public partial class ResourceBrowser : UserControl
         var currentMc = LauncherApp.I.CurrentVersion?.MinecraftVersion;
         _allMcVersions = mcList;
         ApplyVersionFilter();
-        McCombo.SelectedItem = !string.IsNullOrWhiteSpace(currentMc) && mcList.Contains(currentMc) ? currentMc : mcList[0];
+        McCombo.SelectedItem = mcList[0];
         TargetCombo.ItemsSource = versions;
         TargetCombo.SelectedItem = LauncherApp.I.CurrentVersion ?? versions.FirstOrDefault();
         UpdateTypeUi();
@@ -153,6 +162,13 @@ public partial class ResourceBrowser : UserControl
         if (LoaderCombo.SelectedIndex < 0) LoaderCombo.SelectedIndex = 0;
     }
 
+    private void Sort_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (!_initialized || SortCombo is null) return;
+        _sortByDownloads = SortCombo.SelectedIndex == 1;
+        _ = SearchAsync(true);
+    }
+
     private void Source_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
         if (!_initialized || SourceCombo is null) return;
@@ -170,9 +186,23 @@ public partial class ResourceBrowser : UserControl
 
     private void Search_Click(object sender, RoutedEventArgs e) => _ = SearchAsync(true);
 
-    private void LoadMore_Click(object sender, RoutedEventArgs e)
+    private void LoadMore_Click(object sender, RoutedEventArgs e) => _ = LoadMoreAsync();
+
+    private async Task LoadMoreAsync()
     {
-        _ = SearchAsync(false);
+        if (_loadingMore || _projects.Count == 0) return;
+        _loadingMore = true;
+        try { await SearchAsync(false); }
+        finally { _loadingMore = false; }
+    }
+
+    private void ProjectList_ScrollChanged(object sender, ScrollChangedEventArgs e)
+    {
+        if (!_allSources || _loadingMore || e.ExtentHeight <= e.ViewportHeight) return;
+        if (Math.Abs(e.VerticalChange) < 0.1) return;
+        if (e.VerticalOffset + e.ViewportHeight < e.ExtentHeight - 120) return;
+        _loadMoreTimer.Stop();
+        _loadMoreTimer.Start();
     }
 
     private static async Task<List<ResourceProject>> SafeSearch(
@@ -207,7 +237,6 @@ public partial class ResourceBrowser : UserControl
         if (!reset && (query != _snapshotQuery || mc != _snapshotMc || loader != _snapshotLoader ||
                        _type != _snapshotType || _source != _snapshotSource || _allSources != _snapshotAll))
             reset = true;
-        if (_allSources) reset = true;
 
         if (!_allSources && _source == ResourceSource.CurseForge && !LauncherApp.I.CurseForge.HasKey)
         {
@@ -229,6 +258,7 @@ public partial class ResourceBrowser : UserControl
             if (reset)
             {
                 _offset = 0;
+                _allSourceOffset = 0;
                 _snapshotQuery = query;
                 _snapshotMc = mc;
                 _snapshotLoader = loader;
@@ -250,13 +280,19 @@ public partial class ResourceBrowser : UserControl
             {
                 var tasks = new List<Task<List<ResourceProject>>>
                 {
-                    SafeSearch(token => LauncherApp.I.Modrinth.SearchAsync(_type, searchQuery, mc, loader, 0, token), timeout.Token)
+                    SafeSearch(token => LauncherApp.I.Modrinth.SearchAsync(_type, searchQuery, mc, loader, _allSourceOffset, token), timeout.Token)
                 };
-                if (LauncherApp.I.CurseForge.HasKey)
-                    tasks.Add(SafeSearch(token => LauncherApp.I.CurseForge.SearchAsync(_type, searchQuery, mc, loader, 0, token), timeout.Token));
+                tasks.Add(SafeSearch(token => LauncherApp.I.CurseForge.SearchAsync(_type, searchQuery, mc, loader, _allSourceOffset, token), timeout.Token));
                 var results = await Task.WhenAll(tasks);
                 foreach (var part in results) list.AddRange(part);
-                list = list.OrderByDescending(x => x.Downloads).ToList();
+                // 同名的同一个 Mod 只保留下载量更高的一条，避免两个源重复刷屏。
+                // 保持搜索接口的相关度顺序，和 PCL 默认排序一致。
+                var seen = new HashSet<string>(_projects.Select(p => (p.Title ?? "").Trim().ToLowerInvariant()));
+                list = list
+                    .Where(p => !seen.Contains((p.Title ?? "").Trim().ToLowerInvariant()))
+                    .GroupBy(x => (x.Title ?? "").Trim().ToLowerInvariant())
+                    .Select(g => g.OrderByDescending(x => x.Downloads).First())
+                    .ToList();
             }
             else
             {
@@ -265,8 +301,12 @@ public partial class ResourceBrowser : UserControl
                     : await LauncherApp.I.CurseForge.SearchAsync(_type, searchQuery, mc, loader, _offset, timeout.Token);
             }
             if (version != _searchVersion) return;
+            if (_sortByDownloads) list = list.OrderByDescending(x => x.Downloads).ToList();
+            foreach (var project in list)
+                project.ChineseTitle = ChineseNames.Find(project.Title, project.Slug) ?? "";
             _projects.AddRange(list);
             _offset = _projects.Count;
+            if (_allSources) _allSourceOffset += 20;
             ProjectList.ItemsSource = null;
             ProjectList.ItemsSource = _projects;
             SearchStatus.Text = query.Length > 0 && !string.Equals(query, searchQuery, StringComparison.OrdinalIgnoreCase)
@@ -274,7 +314,7 @@ public partial class ResourceBrowser : UserControl
                 : $"{_projects.Count} 个结果";
             EmptyText.Visibility = _projects.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
             EmptyText.Text = "没有找到匹配的项目";
-            LoadMoreButton.Visibility = !_allSources && list.Count >= 20 ? Visibility.Visible : Visibility.Collapsed;
+            LoadMoreButton.Visibility = list.Count >= 20 ? Visibility.Visible : Visibility.Collapsed;
             if (reset && _projects.Count > 0) ProjectList.SelectedIndex = 0;
             _searched = true;
         }
@@ -309,7 +349,7 @@ public partial class ResourceBrowser : UserControl
     {
         if (ProjectList.SelectedItem is not ResourceProject project) return;
         _selected = project;
-        DetailTitle.Text = project.Title;
+        DetailTitle.Text = project.DisplayTitle;
         DetailSub.Text = $"{project.Author} · {project.DownloadsText} 次下载";
         DetailSummary.Text = project.Summary;
         _files = new List<ResourceFileInfo>();
@@ -360,6 +400,10 @@ public partial class ResourceBrowser : UserControl
             VersionCombo.ItemsSource = _files.Select(f => f.Display).ToList();
             if (selectedIndex >= 0 && selectedIndex < _files.Count) VersionCombo.SelectedIndex = selectedIndex;
             else VersionCombo.SelectedIndex = _files.Count > 0 ? 0 : -1;
+            var branches = _files.SelectMany(f => f.Loaders).Where(x => !string.IsNullOrWhiteSpace(x))
+                .Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+            BranchText.Text = branches.Count > 1 ? "分支：" + string.Join(" / ", branches) : "";
+            BranchText.Visibility = branches.Count > 1 ? Visibility.Visible : Visibility.Collapsed;
             InstallStatus.Text = _files.Count == 0 ? "没有找到与当前筛选条件兼容的版本" : $"{_files.Count} 个可用版本";
             InstallButton.IsEnabled = _files.Count > 0 && !_installing;
             _versionHasMore = project.Source == ResourceSource.CurseForge && files.Count >= 50 && _files.Count < 500;
@@ -412,7 +456,7 @@ public partial class ResourceBrowser : UserControl
         if (_type == ResourceType.Modpack)
         {
             if (!MessageDialog.Show(Window.GetWindow(this), "安装整合包",
-                    $"将安装「{_selected.Title}」的 {file.VersionNumber}\n\n会先安装对应的加载器，再下载整合包文件，耗时可能较长",
+                    $"将安装「{_selected.DisplayTitle}」的 {file.VersionNumber}\n\n会先安装对应的加载器，再下载整合包文件，耗时可能较长",
                     "开始安装", "取消")) return;
             _cts?.Dispose();
             _cts = new CancellationTokenSource();
@@ -447,7 +491,7 @@ public partial class ResourceBrowser : UserControl
             return;
         }
         if (!MessageDialog.Show(Window.GetWindow(this), "安装资源",
-                $"将把「{_selected.Title}」安装到实例「{target.DisplayName}」\n\n文件：{file.FileName}",
+                $"将把「{_selected.DisplayTitle}」安装到实例「{target.DisplayName}」\n\n文件：{file.FileName}",
                 "开始安装", "取消")) return;
         _cts?.Dispose();
         _cts = new CancellationTokenSource();
@@ -515,6 +559,13 @@ public partial class ResourceBrowser : UserControl
         LauncherApp.I.Save();
         KeyButton.Visibility = Visibility.Collapsed;
         _ = SearchAsync(true);
+    }
+
+    private async void OpenMcmod_Click(object sender, RoutedEventArgs e)
+    {
+        if (_selected is null || string.IsNullOrWhiteSpace(_selected.Title)) return;
+        var url = await McmodService.GetDetailOrSearchAsync(_selected.Title);
+        Shell.OpenUrl(url);
     }
 
     private void OpenWebsite_Click(object sender, RoutedEventArgs e)

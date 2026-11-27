@@ -27,10 +27,10 @@
                 <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
             <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                <RadioButton x:Name="TypeModpack" Style="{StaticResource TabItem}" GroupName="ResourceType"
-                             Content="整合包" IsChecked="True" Checked="Type_Checked" Tag="modpack" />
                 <RadioButton x:Name="TypeMod" Style="{StaticResource TabItem}" GroupName="ResourceType"
-                             Content="Mod" Checked="Type_Checked" Tag="mod" />
+                             Content="Mod" IsChecked="True" Checked="Type_Checked" Tag="mod" />
+                <RadioButton x:Name="TypeModpack" Style="{StaticResource TabItem}" GroupName="ResourceType"
+                             Content="整合包" Checked="Type_Checked" Tag="modpack" />
                 <RadioButton x:Name="TypeResourcePack" Style="{StaticResource TabItem}" GroupName="ResourceType"
                              Content="资源包" Checked="Type_Checked" Tag="resourcepack" />
                 <RadioButton x:Name="TypeShader" Style="{StaticResource TabItem}" GroupName="ResourceType"
@@ -63,11 +63,13 @@
         <!-- 筛选 -->
         <Grid Grid.Row="2" Margin="0,9,0,8">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="150" />
+                <ColumnDefinition Width="140" />
                 <ColumnDefinition Width="8" />
-                <ColumnDefinition Width="200" />
+                <ColumnDefinition Width="180" />
                 <ColumnDefinition Width="10" />
-                <ColumnDefinition Width="160" />
+                <ColumnDefinition Width="150" />
+                <ColumnDefinition Width="10" />
+                <ColumnDefinition Width="130" />
                 <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
             <TextBox x:Name="VersionSearchBox" Style="{StaticResource InputBox}" Height="32"
@@ -80,7 +82,11 @@
                 <ComboBoxItem Content="NeoForge" />
                 <ComboBoxItem Content="Quilt" />
             </ComboBox>
-            <TextBlock x:Name="SearchStatus" Grid.Column="5" Text="" FontSize="11.5" FontWeight="SemiBold"
+            <ComboBox x:Name="SortCombo" Grid.Column="6" Height="32" SelectionChanged="Sort_SelectionChanged">
+                <ComboBoxItem Content="默认排序" IsSelected="True" />
+                <ComboBoxItem Content="按下载量" />
+            </ComboBox>
+            <TextBlock x:Name="SearchStatus" Grid.Column="7" Text="" FontSize="11.5" FontWeight="SemiBold"
                        Foreground="{DynamicResource AccentBrush}"
                        VerticalAlignment="Center" HorizontalAlignment="Right" />
         </Grid>
@@ -113,7 +119,9 @@
                                    Foreground="{DynamicResource AccentBrush}" VerticalAlignment="Center" />
                     </Grid>
                 </Border>
-                <ListBox x:Name="ProjectList" Grid.Row="1" Style="{StaticResource FlatListBox}" ItemContainerStyle="{StaticResource ResourceProjectItem}" SelectionChanged="ProjectList_SelectionChanged">
+                <ListBox x:Name="ProjectList" Grid.Row="1" Style="{StaticResource FlatListBox}" ItemContainerStyle="{StaticResource ResourceProjectItem}"
+                         SelectionChanged="ProjectList_SelectionChanged"
+                         ScrollViewer.ScrollChanged="ProjectList_ScrollChanged">
                     <ListBox.ItemTemplate>
                         <DataTemplate>
                             <Grid Height="84">
@@ -137,7 +145,7 @@
                                     </Grid>
                                 </Border>
                                 <StackPanel Grid.Column="1" Margin="10,0,0,0" VerticalAlignment="Center">
-                                    <TextBlock Text="{Binding Title}" FontSize="12.5" FontWeight="SemiBold"
+                                    <TextBlock Text="{Binding DisplayTitle}" FontSize="12.5" FontWeight="SemiBold"
                                                Foreground="{DynamicResource TextBrush}" TextTrimming="CharacterEllipsis"
                                                ToolTip="{Binding Title}" />
                                     <TextBlock Text="{Binding Summary}" FontSize="9.5" Foreground="{DynamicResource TextMutedBrush}"
@@ -166,6 +174,8 @@
                     <TextBlock x:Name="DetailTitle" Text="选择一个项目" FontFamily="{DynamicResource DisplayFont}"
                                FontSize="17" FontWeight="SemiBold" Margin="0,10,0,0" TextWrapping="Wrap" />
                     <TextBlock x:Name="DetailSub" Text="" Style="{StaticResource MutedText}" Margin="0,5,0,0" />
+                    <TextBlock x:Name="BranchText" Text="" Style="{StaticResource MutedText}" Margin="0,4,0,0"
+                               Visibility="Collapsed" />
                     <TextBlock x:Name="DetailSummary" Text="" Style="{StaticResource MutedText}" Margin="0,9,0,0"
                                TextWrapping="Wrap" MaxHeight="120" />
                     <Border Style="{StaticResource Divider}" />
@@ -190,8 +200,10 @@
                     <Button x:Name="CancelInstallButton" Style="{StaticResource LinkButton}" Content="取消下载"
                             Foreground="{DynamicResource DangerBrush}" HorizontalAlignment="Left"
                             Margin="0,6,0,0" Visibility="Collapsed" Click="CancelInstall_Click" />
-                    <Button Style="{StaticResource LinkButton}" Content="打开项目主页" HorizontalAlignment="Left"
-                            Margin="0,8,0,0" Click="OpenWebsite_Click" />
+                    <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                        <Button Style="{StaticResource LinkButton}" Content="打开项目主页" Click="OpenWebsite_Click" />
+                        <Button Style="{StaticResource LinkButton}" Content="MC 百科" Margin="14,0,0,0" Click="OpenMcmod_Click" />
+                    </StackPanel>
                 </StackPanel>
             </Border>
         </Grid>
