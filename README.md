@@ -30,8 +30,12 @@
 ## 截图
 
 <p align="center">
-  <img src="screenshots/versions.png" width="49%" alt="版本管理" />
-  <img src="screenshots/more.png" width="49%" alt="更多" />
+  <img src="screenshots/versions-dark.png" width="49%" alt="版本管理 深色" />
+  <img src="screenshots/versions-light.png" width="49%" alt="版本管理 浅色" />
+</p>
+<p align="center">
+  <img src="screenshots/more-dark.png" width="49%" alt="更多 深色" />
+  <img src="screenshots/more-light.png" width="49%" alt="更多 浅色" />
 </p>
 
 ## 环境要求
